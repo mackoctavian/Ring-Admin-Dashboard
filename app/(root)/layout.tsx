@@ -1,12 +1,19 @@
+import Header from "@/components/layout/header";
+import Sidebar from "@/components/layout/sidebar";
+
 export default function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
     return (
-        <main>
-            SIDEBAR
-            {children}
-        </main>
+        <>
+            <Header />
+            <div className="flex h-screen overflow-hidden">
+                <Sidebar />
+                <main className="w-full pt-16">{children}</main>
+            </div>
+        </>
+  
     );
 }

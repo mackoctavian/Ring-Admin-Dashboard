@@ -1,8 +1,13 @@
+import React from "react";
+
 export const dynamic = 'force-dynamic'
 
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Serif, Open_Sans } from "next/font/google";
 import "./globals.css";
+import { getServerSession } from "next-auth";
+import Providers from "@/components/layout/providers";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const ibmPlexSerif = IBM_Plex_Serif({
@@ -24,14 +29,20 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession();
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${ibmPlexSerif.variable} ${openSans.variable}`}>{children}</body>
+      <body className={`${inter.variable} ${ibmPlexSerif.variable} ${openSans.variable}`}>
+        <Providers session={session}>
+          <Toaster />
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

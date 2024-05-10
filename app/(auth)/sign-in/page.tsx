@@ -1,8 +1,14 @@
 import React from 'react'
+import Header from '@/components/layout/header'
 
 const SignIn = () => {
     return (
-        <div>Sign In</div>
+        <section className="signin">
+            <div className="content">
+                <Header />
+                Signin Page
+            </div>
+        </section>
     )
 }
 

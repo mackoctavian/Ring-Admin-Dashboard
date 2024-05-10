@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars */
+import { Icons } from "@/components/icons";
 
 declare type SearchParamProps = {
   params: { [key: string]: string };
@@ -6,6 +7,37 @@ declare type SearchParamProps = {
 };
 
 // ========================================
+
+declare interface NavItem {
+  title: string;
+  href?: string;
+  disabled?: boolean;
+  external?: boolean;
+  icon?: keyof typeof Icons;
+  label?: string;
+  description?: string;
+}
+
+declare interface NavItemWithChildren extends NavItem {
+  items: NavItemWithChildren[];
+}
+
+declare interface NavItemWithOptionalChildren extends NavItem {
+  items?: NavItemWithChildren[];
+}
+
+declare interface FooterItem {
+  title: string;
+  items: {
+    title: string;
+    href: string;
+    external?: boolean;
+  }[];
+}
+
+declare type MainNavItem = NavItemWithOptionalChildren;
+
+declare type SidebarNavItem = NavItemWithChildren;
 
 declare type SignUpParams = {
   firstName: string;
