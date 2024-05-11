@@ -1,35 +1,85 @@
 "use client";
-import DashboardNav from "@/components/layout/dashboard-nav";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { sidebarLinks } from "@/constants";
-import { MenuIcon } from "lucide-react";
-import React, { useState } from "react";
+import React from "react";
+import { siteConfig } from "@/config/site";
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
-  // playlists: Playlist[];
-}
+const MobileSidebar = ({ user }: MobileSidebarProps) => {
+  const pathname = usePathname();
 
-export function MobileSidebar({ className }: SidebarProps) {
-  const [open, setOpen] = useState(false);
   return (
-    <>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <MenuIcon />
+    <section className="w-fulll max-w-[264px]">
+      <Sheet>
+        <SheetTrigger>
+          <Image
+            src="/icons/hamburger.svg"
+            width={30}
+            height={30}
+            alt="menu"
+            className="cursor-pointer"
+          />
         </SheetTrigger>
-        <SheetContent side="left" className="!px-0">
-          <div className="space-y-4 py-4">
-            <div className="px-3 py-2">
-              <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
-                Overview
-              </h2>
-              <div className="space-y-1">
-                <DashboardNav setOpen={setOpen} />
-              </div>
-            </div>
+        <SheetContent side="left" className="border-none bg-white">
+          <Link href="/" className="cursor-pointer flex items-center gap-1 px-4">
+            <Image 
+              src="/icons/logo.svg"
+              width={34}
+              height={34}
+              alt="Horizon logo"
+            />
+            <h1 className="text-26 font-ibm-plex-serif font-bold text-black-1">{siteConfig.name}</h1>
+          </Link>
+          <div className="mobilenav-sheet">
+            <SheetClose asChild>
+              <nav className="flex h-full flex-col gap-6 pt-16 text-white">
+                  {sidebarLinks.map((item) => {
+                const isActive = pathname === item.route || pathname.startsWith(`${item.route}/`)
+
+                return (
+                  <SheetClose asChild key={item.route}>
+                    <Link href={item.route} key={item.label}
+                      className={cn('mobilenav-sheet_close w-full', { 'bg-bank-gradient': isActive })}
+                    >
+                        <Image 
+                          src={item.imgURL}
+                          alt={item.label}
+                          width={20}
+                          height={20}
+                          className={cn({
+                            'brightness-[3] invert-0': isActive
+                          })}
+                        />
+                      <p className={cn("text-16 font-semibold text-black-2", { "text-white": isActive })}>
+                        {item.label}
+                      </p>
+                    </Link>
+                  </SheetClose>
+                )
+              })}
+
+              USER
+              </nav>
+            </SheetClose>
+
+            Footer
+            {/* <Footer user={user} type="mobile" /> */}
           </div>
         </SheetContent>
       </Sheet>
-    </>
-  );
+    </section>
+  )
 }
+
+export default MobileSidebar
