@@ -1,15 +1,11 @@
-import React from 'react'
-import Header from '@/components/layout/header'
+import AuthForm from '@/components/AuthForm'
 
 const SignIn = () => {
-    return (
-        <section className="signin">
-            <div className="content">
-                <Header />
-                Signin Page
-            </div>
-        </section>
-    )
+  return (
+    <section className="flex-center size-full max-sm:px-6">
+      <AuthForm type="sign-in" />
+    </section>
+  )
 }
 
 export default SignIn
