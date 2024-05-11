@@ -1,5 +1,5 @@
 "use client";
-import { DashboardNav } from "@/components/layout/dashboard-nav";
+import DashboardNav from "@/components/layout/dashboard-nav";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { sidebarLinks } from "@/constants";
 import { MenuIcon } from "lucide-react";
@@ -24,7 +24,7 @@ export function MobileSidebar({ className }: SidebarProps) {
                 Overview
               </h2>
               <div className="space-y-1">
-                <DashboardNav items={sidebarLinks} setOpen={setOpen} />
+                <DashboardNav setOpen={setOpen} />
               </div>
             </div>
           </div>

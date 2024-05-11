@@ -169,6 +169,11 @@ declare type NewDwollaCustomerParams = {
   ssn: string;
 };
 
+declare interface DashboardNavProps {
+  user: User;
+  setOpen: boolean;
+}
+
 declare interface CreditCardProps {
   account: Account;
   userName: string;

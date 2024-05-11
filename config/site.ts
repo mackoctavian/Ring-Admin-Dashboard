@@ -1,7 +1,7 @@
 export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
-  name: "Slide",
+  name: "Slide POS",
   description: "Business tools for small enterprises",
   mainNav: [
     {

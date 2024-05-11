@@ -118,10 +118,10 @@ export const navItems: NavItem[] = [
     icon: "dashboard",
     label: "Dashboard",
   },
-  {
-    title: "Reports",
-    spacer: true,
-  },
+  // {
+  //   title: "Reports",
+  //   spacer: true,
+  // },
   {
     title: "Sales Reports",
     href: "/dashboard/sales-reports",
@@ -135,10 +135,10 @@ export const navItems: NavItem[] = [
     label: "Inventory Reports",
   },
 
-  {
-    title: "Inventory",
-    spacer: true,
-  },
+  // {
+  //   title: "Inventory",
+  //   spacer: true,
+  // },
   {
     title: "Vendors",
     href: "/dashboard/vendors",
@@ -169,10 +169,10 @@ export const navItems: NavItem[] = [
     icon: "laptop",
     label: "Categories",
   },
-  {
-    title: "Stock",
-    spacer: true,
-  },
+  // {
+  //   title: "Stock",
+  //   spacer: true,
+  // },
   {
     title: "Manage Stock",
     href: "/dashboard/stock",
