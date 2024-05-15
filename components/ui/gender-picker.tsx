@@ -28,7 +28,7 @@ const GenderSelect: React.FC<Props> = ({ value, onChange }) => {
                 <SelectGroup>
                  <SelectItem key="male" value="MALE">Male</SelectItem>
                  <SelectItem key="female" value="FEMALE">Female</SelectItem>
-                 <SelectItem key="undisclosed" value="UNDISCLOSED">I don't want to disclose</SelectItem>
+                 <SelectItem key="undisclosed" value="UNDISCLOSED">I don&apos;t want to disclose</SelectItem>
                 </SelectGroup>
             </SelectContent>
         </Select>

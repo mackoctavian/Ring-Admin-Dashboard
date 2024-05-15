@@ -103,7 +103,8 @@ export function UnitsTable<TData, TValue>({
         scroll: false,
       },
     );
-  }, [pageIndex, pageSize]);
+  }, [pageIndex, pageSize, createQueryString, pathname, router]);
+
 
   const table = useReactTable({
     data,
@@ -122,6 +123,7 @@ export function UnitsTable<TData, TValue>({
 
   const searchValue = table.getColumn(searchKey)?.getFilterValue() as string;
 
+  
   React.useEffect(() => {
     if (searchValue?.length > 0) {
       router.push(
