@@ -12,7 +12,7 @@ import { ProductUnit } from "@/types";
 import { Edit, MoreHorizontal, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { deleteProductUnit } from "@/lib/actions/business.actions"
+import { deleteProductUnit } from "@/lib/actions/product-unit.actions"
 
 interface CellActionProps {
   data: ProductUnit;

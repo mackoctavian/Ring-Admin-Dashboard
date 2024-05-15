@@ -18,8 +18,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ProductUnit } from "@/types";
-import { createProductUnit, updateProductUnit } from "@/lib/actions/product-unit.actions"
+import { Department } from "@/types";
+import { createDepartment, updateDepartment } from "@/lib/actions/department.actions"
 import { toast } from "sonner"
 import CancelButton from "../layout/cancel-button";
 
@@ -30,13 +30,13 @@ const formSchema = z.object({
     status: z.boolean(),
 });
   
-  const ProductUnitForm = ({ unit }: { unit?: ProductUnit | null }) => {
+  const DepartmentForm = ({ item }: { item?: Department | null }) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
   
     const form = useForm<z.infer<typeof formSchema>>({
       resolver: zodResolver(formSchema),
-      defaultValues: unit ? unit : {
+      defaultValues: item ? item : {
         name: "",
         shortName: "",
         business: "664338f2002b67031e4c",
@@ -49,18 +49,18 @@ const formSchema = z.object({
   
       try {
         console.error("submitting data:", data);
-        if (unit) {
-            await updateProductUnit(unit.$id, data);
-            toast("Product unit updated succesfully!");
+        if (item) {
+            await updateDepartment(item.$id, data);
+            toast("Department updated succesfully!");
         } else {
-            await createProductUnit(data);
-            toast("Product unit created succesfully!");
+            await createDepartment(data);
+            toast("Department created succesfully!");
         }
         
-        // Redirect to the units page after submission
-        router.push("/units");
+        // Redirect to list page after submission
+        router.push("/departments");
       } catch (error) {
-        console.error("Creating unit failed: ", error);
+        console.error("Creating department failed: ", error);
       }
   
       setIsLoading(false);
@@ -74,10 +74,10 @@ const formSchema = z.object({
                 name="name"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Unit name</FormLabel>
+                        <FormLabel>Department name</FormLabel>
                         <FormControl>
                             <Input
-                            placeholder="Unit full name (eg. carton)"
+                            placeholder="Enter department name"
                             className="input-class"
                             {...field}
                             />
@@ -95,7 +95,7 @@ const formSchema = z.object({
                             <FormLabel>Short name </FormLabel>
                             <FormControl>
                                 <Input
-                                placeholder="Unit short name (eg. ctn)"
+                                placeholder="Enter department short name ( eg. HR )"
                                 className="input-class"
                                 {...field}
                                 />
@@ -134,7 +134,7 @@ const formSchema = z.object({
                                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
                             </>
                             ) : (
-                            unit ? "Update unit" : "Save unit"
+                            item ? "Update department" : "Create department"
                         )}
                     </Button> 
                 </div>
@@ -143,4 +143,4 @@ const formSchema = z.object({
         );
     };
   
-export default ProductUnitForm;
+export default DepartmentForm;

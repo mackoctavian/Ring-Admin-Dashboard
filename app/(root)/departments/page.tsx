@@ -4,14 +4,14 @@ import { UnitsTable } from "@/components/layout/tables/units-table/units-table";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { ProductUnit } from "@/types";
+import { Department } from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
-import { getProductUnits } from "@/lib/actions/product-unit.actions";
+import { getDepartments } from "@/lib/actions/department.actions";
 
-const breadcrumbItems = [{ title: "Units", link: "/units" }];
+const breadcrumbItems = [{ title: "Departments", link: "/departments" }];
 
 type ParamsProps = {
   searchParams: {
@@ -25,8 +25,8 @@ export default async function Page({ searchParams }: ParamsProps) {
   const q = searchParams.search || null;
   const offset = (page - 1) * pageLimit;
 
-  const data : ProductUnit[] = await getProductUnits();
-  const total = data.length;
+  const data : Department[] = await getDepartments();
+  const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
 
 
@@ -36,9 +36,9 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Product units (${total})`} description="Manage product units" />
+            <Heading title={`Departments (${total})`} description="Manage departments" />
 
-            <Link href={"/units/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/departments/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add New
             </Link>
         </div>

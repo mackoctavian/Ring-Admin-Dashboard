@@ -7,7 +7,6 @@ import { ProductUnitDto, ProductUnit } from "@/types";
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
-    BUSINESS_CATEGORY_COLLECTION: BUSINESS_CATEGORY_ID,
     PRODUCT_UNITS_COLLECTION: PRODUCT_UNITS_ID
   } = process.env;
 
@@ -55,10 +54,14 @@ const {
     }
   };
 
-  export const getProductUnit = async ({ id }: string) => {
+  export const getProductUnit = async (id: string) => {
     try {
       if (!DATABASE_ID || !PRODUCT_UNITS_ID) {
         throw new Error('Database ID or Collection ID is missing');
+      }
+
+      if (!id) {
+        throw new Error('Document ID is missing');
       }
 
       const { database } = await createAdminClient();
@@ -66,7 +69,7 @@ const {
       const productUnit = await database.listDocuments(
         DATABASE_ID!,
         PRODUCT_UNITS_ID!,
-        [Query.equal('id', id)]
+        [Query.equal('$id', id)]
       )
   
       return parseStringify(productUnit.documents[0]);
@@ -87,6 +90,26 @@ const {
         DATABASE_ID!,
         PRODUCT_UNITS_ID!,
         $id);
+  
+      return parseStringify(productUnit);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  export const updateProductUnit = async (id: string, data: ProductUnitDto) => {  
+    try {
+      if (!DATABASE_ID || !PRODUCT_UNITS_ID) {
+        throw new Error('Database ID or Collection ID is missing');
+      }
+
+      const { database } = await createAdminClient();
+  
+      const productUnit = await database.updateDocument(
+        DATABASE_ID!,
+        PRODUCT_UNITS_ID!,
+        id,
+        data);
   
       return parseStringify(productUnit);
     } catch (error) {

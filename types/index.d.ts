@@ -89,6 +89,8 @@ declare type Business = {
   status: boolean;
 }
 
+/* Product Unit Data types */
+
 declare type ProductUnit = {
   $id: string;
   name: string;
@@ -103,6 +105,27 @@ declare type ProductUnitDto = {
   business: string;
   status: boolean;
 }
+
+/* End Product Unit Data types */
+
+
+/* Department Data types */
+declare type Department = {
+  $id: string;
+  name: string;
+  shortName?: string;
+  business: string;
+  status: boolean;
+};
+
+declare type DepartmentDto = {
+  name: string;
+  shortName?: string;
+  business: string;
+  status: boolean;
+}
+
+/* Department Data types */
 
 declare type Category = {
   $id: string;
