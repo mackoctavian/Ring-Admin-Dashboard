@@ -45,6 +45,7 @@ const formSchema = z.object({
     });
 
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
+        console.log("FORM"+form)
       setIsLoading(true);
   
       try {

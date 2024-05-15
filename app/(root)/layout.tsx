@@ -1,7 +1,7 @@
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import { getLoggedInUser } from "@/lib/actions/user.actions";
 import { Toaster } from "@/components/ui/sonner"
+import { Analytics } from '@vercel/analytics/react';
 
 export default function RootLayout({
     children,
@@ -15,6 +15,7 @@ export default function RootLayout({
                 <Sidebar />
                 <main className="w-full pt-16">{children}</main>
                 <Toaster />
+                <Analytics />
             </div>
         </>
   
