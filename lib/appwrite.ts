@@ -8,7 +8,7 @@ export async function createSessionClient() {
     .setEndpoint(process.env.APPWRITE_ENDPOINT!)
     .setProject(process.env.APPWRITE_PROJECT!);
 
-  const session = cookies().get("appwrite-session");
+  const session = cookies().get("qroo-pos-session");
 
   if (!session || !session.value) {
     throw new Error("No session");

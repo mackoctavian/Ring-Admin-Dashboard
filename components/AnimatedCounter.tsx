@@ -5,7 +5,8 @@ import CountUp from 'react-countup';
 const AnimatedCounter = ({ value, type }: { value: number, type?: string }) => {
   return (
     <div className="w-full">
-      <CountUp 
+      <CountUp
+        className='text-green-main'
         duration={0.75}
         decimals={type === "money" ? 2 : 0}
         decimal="."

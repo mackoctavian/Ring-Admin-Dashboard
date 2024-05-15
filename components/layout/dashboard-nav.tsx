@@ -14,15 +14,13 @@ const DashboardNav = ({ user, setOpen }: DashboardNavProps) => {
       {sidebarLinks.map((item) => {
         const isActive = pathname === item.route || pathname.startsWith(`${item.route}/`);
         return (
-          <Link href={item.route} key={item.label} className={cn('sidebar-link', { 'bg-bank-gradient': isActive })}>
-            <div className="relative size-6">
+          <Link href={item.route} key={item.label} className={cn('sidebar-link', { 'bg-green-main': isActive })}>
+            <div className="relative size-4">
               <Image 
                 src={item.imgURL}
                 alt={item.label}
                 fill
-                className={cn({
-                  'brightness-[3] invert-0': isActive
-                })}
+                className={cn({ 'brightness-[3] invert-0': isActive })}
               />
             </div>
             <p className={cn("sidebar-label", { "!text-white": isActive })}>

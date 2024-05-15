@@ -6,19 +6,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <main className="flex min-h-screen w-full justify-between font-inter">
-      {children}
+    <main className="flex min-h-screen w-full justify-between font-open-sans">
       <div className="auth-asset">
         <div>
           <Image 
-            src="/icons/auth-image.svg"
-            alt="Auth image"
+            src="/icons/login-security.svg"
+            alt="Login"
             width={500}
             height={500}
+            priority={false}
             className="rounded-l-xl object-contain"
           />
         </div>
       </div>
+      {children}
     </main>
   );
 }

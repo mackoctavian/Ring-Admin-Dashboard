@@ -1,5 +1,7 @@
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
+import { getLoggedInUser } from "@/lib/actions/user.actions";
+import { Toaster } from "@/components/ui/sonner"
 
 export default function RootLayout({
     children,
@@ -12,6 +14,7 @@ export default function RootLayout({
             <div className="flex h-screen overflow-hidden">
                 <Sidebar />
                 <main className="w-full pt-16">{children}</main>
+                <Toaster />
             </div>
         </>
   

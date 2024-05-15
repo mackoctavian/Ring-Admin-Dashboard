@@ -5,9 +5,9 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Serif, Open_Sans } from "next/font/google";
 import "./globals.css";
-import { getServerSession } from "next-auth";
 import Providers from "@/components/layout/providers";
 import { Toaster } from "@/components/ui/toaster";
+import { cookies } from "next/headers";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const ibmPlexSerif = IBM_Plex_Serif({
@@ -18,7 +18,7 @@ const ibmPlexSerif = IBM_Plex_Serif({
 const openSans = Open_Sans({
   subsets: ['latin'],
   weight: ['300', '400', '700'],
-  variable: '--open-sans'
+  variable: '--font-open-sans'
 })
 
 export const metadata: Metadata = {
@@ -34,11 +34,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession();
+  const session = cookies().get("qroo-pos-session");
+
   return (
     <html lang="en">
       <body className={`${inter.variable} ${ibmPlexSerif.variable} ${openSans.variable}`}>
-        <Providers session={session}>
+        <Providers>
           <Toaster />
           {children}
         </Providers>

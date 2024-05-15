@@ -5,7 +5,161 @@ declare type SearchParamProps = {
   params: { [key: string]: string };
   searchParams: { [key: string]: string | string[] | undefined };
 };
+//=======================================
 
+enum CategoryType {
+  SERVICE = "SERVICE",
+  PRODUCT = "PRODUCT",
+}
+enum Gender {
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  UNDISCLOSED = "UNDISCLOSED",
+}
+
+declare type Country = {
+  name: string;
+  countryShortName: string;
+  currency: string; 
+  currencyShortName: string;
+  phonecode: number;
+}
+
+declare type SignUpParams = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  name: string;
+  phoneNumber: string;
+  city?: string;
+  country: string;
+  gender: string;
+  dateOfBirth: Date;
+  email: string;
+  password: string;
+};
+
+declare type LoginUser = {
+  email: string;
+  password: string;
+};
+
+declare type User = {
+  $id: string;
+  email: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  name: string;
+  phoneNumber: string;
+  city?: string;
+  country: string;
+  gender: string;
+  dateOfBirth: Date;
+  points: number;
+  status: boolean;
+};
+
+declare type NewUserParams = {
+  userId: string;
+  email: string;
+  name: string;
+  business: Business;
+  password: string;
+};
+
+declare type BusinessCategory = {
+  $id: string;
+  name: string;
+}
+
+declare type Business = {
+  $id: string;
+  name: string;
+  logo?: string;
+  slug: string;
+  description?: string;
+  emailAddress: string;
+  phoneNumber: string;
+  address?: string;
+  city?: string;
+  country: string;
+  businessType: BusinessCategory;
+  user: User;
+  status: boolean;
+}
+
+declare type ProductUnit = {
+  $id: string;
+  name: string;
+  shortName: string;
+  business: string;
+  status: boolean;
+};
+
+declare type ProductUnitDto = {
+  name: string;
+  shortName: string;
+  business: string;
+  status: boolean;
+}
+
+declare type Category = {
+  $id: string;
+  name: string;
+  slug: string;
+  type: CategoryType;
+  parent?: string;
+  description?: string;
+  business: Business;
+  status: boolean;
+};
+
+declare type Product = {
+  $id: string;
+  name: string;
+  slug: string;
+  sku: string;
+  quantity: number;
+  quantityAlert?: number;
+  allowDiscount: boolean;
+  expiryDate: Date;
+  price: number;
+  unit: ProductUnit;
+  category: Category;
+  description?: string;
+  business: Business;
+  status: boolean;
+};
+
+declare type Service = {
+  $id: string;
+  name: string;
+  slug: string;
+  allowDiscount: boolean;
+  duration?: string;
+  price: number;
+  startTime?: string;
+  endTime?: string;
+  category: Category;
+  description?: string;
+  business: Business;
+  status: boolean;
+};
+
+declare type Vendor = {
+  $id: string;
+  name: string;
+  phoneNumber: string;
+  emailAddress?: string;
+  address?: string;
+  description?: string;
+  contactPerson: string;
+  contactPersonEmail: string;
+  contactPersonPhone: string;
+  business: Business;
+  status: boolean;
+}
 // ========================================
 
 declare interface NavItem {
@@ -39,47 +193,7 @@ declare type MainNavItem = NavItemWithOptionalChildren;
 
 declare type SidebarNavItem = NavItemWithChildren;
 
-declare type SignUpParams = {
-  firstName: string;
-  lastName: string;
-  address1: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  dateOfBirth: string;
-  ssn: string;
-  email: string;
-  password: string;
-};
 
-declare type LoginUser = {
-  email: string;
-  password: string;
-};
-
-declare type User = {
-  $id: string;
-  email: string;
-  userId: string;
-  dwollaCustomerUrl: string;
-  dwollaCustomerId: string;
-  firstName: string;
-  lastName: string;
-  name: string;
-  address1: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  dateOfBirth: string;
-  ssn: string;
-};
-
-declare type NewUserParams = {
-  userId: string;
-  email: string;
-  name: string;
-  password: string;
-};
 
 declare type Account = {
   id: string;
