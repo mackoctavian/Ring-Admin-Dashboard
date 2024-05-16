@@ -5,7 +5,7 @@ import { createAdminClient, createSessionClient } from "../appwrite";
 import { cookies } from "next/headers";
 import { encryptId, extractCustomerIdFromUrl, parseStringify } from "../utils";
 import { revalidatePath } from "next/cache";
-
+import { signInProps , getUserInfoProps, SignUpParams } from "@/types"
 
 const {
   APPWRITE_DATABASE: DATABASE_ID,
@@ -30,19 +30,24 @@ export const getUserInfo = async ({ userId }: getUserInfoProps) => {
 
 export const signIn = async ({ email, password }: signInProps) => {
   try {
-    const { account } = await createAdminClient();
-    const session = await account.createEmailPasswordSession(email, password);
+     const { account } = await createSessionClient();
+     const session = await account.createEmailPasswordSession(email, password);
 
-    // cookies().set("qroo-pos-session", session.secret, {
-    //   path: "/",
-    //   httpOnly: true,
-    //   sameSite: "strict",
-    //   secure: true,
-    // });
+    if ( session ){
+      cookies().set("qroo-pos-session", session.secret, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "strict",
+        secure: true,
+      });
+  
+      const user = await getUserInfo({ userId: session.userId }) 
 
-    const user = await getUserInfo({ userId: session.userId }) 
-
-    return parseStringify(user);
+      return parseStringify(user);
+    }else{
+      return null
+    }
+    
   } catch (error) {
     console.error('Error', error);
   }

@@ -10,7 +10,6 @@ const {
     PRODUCT_UNITS_COLLECTION: PRODUCT_UNITS_ID
   } = process.env;
 
-
   export const createProductUnit = async (productUnit: ProductUnitDto) => {
     try {
       if (!DATABASE_ID || !PRODUCT_UNITS_ID) {
@@ -44,7 +43,7 @@ const {
 
       const productUnits = await database.listDocuments(
         DATABASE_ID,
-        PRODUCT_UNITS_ID
+        PRODUCT_UNITS_ID,
       );
 
       return parseStringify(productUnits.documents);
@@ -109,7 +108,7 @@ const {
         DATABASE_ID!,
         PRODUCT_UNITS_ID!,
         id,
-        data);
+        data,);
   
       return parseStringify(productUnit);
     } catch (error) {

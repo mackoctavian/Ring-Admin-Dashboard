@@ -20,55 +20,72 @@ import {
 import { Input } from "@/components/ui/input";
 import { ProductUnit } from "@/types";
 import { createProductUnit, updateProductUnit } from "@/lib/actions/product-unit.actions"
-import { toast } from "sonner"
+import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 
-const formSchema = z.object({
-    shortName: z.string().min(1),
-    name: z.string().min(1),
-    business: z.string().min(1),
-    status: z.boolean(),
-});
+    const formSchema = z.object({
+        shortName: z.string().min(1),
+        name: z.string().min(1),
+        status: z.boolean(),
+    });
   
   const ProductUnitForm = ({ unit }: { unit?: ProductUnit | null }) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
-  
+    const { toast } = useToast()
+
     const form = useForm<z.infer<typeof formSchema>>({
       resolver: zodResolver(formSchema),
       defaultValues: unit ? unit : {
         name: "",
         shortName: "",
-        business: "664338f2002b67031e4c",
+        business: "",
         status: false,
       },
     });
+
+    const onInvalid = (errors : any ) => {
+        console.error("Creating unit failed: ", errors);
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.", 
+            description: "There was an issue submitting your form please try later"
+        });
+    }
 
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
       setIsLoading(true);
   
       try {
-        console.error("submitting data:", data);
         if (unit) {
             await updateProductUnit(unit.$id, data);
-            toast("Product unit updated succesfully!");
+            toast({
+                variant: "default",
+                title: "Success", 
+                description: "Product unit updated succesfully!"
+            });
         } else {
             await createProductUnit(data);
-            toast("Product unit created succesfully!");
+            toast({
+                variant: "default",
+                title: "Success", 
+                description: "Product unit created succesfully!"
+            });
         }
         
         // Redirect to the units page after submission
         router.push("/units");
+        router.refresh();
+        setIsLoading(false);
       } catch (error) {
         console.error("Creating unit failed: ", error);
+        setIsLoading(false);
       }
-  
-      setIsLoading(false);
     };
-  
+
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
                 <FormField
                 control={form.control}
                 name="name"

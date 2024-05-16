@@ -3,60 +3,59 @@
 import { ID, Query } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { DepartmentDto, Department } from "@/types";
+import { Category, CategoryDto } from "@/types";
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
-    DEPARTMENTS_COLLECTION: DEPARTMENT_COLLECTION_ID
+    CATEGORIES_COLLECTION: CATEGORY_COLLECTION_ID
   } = process.env;
 
-
-  export const createDepartment = async (department: DepartmentDto) => {
+  export const createCategory = async (category: CategoryDto) => {
     try {
-      if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
+      if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
   
-      const newDepartment = await database.createDocument(
+      const newCategory = await database.createDocument(
         DATABASE_ID!,
-        DEPARTMENT_COLLECTION_ID!,
+        CATEGORY_COLLECTION_ID!,
         ID.unique(),
         {
-          ...department,
+          ...category,
         }
       )
   
-      return parseStringify(newDepartment);
+      return parseStringify(newCategory);
     } catch (error) {
       console.error(error);
     }
   }
 
-  export const getDepartments = async () => {
+  export const getCategories = async () => {
     try {
-      if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
+      if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
 
-      const departments = await database.listDocuments(
+      const categories = await database.listDocuments(
         DATABASE_ID,
-        DEPARTMENT_COLLECTION_ID,
+        CATEGORY_COLLECTION_ID,
       );
 
-      return parseStringify(departments.documents);
+      return parseStringify(categories.documents);
 
     }catch (error: any){
       console.error(error);
     }
   };
 
-  export const getDepartment = async (id: string) => {
+  export const getCategory = async (id: string) => {
     try {
-      if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
+      if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
@@ -66,52 +65,52 @@ const {
 
       const { database } = await createAdminClient();
   
-      const department = await database.listDocuments(
+      const category = await database.listDocuments(
         DATABASE_ID!,
-        DEPARTMENT_COLLECTION_ID!,
+        CATEGORY_COLLECTION_ID!,
         [Query.equal('$id', id)]
       )
   
-      return parseStringify(department.documents[0]);
+      return parseStringify(category.documents[0]);
     } catch (error) {
       console.log(error)
     }
   }
 
-  export const deleteDepartment = async ({ $id }: Department) => {
+  export const deleteCategory = async ({ $id }: Category) => {
     try {
-      if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
+      if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
   
-      const department = await database.deleteDocument(
+      const category = await database.deleteDocument(
         DATABASE_ID!,
-        DEPARTMENT_COLLECTION_ID!,
+        CATEGORY_COLLECTION_ID!,
         $id);
   
-      return parseStringify(department);
+      return parseStringify(category);
     } catch (error) {
       console.log(error)
     }
   }
 
-  export const updateDepartment = async (id: string, data: DepartmentDto) => {  
+  export const updateCategory = async (id: string, data: CategoryDto) => {  
     try {
-      if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
+      if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
   
-      const department = await database.updateDocument(
+      const category = await database.updateDocument(
         DATABASE_ID!,
-        DEPARTMENT_COLLECTION_ID!,
+        CATEGORY_COLLECTION_ID!,
         id,
         data);
   
-      return parseStringify(department);
+      return parseStringify(category);
     } catch (error) {
       console.log(error)
     }

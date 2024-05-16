@@ -1,7 +1,7 @@
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import { getLoggedInUser } from "@/lib/actions/user.actions";
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function RootLayout({
     children,

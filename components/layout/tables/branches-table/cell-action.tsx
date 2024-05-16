@@ -8,15 +8,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ProductUnit } from "@/types";
+import { Branch } from "@/types";
 import { Edit, MoreHorizontal, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { deleteProductUnit } from "@/lib/actions/product-unit.actions"
+import { deleteBranch } from "@/lib/actions/branch.actions"
 import { useToast } from "@/components/ui/use-toast"
 
 interface CellActionProps {
-  data: ProductUnit;
+  data: Branch;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
@@ -26,13 +26,13 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const { toast } = useToast()
 
   const onConfirm = async () => {
-    deleteProductUnit(data);
+    deleteBranch(data);
     toast({
       variant: "destructive",
       title: "Success!", 
-      description: "Deleted unit succesfully!"
+      description: "Deleted branch succesfully!"
   });
-    router.push("/units");
+    router.push("/branches");
     router.refresh();
   };
 
@@ -54,7 +54,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-          <DropdownMenuItem onClick={() => router.push(`/units/${data.$id}`)}>
+          <DropdownMenuItem onClick={() => router.push(`/branches/${data.$id}`)}>
             <Edit className="mr-2 h-4 w-4" /> Update
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setOpen(true)}>

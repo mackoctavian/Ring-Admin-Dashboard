@@ -32,6 +32,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { BusinessForm } from "./BusinessForm";
+import { useToast } from "@/components/ui/use-toast"
 
 const AuthForm = ({ type }: { type: string }) => {
   const router = useRouter();
@@ -39,6 +40,7 @@ const AuthForm = ({ type }: { type: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const formSchema = authFormSchema(type);
   const [country, setCountry] = useState<string>('TZ'); // Default country set
+  const { toast } = useToast()
 
   const handleCountryChange = (value: string) => {
     setCountry(value);
@@ -51,13 +53,20 @@ const AuthForm = ({ type }: { type: string }) => {
       password: '',
       firstName: "",
       lastName: "",
-      phoneNumber: "",
       city: "",
       country: country,
       gender: "",
-      dateOfBirth: null,
     },
   })
+
+  const onInvalid = (errors : any ) => {
+    console.error("Authentication error: ", JSON.stringify(errors));
+    toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.", 
+        description: "There was an issue submitting your form please try again"
+    });
+  }
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsLoading(true);
@@ -82,19 +91,24 @@ const AuthForm = ({ type }: { type: string }) => {
       }
 
       if (type === 'sign-in') {
+         
         const response = await signIn({
           email: data.email,
           password: data.password,
         });
-
-        if (response && response.success) {
+        
+        if (response ) {
           router.push('/');
         } else {
-          console.log("Sign in failed.");
+          toast({
+            variant: "destructive",
+            title: "Invalid credentials.", 
+            description: " Please check the email and password." + JSON.stringify(response)
+           });
         }
       }
     } catch (error) {
-      console.log("Error:", error);
+      console.error("Error logging in user: ", error);
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +149,8 @@ const AuthForm = ({ type }: { type: string }) => {
           <BusinessForm />
         </div>
       ) : (
-        <Form {...form} onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
           {type === 'sign-up' && (
             <>
               <div className="flex gap-4">
@@ -214,13 +229,13 @@ const AuthForm = ({ type }: { type: string }) => {
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
+                  <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> Loading...
                 </>
               ) : type === 'sign-in' ? 'Sign In' : 'Sign Up'
               }
             </Button>
           </div>
+          </form>
         </Form>
       )}
       <footer className="flex justify-center gap-1">

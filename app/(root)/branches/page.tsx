@@ -2,16 +2,16 @@ import BreadCrumb from "@/components/layout/breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { Department } from "@/types";
+import { Branch } from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
-import { columns } from "@/components/layout/tables/departments-table/columns";
-import { getDepartments } from "@/lib/actions/department.actions";
-import { DepartmentsTable } from "@/components/layout/tables/departments-table/departments-table";
+import { columns } from "@/components/layout/tables/branches-table/columns";
+import { getBranches } from "@/lib/actions/branch.actions";
+import { BranchesTable } from "@/components/layout/tables/branches-table/branches-table";
 
-const breadcrumbItems = [{ title: "Departments", link: "/departments" }];
+const breadcrumbItems = [{ title: "Branches", link: "/branches" }];
 
 type ParamsProps = {
   searchParams: {
@@ -25,7 +25,7 @@ export default async function Page({ searchParams }: ParamsProps) {
   const q = searchParams.search || null;
   const offset = (page - 1) * pageLimit;
 
-  const data : Department[] = await getDepartments();
+  const data : Branch[] = await getBranches();
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
 
@@ -36,15 +36,15 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Departments (${total})`} description="Manage departments" />
+            <Heading title={`Branches (${total})`} description="Manage branches" />
 
-            <Link href={"/departments/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/branches/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add New
             </Link>
         </div>
         <Separator />
 
-        <DepartmentsTable
+        <BranchesTable
           searchKey="name"
           pageNo={page}
           columns={columns}

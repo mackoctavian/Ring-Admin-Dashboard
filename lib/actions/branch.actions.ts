@@ -3,60 +3,59 @@
 import { ID, Query } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { DepartmentDto, Department } from "@/types";
+import { Branch, BranchDto } from "@/types";
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
-    DEPARTMENTS_COLLECTION: DEPARTMENT_COLLECTION_ID
+    BRANCHES_COLLECTION: BRANCH_COLLECTION_ID
   } = process.env;
 
-
-  export const createDepartment = async (department: DepartmentDto) => {
+  export const createBranch = async (branch: BranchDto) => {
     try {
-      if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
+      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
   
-      const newDepartment = await database.createDocument(
+      const newBranch = await database.createDocument(
         DATABASE_ID!,
-        DEPARTMENT_COLLECTION_ID!,
+        BRANCH_COLLECTION_ID!,
         ID.unique(),
         {
-          ...department,
+          ...branch,
         }
       )
   
-      return parseStringify(newDepartment);
+      return parseStringify(newBranch);
     } catch (error) {
       console.error(error);
     }
   }
 
-  export const getDepartments = async () => {
+  export const getBranches = async () => {
     try {
-      if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
+      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
 
-      const departments = await database.listDocuments(
+      const branches = await database.listDocuments(
         DATABASE_ID,
-        DEPARTMENT_COLLECTION_ID,
+        BRANCH_COLLECTION_ID,
       );
 
-      return parseStringify(departments.documents);
+      return parseStringify(branches.documents);
 
     }catch (error: any){
       console.error(error);
     }
   };
 
-  export const getDepartment = async (id: string) => {
+  export const getBranch = async (id: string) => {
     try {
-      if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
+      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
@@ -66,52 +65,52 @@ const {
 
       const { database } = await createAdminClient();
   
-      const department = await database.listDocuments(
+      const branch = await database.listDocuments(
         DATABASE_ID!,
-        DEPARTMENT_COLLECTION_ID!,
+        BRANCH_COLLECTION_ID!,
         [Query.equal('$id', id)]
       )
   
-      return parseStringify(department.documents[0]);
+      return parseStringify(branch.documents[0]);
     } catch (error) {
       console.log(error)
     }
   }
 
-  export const deleteDepartment = async ({ $id }: Department) => {
+  export const deleteBranch = async ({ $id }: Branch) => {
     try {
-      if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
+      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
   
-      const department = await database.deleteDocument(
+      const branch = await database.deleteDocument(
         DATABASE_ID!,
-        DEPARTMENT_COLLECTION_ID!,
+        BRANCH_COLLECTION_ID!,
         $id);
   
-      return parseStringify(department);
+      return parseStringify(branch);
     } catch (error) {
       console.log(error)
     }
   }
 
-  export const updateDepartment = async (id: string, data: DepartmentDto) => {  
+  export const updateBranch = async (id: string, data: BranchDto) => {  
     try {
-      if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
+      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
   
-      const department = await database.updateDocument(
+      const branch = await database.updateDocument(
         DATABASE_ID!,
-        DEPARTMENT_COLLECTION_ID!,
+        BRANCH_COLLECTION_ID!,
         id,
         data);
   
-      return parseStringify(department);
+      return parseStringify(branch);
     } catch (error) {
       console.log(error)
     }

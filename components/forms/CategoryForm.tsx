@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea"
 import {
   Form,
   FormControl,
@@ -17,19 +18,42 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from "@/components/ui/select"
 import { Input } from "@/components/ui/input";
-import { Department } from "@/types";
-import { createDepartment, updateDepartment } from "@/lib/actions/department.actions"
+import { Category } from "@/types";
+import { createCategory, updateCategory } from "@/lib/actions/category.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 
+
+    enum CategoryType{
+        SERVICE = "SERVICE",
+        PRODUCT = "PRODUCT",
+    }
+
     const formSchema = z.object({
-        shortName: z.string().min(1),
-        name: z.string().min(1),
+        slug: z.string().min(1),
+        type: z.enum([CategoryType.SERVICE, CategoryType.PRODUCT], {
+            required_error: "Category type is required",
+            invalid_type_error: "Category type must be either 'Product' or 'Service'",
+        }),
+        name: z.string({
+            required_error: "Product category name is required",
+            invalid_type_error: "Product category name must be more than 2 characters long",
+          }).min(2),
+        parent: z.string().optional(),
+        description: z.string().optional(),
         status: z.boolean(),
     });
+
   
-    const DepartmentForm = ({ item }: { item?: Department | null }) => {
+    const CategoryForm = ({ item }: { item?: Category | null }) => {
         const router = useRouter();
         const [isLoading, setIsLoading] = useState(false);
         const { toast } = useToast()
@@ -38,13 +62,16 @@ import CancelButton from "../layout/cancel-button";
             resolver: zodResolver(formSchema),
             defaultValues: item ? item : {
             name: "",
-            shortName: "",
+            slug: "",
+            type: CategoryType,
+            parent: "",
+            description: "",
             status: false,
             },
         });
 
         const onInvalid = (errors : any ) => {
-            console.error("Creating department failed: ", JSON.stringify(errors));
+            console.error("Creating product category failed: ", JSON.stringify(errors));
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.", 
@@ -57,27 +84,27 @@ import CancelButton from "../layout/cancel-button";
         
             try {
                 if (item) {
-                    await updateDepartment(item.$id, data);
+                    await updateCategory(item.$id, data);
                     toast({
                         variant: "default",
                         title: "Success", 
-                        description: "Department updated succesfully!"
+                        description: "Product category updated succesfully!"
                     });
                 } else {
-                    await createDepartment(data);
+                    await createCategory(data);
                     toast({
                         variant: "default",
                         title: "Success", 
-                        description: "Department created succesfully!"
+                        description: "Product category created succesfully!"
                     });
                 }
                 
                 // Redirect to the list page after submission
-                router.push("/departments");
+                router.push("/categories");
                 router.refresh();
                 setIsLoading(false);
             } catch (error) {
-                console.error("Creating department failed: ", error);
+                console.error("Creating product category failed: ", error);
                 toast({
                     variant: "destructive",
                     title: "Uh oh! Something went wrong.", 
@@ -91,32 +118,54 @@ import CancelButton from "../layout/cancel-button";
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
                 <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Department name</FormLabel>
+                        <FormLabel>Product category name</FormLabel>
                         <FormControl>
                             <Input
-                            placeholder="Department full name (eg. Human Resources)"
+                            placeholder="Product category name (eg. Hair Products)"
                             className="input-class"
                             {...field}
                             />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
-                )}
+                    )}
                 />
             
                 <FormField
                     control={form.control}
-                    name="shortName"
+                    name="type"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Short name </FormLabel>
+                        <FormLabel>Product category type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select category type" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value={CategoryType.PRODUCT}>Product</SelectItem>
+                                <SelectItem value={CategoryType.SERVICE}>Service</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                
+                <FormField
+                    control={form.control}
+                    name="slug"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Slug</FormLabel>
                             <FormControl>
                                 <Input
-                                placeholder="Department short name (eg. HR)"
+                                placeholder="Category identifier"
                                 className="input-class"
                                 {...field}
                                 />
@@ -125,7 +174,25 @@ import CancelButton from "../layout/cancel-button";
                         </FormItem>
                     )}
                 />
-
+                
+                <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Category description</FormLabel>
+                        <FormControl>
+                            <Textarea
+                                placeholder="Short description of the category"
+                                className="resize-none"
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                
                 <FormField
                     control={form.control}
                     name="status"
@@ -155,7 +222,7 @@ import CancelButton from "../layout/cancel-button";
                                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
                             </>
                             ) : (
-                            item ? "Update department" : "Save department"
+                            item ? "Update category" : "Save category"
                         )}
                     </Button> 
                 </div>
@@ -164,4 +231,4 @@ import CancelButton from "../layout/cancel-button";
         );
     };
   
-export default DepartmentForm;
+export default CategoryForm;

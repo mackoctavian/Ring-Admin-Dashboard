@@ -7,10 +7,11 @@ declare type SearchParamProps = {
 };
 //=======================================
 
-enum CategoryType {
+declare enum CategoryType{
   SERVICE = "SERVICE",
   PRODUCT = "PRODUCT",
 }
+
 enum Gender {
   MALE = "MALE",
   FEMALE = "FEMALE",
@@ -30,11 +31,11 @@ declare type SignUpParams = {
   firstName: string;
   lastName: string;
   name: string;
-  phoneNumber: string;
+  phoneNumber?: number;
   city?: string;
   country: string;
   gender: string;
-  dateOfBirth: Date;
+  dateOfBirth?: Date;
   email: string;
   password: string;
 };
@@ -51,7 +52,7 @@ declare type User = {
   firstName: string;
   lastName: string;
   name: string;
-  phoneNumber: string;
+  phoneNumber: number;
   city?: string;
   country: string;
   gender: string;
@@ -71,6 +72,8 @@ declare type NewUserParams = {
 declare type BusinessCategory = {
   $id: string;
   name: string;
+  $createdAt: Date;
+  $updatedAt: Date;
 }
 
 declare type Business = {
@@ -79,14 +82,16 @@ declare type Business = {
   logo?: string;
   slug: string;
   description?: string;
-  emailAddress: string;
+  email: string;
   phoneNumber: string;
   address?: string;
   city?: string;
-  country: string;
-  businessType: BusinessCategory;
+  country?: string;
+  businessCategory: BusinessCategory[];
   user: User;
   status: boolean;
+  $createdAt: Date;
+  $updatedAt: Date;
 }
 
 /* Product Unit Data types */
@@ -95,7 +100,7 @@ declare type ProductUnit = {
   $id: string;
   name: string;
   shortName: string;
-  business: string;
+  business: BusinessDto;
   status: boolean;
 };
 
@@ -113,30 +118,71 @@ declare type ProductUnitDto = {
 declare type Department = {
   $id: string;
   name: string;
-  shortName?: string;
-  business: string;
+  shortName: string;
   status: boolean;
 };
 
 declare type DepartmentDto = {
   name: string;
-  shortName?: string;
-  business: string;
+  shortName: string;
   status: boolean;
 }
 
 /* Department Data types */
 
+/* Category Data types */
+
 declare type Category = {
   $id: string;
+  name: string;
+  slug: string;
+  categoryType: CategoryType;
+  parent?: string;
+  description?: string;
+  $createdAt: Date;
+  $updatedAt: Date;
+  status: boolean;
+};
+
+declare type CategoryDto = {
   name: string;
   slug: string;
   type: CategoryType;
   parent?: string;
   description?: string;
-  business: Business;
   status: boolean;
 };
+
+/* Category */
+
+
+
+/* Branches */
+declare type Branch = {
+  $id: string;
+  name: string;
+  email: string;
+  phoneNumber: number;
+  address?: string;
+  city?: string;
+  openingTime?: string;
+  closingTime?: string;
+  $createdAt: Date;
+  $updatedAt: Date;
+  status: boolean;
+}
+
+declare type BranchDto = {
+  name: string;
+  email: string;
+  phoneNumber: number;
+  address?: string;
+  city?: string;
+  openingTime?: string;
+  closingTime?: string;
+  status: boolean;
+}
+/* Branches */
 
 declare type Product = {
   $id: string;
@@ -151,7 +197,6 @@ declare type Product = {
   unit: ProductUnit;
   category: Category;
   description?: string;
-  business: Business;
   status: boolean;
 };
 
@@ -166,7 +211,6 @@ declare type Service = {
   endTime?: string;
   category: Category;
   description?: string;
-  business: Business;
   status: boolean;
 };
 
@@ -180,7 +224,6 @@ declare type Vendor = {
   contactPerson: string;
   contactPersonEmail: string;
   contactPersonPhone: string;
-  business: Business;
   status: boolean;
 }
 // ========================================
