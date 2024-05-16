@@ -9,7 +9,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea"
 import {
   Form,
   FormControl,
@@ -18,41 +17,28 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select"
 import { Input } from "@/components/ui/input";
-import { Category } from "@/types";
-import { createCategory, updateCategory } from "@/lib/actions/category.actions"
+import { Vendor } from "@/types";
+import { createVendor, updateVendor } from "@/lib/actions/vendor.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
+import { Textarea } from "@/components/ui/textarea"
 
-    enum CategoryType{
-        SERVICE = "SERVICE",
-        PRODUCT = "PRODUCT",
-    }
+
+    const phoneNumberRegex = /^[0-9]{10,15}$/;
+
 
     const formSchema = z.object({
-        slug: z.string().min(1),
-        type: z.enum([CategoryType.SERVICE, CategoryType.PRODUCT], {
-            required_error: "Category type is required",
-            invalid_type_error: "Category type must be either 'Product' or 'Service'",
-        }),
-        name: z.string({
-            required_error: "Product category name is required",
-            invalid_type_error: "Product category name must be more than 2 characters long",
-          }).min(2),
-        parent: z.string().optional(),
+        name: z.string(),
+        email: z.string().email("Invalid email address"),
+        phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
+        address: z.string().optional(),
         description: z.string().optional(),
+        contactPersonName: z.string().optional(),
         status: z.boolean(),
     });
-
   
-    const CategoryForm = ({ item }: { item?: Category | null }) => {
+    const VendorForm = ({ item }: { item?: Vendor | null }) => {
         const router = useRouter();
         const [isLoading, setIsLoading] = useState(false);
         const { toast } = useToast()
@@ -60,17 +46,13 @@ import CancelButton from "../layout/cancel-button";
         const form = useForm<z.infer<typeof formSchema>>({
             resolver: zodResolver(formSchema),
             defaultValues: item ? item : {
-            name: "",
-            slug: "",
-            type: CategoryType,
-            parent: "",
-            description: "",
-            status: false,
+                status: false,
+                contactPersonName: ""
             },
         });
 
         const onInvalid = (errors : any ) => {
-            console.error("Creating product category failed: ", JSON.stringify(errors));
+            console.error("Creating vendor failed: ", JSON.stringify(errors));
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.", 
@@ -83,27 +65,27 @@ import CancelButton from "../layout/cancel-button";
         
             try {
                 if (item) {
-                    await updateCategory(item.$id, data);
+                    await updateVendor(item.$id, data);
                     toast({
                         variant: "default",
                         title: "Success", 
-                        description: "Product category updated succesfully!"
+                        description: "Vendor updated succesfully!"
                     });
                 } else {
-                    await createCategory(data);
+                    await createVendor(data);
                     toast({
                         variant: "default",
                         title: "Success", 
-                        description: "Product category created succesfully!"
+                        description: "Vendor created succesfully!"
                     });
                 }
                 
                 // Redirect to the list page after submission
-                router.push("/categories");
+                router.push("/vendors");
                 router.refresh();
                 setIsLoading(false);
             } catch (error) {
-                console.error("Creating product category failed: ", error);
+                console.error("Creating vendor failed: ", error);
                 toast({
                     variant: "destructive",
                     title: "Uh oh! Something went wrong.", 
@@ -116,73 +98,112 @@ import CancelButton from "../layout/cancel-button";
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-                <FormField
+
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Product category name</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder="Product category name (eg. Hair Products)"
-                            className="input-class"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            
-                <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Product category type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select category type" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value={CategoryType.PRODUCT}>Product</SelectItem>
-                                <SelectItem value={CategoryType.SERVICE}>Service</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                
-                <FormField
-                    control={form.control}
-                    name="slug"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Slug</FormLabel>
+                            <FormLabel>Vendor name</FormLabel>
                             <FormControl>
                                 <Input
-                                placeholder="Category identifier"
+                                placeholder="Enter vendor full name"
                                 className="input-class"
                                 {...field}
                                 />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
-                    )}
-                />
+                        )}
+                    />
+
+                    <FormField
+                    control={form.control}
+                    name="contactPersonName"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Contact person</FormLabel>
+                            <FormControl>
+                                <Input
+                                placeholder="Enter contact person's full name"
+                                className="input-class"
+                                {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Vendor email address</FormLabel>
+                            <FormControl>
+                                <Input
+                                type="email"
+                                placeholder="Enter vendor email address"
+                                className="input-class"
+                                {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                    control={form.control}
+                    name="phoneNumber"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Vendor phone number</FormLabel>
+                            <FormControl>
+                                <Input
+                                type="tel"
+                                placeholder="Enter vendor phone number"
+                                className="input-class"
+                                {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+
+                    <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Vendor address</FormLabel>
+                                <FormControl>
+                                    <Input
+                                    placeholder="Enter vendor address"
+                                    className="input-class"
+                                    {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                    />
                 
                 <FormField
                     control={form.control}
                     name="description"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Category description</FormLabel>
+                        <FormLabel>Notes</FormLabel>
                         <FormControl>
                             <Textarea
-                                placeholder="Short description of the category"
+                                placeholder="Short notes about the vendor"
                                 className="resize-none"
                                 {...field}
                             />
@@ -191,7 +212,8 @@ import CancelButton from "../layout/cancel-button";
                         </FormItem>
                     )}
                 />
-                
+            
+
                 <FormField
                     control={form.control}
                     name="status"
@@ -221,7 +243,7 @@ import CancelButton from "../layout/cancel-button";
                                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
                             </>
                             ) : (
-                            item ? "Update category" : "Save category"
+                            item ? "Update vendor" : "Save vendor"
                         )}
                     </Button> 
                 </div>
@@ -230,4 +252,4 @@ import CancelButton from "../layout/cancel-button";
         );
     };
   
-export default CategoryForm;
+export default VendorForm;

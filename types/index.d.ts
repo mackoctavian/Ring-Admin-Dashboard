@@ -6,6 +6,7 @@ declare type SearchParamProps = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 //=======================================
+export const phoneNumberRegex = /^[0-9]{10,15}$/;
 
 declare enum CategoryType{
   SERVICE = "SERVICE",
@@ -182,7 +183,7 @@ declare type BranchDto = {
   closingTime?: string;
   status: boolean;
 }
-/* Branches */
+/* End Branches */
 
 declare type Product = {
   $id: string;
@@ -198,12 +199,29 @@ declare type Product = {
   category: Category;
   description?: string;
   status: boolean;
+  $createdAt: Date;
+  $updatedAt: Date;
 };
+
+/* Service */
 
 declare type Service = {
   $id: string;
   name: string;
-  slug: string;
+  allowDiscount: boolean;
+  duration?: string;
+  price: number;
+  startTime?: string;
+  endTime?: string;
+  category: Category;
+  description?: string;
+  status: boolean;
+  $createdAt: Date;
+  $updatedAt: Date;
+};
+
+declare type ServiceDto = {
+  name: string;
   allowDiscount: boolean;
   duration?: string;
   price: number;
@@ -214,18 +232,31 @@ declare type Service = {
   status: boolean;
 };
 
+/* Vendor */
+
 declare type Vendor = {
   $id: string;
   name: string;
   phoneNumber: string;
-  emailAddress?: string;
+  email?: string;
   address?: string;
   description?: string;
-  contactPerson: string;
-  contactPersonEmail: string;
-  contactPersonPhone: string;
+  contactPerson?: string;
   status: boolean;
 }
+
+declare type VendorDto = {
+  name: string;
+  phoneNumber: string;
+  email?: string;
+  address?: string;
+  description?: string;
+  contactPerson?: string;
+  status: boolean;
+}
+
+/* End Vendor */
+
 // ========================================
 
 declare interface NavItem {

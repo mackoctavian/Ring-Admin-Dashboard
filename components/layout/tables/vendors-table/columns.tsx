@@ -1,10 +1,10 @@
 "use client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Branch } from "@/types";
+import { Vendor } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 
-export const columns: ColumnDef<Branch>[] = [
+export const columns: ColumnDef<Vendor>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -29,24 +29,20 @@ export const columns: ColumnDef<Branch>[] = [
     header: "NAME",
   },
   {
-    accessorKey: "phoneNumber",
-    header: "PHONE",
+    accessorKey: "contactPersonName",
+    header: "CONTACT PERSON",
   },
   {
     accessorKey: "email",
     header: "EMAIL",
   },
   {
-    accessorKey: "address",
-    header: "ADDRESS",
+    accessorKey: "phoneNumber",
+    header: "PHONE NUMBER",
   },
   {
-    accessorKey: "openingTime",
-    header: "OPENING TIME",
-  },
-  {
-    accessorKey: "closingTime",
-    header: "CLOSING TIME",
+    accessorKey: "description",
+    header: "NOTES",
   },
   {
     accessorKey: "status",
