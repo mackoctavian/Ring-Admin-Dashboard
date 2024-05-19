@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Department } from "@/types";
-import { createDepartment, updateDepartment } from "@/lib/actions/department.actions"
+import { createItem, updateItem } from "@/lib/actions/department.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 
@@ -37,8 +37,6 @@ import CancelButton from "../layout/cancel-button";
         const form = useForm<z.infer<typeof formSchema>>({
             resolver: zodResolver(formSchema),
             defaultValues: item ? item : {
-            name: "",
-            shortName: "",
             status: false,
             },
         });
@@ -57,14 +55,14 @@ import CancelButton from "../layout/cancel-button";
         
             try {
                 if (item) {
-                    await updateDepartment(item.$id, data);
+                    await updateItem(item.$id, data);
                     toast({
                         variant: "default",
                         title: "Success", 
-                        description: "Department updated succesfully!"
+                        description: "Department details updated succesfully!"
                     });
                 } else {
-                    await createDepartment(data);
+                    await createItem(data);
                     toast({
                         variant: "default",
                         title: "Success", 
@@ -76,15 +74,18 @@ import CancelButton from "../layout/cancel-button";
                 router.push("/departments");
                 router.refresh();
                 setIsLoading(false);
-            } catch (error) {
-                console.error("Creating department failed: ", error);
+            } catch (error: any) {
                 toast({
                     variant: "destructive",
                     title: "Uh oh! Something went wrong.", 
-                    description: "There was an issue submitting your form please try later"
+                    description: error.message || "There was an issue submitting your form, please try later"
                 });
-                setIsLoading(false);
-            }
+                } finally {
+                //delay loading
+                setTimeout(() => {
+                    setIsLoading(false);
+                    }, 1000); 
+                }
         };
 
     return (

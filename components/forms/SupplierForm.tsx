@@ -18,8 +18,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Vendor } from "@/types";
-import { createVendor, updateVendor } from "@/lib/actions/vendor.actions"
+import { Supplier } from "@/types";
+import { createItem, updateItem } from "@/lib/actions/supplier.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 import { Textarea } from "@/components/ui/textarea"
@@ -38,7 +38,7 @@ import { Textarea } from "@/components/ui/textarea"
         status: z.boolean(),
     });
   
-    const VendorForm = ({ item }: { item?: Vendor | null }) => {
+    const SupplierForm = ({ item }: { item?: Supplier | null }) => {
         const router = useRouter();
         const [isLoading, setIsLoading] = useState(false);
         const { toast } = useToast()
@@ -47,7 +47,6 @@ import { Textarea } from "@/components/ui/textarea"
             resolver: zodResolver(formSchema),
             defaultValues: item ? item : {
                 status: false,
-                contactPersonName: ""
             },
         });
 
@@ -65,33 +64,36 @@ import { Textarea } from "@/components/ui/textarea"
         
             try {
                 if (item) {
-                    await updateVendor(item.$id, data);
+                    await updateItem(item.$id, data);
                     toast({
                         variant: "default",
                         title: "Success", 
-                        description: "Vendor updated succesfully!"
+                        description: "Supplier details updated succesfully!"
                     });
                 } else {
-                    await createVendor(data);
+                    await createItem(data);
                     toast({
                         variant: "default",
                         title: "Success", 
-                        description: "Vendor created succesfully!"
+                        description: "Supplier details created succesfully!"
                     });
                 }
                 
                 // Redirect to the list page after submission
-                router.push("/vendors");
+                router.push("/suppliers");
                 router.refresh();
                 setIsLoading(false);
-            } catch (error) {
-                console.error("Creating vendor failed: ", error);
+            } catch (error: any) {
                 toast({
                     variant: "destructive",
                     title: "Uh oh! Something went wrong.", 
-                    description: "There was an issue submitting your form please try later"
+                    description: error.message || "There was an issue submitting your form, please try later"
                 });
+            } finally {
+            //delay loading
+            setTimeout(() => {
                 setIsLoading(false);
+                }, 1000); 
             }
         };
 
@@ -99,16 +101,16 @@ import { Textarea } from "@/components/ui/textarea"
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
 
-                <div className="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Vendor name</FormLabel>
+                            <FormLabel>Supplier name</FormLabel>
                             <FormControl>
                                 <Input
-                                placeholder="Enter vendor full name"
+                                placeholder="Enter supplier's full name"
                                 className="input-class"
                                 {...field}
                                 />
@@ -137,17 +139,17 @@ import { Textarea } from "@/components/ui/textarea"
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                     control={form.control}
                     name="email"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Vendor email address</FormLabel>
+                            <FormLabel>Supplier email address</FormLabel>
                             <FormControl>
                                 <Input
                                 type="email"
-                                placeholder="Enter vendor email address"
+                                placeholder="Enter supplier's email address"
                                 className="input-class"
                                 {...field}
                                 />
@@ -162,11 +164,11 @@ import { Textarea } from "@/components/ui/textarea"
                     name="phoneNumber"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Vendor phone number</FormLabel>
+                            <FormLabel>Supplier phone number</FormLabel>
                             <FormControl>
                                 <Input
                                 type="tel"
-                                placeholder="Enter vendor phone number"
+                                placeholder="Enter supplier's phone number"
                                 className="input-class"
                                 {...field}
                                 />
@@ -182,10 +184,10 @@ import { Textarea } from "@/components/ui/textarea"
                         name="address"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Vendor address</FormLabel>
+                                <FormLabel>Supplier address</FormLabel>
                                 <FormControl>
                                     <Input
-                                    placeholder="Enter vendor address"
+                                    placeholder="Enter supplier's address"
                                     className="input-class"
                                     {...field}
                                     />
@@ -203,7 +205,7 @@ import { Textarea } from "@/components/ui/textarea"
                         <FormLabel>Notes</FormLabel>
                         <FormControl>
                             <Textarea
-                                placeholder="Short notes about the vendor"
+                                placeholder="Short notes about the supplier"
                                 className="resize-none"
                                 {...field}
                             />
@@ -243,7 +245,7 @@ import { Textarea } from "@/components/ui/textarea"
                                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
                             </>
                             ) : (
-                            item ? "Update vendor" : "Save vendor"
+                            item ? "Update supplier" : "Save supplier"
                         )}
                     </Button> 
                 </div>
@@ -252,4 +254,4 @@ import { Textarea } from "@/components/ui/textarea"
         );
     };
   
-export default VendorForm;
+export default SupplierForm;

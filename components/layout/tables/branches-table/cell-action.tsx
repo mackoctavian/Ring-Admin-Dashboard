@@ -12,7 +12,7 @@ import { Branch } from "@/types";
 import { Edit, MoreHorizontal, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { deleteBranch } from "@/lib/actions/branch.actions"
+import { deleteItem } from "@/lib/actions/branch.actions"
 import { useToast } from "@/components/ui/use-toast"
 
 interface CellActionProps {
@@ -20,20 +20,46 @@ interface CellActionProps {
 }
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const { toast } = useToast()
 
   const onConfirm = async () => {
-    deleteBranch(data);
-    toast({
-      variant: "destructive",
-      title: "Success!", 
-      description: "Deleted branch succesfully!"
-  });
-    router.push("/branches");
-    router.refresh();
+      setIsLoading(true);
+  
+      try {
+          if (data) {
+              await deleteItem(data);
+              toast({
+                  variant: "default",
+                  title: "Success", 
+                  description: "Branch deleted succesfully!"
+              });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Uh oh! Something went wrong.", 
+              description: "There was an issue with your request, please try again later"
+            });
+          }
+          
+          // Redirect to the list page after submission
+          router.push("/branches");
+          router.refresh();
+      } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.", 
+            description: error.message || "There was an issue with your request, please try again later"
+        });
+      } finally {
+      //delay loading
+      setTimeout(() => {
+          setIsLoading(false);
+          setOpen(false);
+          }, 1000); 
+      }
   };
 
   return (
@@ -42,7 +68,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         isOpen={open}
         onClose={() => setOpen(false)}
         onConfirm={onConfirm}
-        loading={loading}
+        loading={isLoading}
       />
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>

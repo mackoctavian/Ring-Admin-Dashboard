@@ -40,7 +40,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey: string;
   pageNo: number;
-  totalData: number;
+  total: number;
   pageSizeOptions?: number[];
   pageCount: number;
   searchParams?: {
@@ -53,7 +53,7 @@ export function BranchesTable<TData, TValue>({
   data,
   pageNo,
   searchKey,
-  totalData,
+  total,
   pageCount,
   pageSizeOptions = [10, 20, 30, 40, 50],
 }: DataTableProps<TData, TValue>) {

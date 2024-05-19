@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
 import { ReloadIcon } from "@radix-ui/react-icons"
@@ -9,6 +10,12 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { TimePicker } from "@/components/ui/time-picker";
+
 import {
   Form,
   FormControl,
@@ -23,14 +30,24 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-  } from "@/components/ui/select"
+} from "@/components/ui/select"
+
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+
 
 import { Input } from "@/components/ui/input";
 import { Service } from "@/types";
 import { createService, updateService } from "@/lib/actions/service.actions"
 import { useToast } from "@/components/ui/use-toast"
-import CancelButton from "../layout/cancel-button";
+import CancelButton from "../layout/cancel-button"
 import { Textarea } from "@/components/ui/textarea"
+import ProductCategorySelector from "@/components/layout/product-category-selector"
+
+
 
 
     const formSchema = z.object({
@@ -102,7 +119,7 @@ import { Textarea } from "@/components/ui/textarea"
             }
         };
 
-    return (
+    return (        
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
 
@@ -152,13 +169,16 @@ import { Textarea } from "@/components/ui/textarea"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Service category</FormLabel>
-                                <FormControl>
-                                    <Input
-                                    placeholder="Select service category"
-                                    className="input-class"
-                                    {...field}
-                                    />
-                                </FormControl>
+                                    <FormControl>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                <SelectValue placeholder="Select category" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <ProductCategorySelector />
+                                        </Select>
+                                    </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -188,6 +208,7 @@ import { Textarea } from "@/components/ui/textarea"
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
+                    
                     <FormField
                     control={form.control}
                     name="startTime"
@@ -195,11 +216,12 @@ import { Textarea } from "@/components/ui/textarea"
                         <FormItem>
                             <FormLabel>Offering start time</FormLabel>
                             <FormControl>
-                                <Input
+                                <TimePicker {...field} />
+                                {/* <Input
                                 placeholder="Select start time"
                                 className="input-class"
                                 {...field}
-                                />
+                                /> */}
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -213,12 +235,12 @@ import { Textarea } from "@/components/ui/textarea"
                         <FormItem>
                             <FormLabel>Offering end time</FormLabel>
                             <FormControl>
-                                <Input
-                                type="tel"
-                                placeholder="Select end time"
+                                <TimePicker {...field} />
+                                {/* <Input
+                                placeholder="Select start time"
                                 className="input-class"
                                 {...field}
-                                />
+                                /> */}
                             </FormControl>
                             <FormMessage />
                         </FormItem>

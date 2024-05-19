@@ -1,77 +1,134 @@
 export const sidebarLinks = [
   {
-    imgURL: "/icons/home.svg",
+    icon: '/icons/icons/dashboard.svg',
     route: "/",
-    label: "Home",
+    label: "Dashboard",
   },
+
+  {
+    type: 'title',
+    label: 'Reports',
+  },
+  { type: 'separator' },
   {
     route: "/sales-reports",
-    imageUrl: "/icons/home.svg",
+    icon: "/icons/icons/sales-report.svg",
     label: "Sales Reports",
   },
   {
     route: "/inventory-reports",
-    imgURL: "/icons/home.svg",
+    icon: "/icons/icons/inventory-report.svg",
     label: "Inventory Reports",
   },
+  {
+    route: "/profit-and-loss",
+    icon: "/icons/icons/invoices.svg",
+    label: "Profit & Loss Report",
+  },
+  
+
 
   {
-    imgURL: "/icons/dollar-circle.svg",
-    route: "/vendors",
-    label: "Vendors",
+    type: 'title',
+    label: 'Stock',
   },
+  { type: 'separator' },
   {
-    imgURL: "/icons/transaction.svg",
-    route: "/products",
-    label: "Products",
-  },
-  {
-    imgURL: "/icons/money-send.svg",
-    route: "/services",
-    label: "Services",
-  },
-  {
-    imgURL: "/icons/home.svg",
-    route: "/units",
-    label: "Units",
-  },
-  {
-    imgURL: "/icons/dollar-circle.svg",
+    icon: "/icons/icons/categories.svg",
     route: "/categories",
     label: "Categories",
   },
   {
-    imgURL: "/icons/transaction.svg",
-    route: "/stock",
-    label: "Stock",
+    icon: "/icons/icons/units.svg",
+    route: "/units",
+    label: "Units",
   },
   {
-    imgURL: "/icons/money-send.svg",
+    icon: "/icons/icons/suppliers.svg",
+    route: "/vendors",
+    label: "Suppliers",
+  },
+  {
+    icon: "/icons/icons/products.svg",
+    route: "/products",
+    label: "Products",
+  },
+  {
+    icon: "/icons/icons/stock-management.svg",
+    route: "/stock",
+    label: "Stock Management",
+  },
+  {
+    icon: "/icons/icons/stock-transfer.svg",
     route: "/stock-transfer",
     label: "Stock Transfer",
   },
+
+  { type: 'separator' },
+
   {
-    imgURL: "/icons/home.svg",
-    route: "/staff",
-    label: "Staff",
+    icon: "/icons/icons/services.svg",
+    route: "/services",
+    label: "Services",
   },
   {
-    imgURL: "/icons/dollar-circle.svg",
+    icon: "/icons/icons/packages.svg",
+    route: "/packages",
+    label: "Packages",
+  },
+  
+  {
+    type: 'title',
+    label: 'Business',
+  },
+  { type: 'separator' },
+  {
+    icon: "/icons/icons/customers.svg",
+    route: "/customers",
+    label: "Customers",
+  },
+  {
+    icon: "/icons/icons/discounts.svg",
+    route: "/discounts",
+    label: "Discounts",
+  },
+  {
+    icon: "/icons/icons/campaigns.svg",
+    route: "/campaigns",
+    label: "Campaigns",
+  },
+  
+
+  { type: 'separator' },
+
+  {
+    icon: "/icons/icons/branches.svg",
+    route: "/branches",
+    label: "Branches",
+  },
+
+  {
+    icon: "/icons/icons/departments.svg",
     route: "/departments",
     label: "Departments",
   },
   {
-    imgURL: "/icons/transaction.svg",
+    icon: "/icons/icons/staff.svg",
+    route: "/staff",
+    label: "Staff",
+  },
+  
+
+  { type: 'separator' },
+
+  {
+    icon: "/icons/icons/business-settings.svg",
     route: "/business-settings",
     label: "Business Settings",
   },
+  
   {
-    imgURL: "/icons/money-send.svg",
-    route: "/branches",
-    label: "Branches",
-  },
-  {
-    imgURL: "/icons/home.svg",
+    icon: "/icons/icons/settings.svg",
     route: "/settings",
     label: "System Settings",
   },
@@ -79,33 +136,6 @@ export const sidebarLinks = [
   
 ];
 
-// good_user / good_password - Bank of America
-export const TEST_USER_ID = "6627ed3d00267aa6fa3e";
-
-// custom_user -> Chase Bank
-// export const TEST_ACCESS_TOKEN =
-//   "access-sandbox-da44dac8-7d31-4f66-ab36-2238d63a3017";
-
-// custom_user -> Chase Bank
-export const TEST_ACCESS_TOKEN =
-  "access-sandbox-229476cf-25bc-46d2-9ed5-fba9df7a5d63";
-
-export const ITEMS = [
-  {
-    id: "6624c02e00367128945e", // appwrite item Id
-    accessToken: "access-sandbox-83fd9200-0165-4ef8-afde-65744b9d1548",
-    itemId: "VPMQJKG5vASvpX8B6JK3HmXkZlAyplhW3r9xm",
-    userId: "6627ed3d00267aa6fa3e",
-    accountId: "X7LMJkE5vnskJBxwPeXaUWDBxAyZXwi9DNEWJ",
-  },
-  {
-    id: "6627f07b00348f242ea9", // appwrite item Id
-    accessToken: "access-sandbox-74d49e15-fc3b-4d10-a5e7-be4ddae05b30",
-    itemId: "Wv7P6vNXRXiMkoKWPzeZS9Zm5JGWdXulLRNBq",
-    userId: "6627ed3d00267aa6fa3e",
-    accountId: "x1GQb1lDrDHWX4BwkqQbI4qpQP1lL6tJ3VVo9",
-  },
-];
 
 export const topCategoryStyles = {
   "Food and Drink": {

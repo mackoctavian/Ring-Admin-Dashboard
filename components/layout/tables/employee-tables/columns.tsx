@@ -21,7 +21,7 @@ export const columns: ColumnDef<Employee>[] = [
         aria-label="Select row"
       />
     ),
-    enableSorting: false,
+    enableSorting: true,
     enableHiding: false,
   },
   {

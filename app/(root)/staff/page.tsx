@@ -2,16 +2,16 @@ import BreadCrumb from "@/components/layout/breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { Vendor } from "@/types";
+import { Staff } from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
-import { columns } from "@/components/layout/tables/vendors-table/columns";
-import { getVendors } from "@/lib/actions/vendor.actions";
-import { VendorsTable } from "@/components/layout/tables/vendors-table/vendors-table";
+import { columns } from "@/components/layout/tables/staff-table/columns";
+import { getItems } from "@/lib/actions/staff.actions";
+import { StaffTable } from "@/components/layout/tables/staff-table/staff-table";
 
-const breadcrumbItems = [{ title: "Vendors", link: "/vendors" }];
+const breadcrumbItems = [{ title: "Staff", link: "/staff" }];
 
 type ParamsProps = {
   searchParams: {
@@ -22,10 +22,10 @@ type ParamsProps = {
 export default async function Page({ searchParams }: ParamsProps) {
   const page = Number(searchParams.page) || 1;
   const pageLimit = Number(searchParams.limit) || 10;
-  const q = searchParams.search || null;
+  const q = searchParams.search || null;  
   const offset = (page - 1) * pageLimit;
 
-  const data : Vendor[] = await getVendors();
+  const data : Staff[] = await getItems(q?.toString(), null, pageLimit, offset);
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
 
@@ -36,19 +36,19 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Vendors (${total})`} description="Manage vendors" />
+            <Heading title={`Staff`} total={total.toString()} description="Manage staff" />
 
-            <Link href={"/vendors/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/staff/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add New
             </Link>
         </div>
         <Separator />
 
-        <VendorsTable
+        <StaffTable
           searchKey="name"
           pageNo={page}
           columns={columns}
-          totalUsers={total}
+          total={total}
           data={data}
           pageCount={pageCount}
         />

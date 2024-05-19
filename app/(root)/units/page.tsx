@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
-import { getProductUnits } from "@/lib/actions/product-unit.actions";
+import { getItems } from "@/lib/actions/product-unit.actions";
 
 const breadcrumbItems = [{ title: "Units", link: "/units" }];
 
@@ -22,11 +22,12 @@ type ParamsProps = {
 export default async function Page({ searchParams }: ParamsProps) {
   const page = Number(searchParams.page) || 1;
   const pageLimit = Number(searchParams.limit) || 10;
-  const q = searchParams.search || null;
+  const q = searchParams.search?.toString() || null;  
   const offset = (page - 1) * pageLimit;
 
-  const data : ProductUnit[] = await getProductUnits();
-  const total = data.length;
+
+  const data : ProductUnit[] = await getItems(q, null, pageLimit, offset);
+  const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
 
 
@@ -36,7 +37,7 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Product units (${total})`} description="Manage product units" />
+            <Heading title={`Product units`} total={total.toString()} description="Manage product units" />
 
             <Link href={"/units/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add New
@@ -48,7 +49,7 @@ export default async function Page({ searchParams }: ParamsProps) {
           searchKey="name"
           pageNo={page}
           columns={columns}
-          totalUsers={total}
+          total={total}
           data={data}
           pageCount={pageCount}
         />

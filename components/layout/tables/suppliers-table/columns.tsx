@@ -1,10 +1,11 @@
 "use client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Vendor } from "@/types";
+import { Supplier } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
+import { StateColumn } from "../state-column";
 
-export const columns: ColumnDef<Vendor>[] = [
+export const columns: ColumnDef<Supplier>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -41,12 +42,9 @@ export const columns: ColumnDef<Vendor>[] = [
     header: "PHONE NUMBER",
   },
   {
-    accessorKey: "description",
-    header: "NOTES",
-  },
-  {
-    accessorKey: "status",
     header: "STATUS",
+    id: "status",
+    cell: ({ row }) => <StateColumn state={row.original.status} />,
   },
   {
     id: "actions",

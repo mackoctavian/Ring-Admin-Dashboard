@@ -13,7 +13,7 @@ declare enum CategoryType{
   PRODUCT = "PRODUCT",
 }
 
-enum Gender {
+export enum Gender {
   MALE = "MALE",
   FEMALE = "FEMALE",
   UNDISCLOSED = "UNDISCLOSED",
@@ -101,14 +101,12 @@ declare type ProductUnit = {
   $id: string;
   name: string;
   shortName: string;
-  business: BusinessDto;
   status: boolean;
 };
 
 declare type ProductUnitDto = {
   name: string;
   shortName: string;
-  business: string;
   status: boolean;
 }
 
@@ -163,7 +161,7 @@ declare type Branch = {
   $id: string;
   name: string;
   email: string;
-  phoneNumber: number;
+  phoneNumber: string;
   address?: string;
   city?: string;
   openingTime?: string;
@@ -176,7 +174,7 @@ declare type Branch = {
 declare type BranchDto = {
   name: string;
   email: string;
-  phoneNumber: number;
+  phoneNumber: string;
   address?: string;
   city?: string;
   openingTime?: string;
@@ -184,6 +182,23 @@ declare type BranchDto = {
   status: boolean;
 }
 /* End Branches */
+
+
+/* Payment Types */
+declare type PaymentType = {
+  $id: string;
+  name: string;
+  status: boolean;
+  $createdAt: Date;
+  $updatedAt: Date;
+}
+
+declare type PaymentTypeDto = {
+  name: string;
+  status: boolean;
+}
+/* End Payment Types */
+
 
 declare type Product = {
   $id: string;
@@ -232,9 +247,14 @@ declare type ServiceDto = {
   status: boolean;
 };
 
-/* Vendor */
 
-declare type Vendor = {
+/* End Service */
+
+
+
+/* Supplier */
+
+declare type Supplier = {
   $id: string;
   name: string;
   phoneNumber: string;
@@ -243,9 +263,11 @@ declare type Vendor = {
   description?: string;
   contactPerson?: string;
   status: boolean;
+  $createdAt: Date;
+  $updatedAt: Date;
 }
 
-declare type VendorDto = {
+declare type SupplierDto = {
   name: string;
   phoneNumber: string;
   email?: string;
@@ -255,41 +277,54 @@ declare type VendorDto = {
   status: boolean;
 }
 
-/* End Vendor */
+/* End Supplier */
+
+
+
+/* Staff */
+
+declare type Staff = {
+  $id: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  code?:code;
+  gender: Gender;
+  dateOfBirth?: Date;
+  nationality?: string;
+  joiningDate: Date;
+  jobTitle: string;
+  emergencyNumber?: string;
+  address?: string;
+  notes?: string;
+  department?: Department;
+  image?: string;
+  status: boolean;
+  $createdAt: Date;
+  $updatedAt: Date;
+}
+
+declare type StaffDto = {
+  name: string;
+  email: string;
+  phoneNumber: string;
+  code?:code;
+  gender: Gender;
+  dateOfBirth?: Date;
+  nationality?: string;
+  joiningDate: Date;
+  jobTitle: string;
+  emergencyNumber?: string;
+  address?: string;
+  notes?: string;
+  department?: Department;
+  image?: string;
+  status: boolean;
+}
+
+/* End Staff */
 
 // ========================================
-
-declare interface NavItem {
-  title: string;
-  href?: string;
-  disabled?: boolean;
-  external?: boolean;
-  icon?: keyof typeof Icons;
-  label?: string;
-  description?: string;
-}
-
-declare interface NavItemWithChildren extends NavItem {
-  items: NavItemWithChildren[];
-}
-
-declare interface NavItemWithOptionalChildren extends NavItem {
-  items?: NavItemWithChildren[];
-}
-
-declare interface FooterItem {
-  title: string;
-  items: {
-    title: string;
-    href: string;
-    external?: boolean;
-  }[];
-}
-
-declare type MainNavItem = NavItemWithOptionalChildren;
-
-declare type SidebarNavItem = NavItemWithChildren;
-
 
 
 declare type Account = {
@@ -426,15 +461,6 @@ declare interface PlaidLinkProps {
   variant?: "primary" | "ghost";
   dwollaCustomerId?: string;
 }
-
-// declare type User = sdk.Models.Document & {
-//   accountId: string;
-//   email: string;
-//   name: string;
-//   items: string[];
-//   accessToken: string;
-//   image: string;
-// };
 
 declare interface AuthFormProps {
   type: "sign-in" | "sign-up";

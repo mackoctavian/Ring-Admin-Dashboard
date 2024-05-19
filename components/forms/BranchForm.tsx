@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Branch } from "@/types";
-import { createBranch, updateBranch } from "@/lib/actions/branch.actions"
+import { createItem, updateItem } from "@/lib/actions/branch.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 
@@ -62,14 +62,14 @@ import CancelButton from "../layout/cancel-button";
         
             try {
                 if (item) {
-                    await updateBranch(item.$id, data);
+                    await updateItem(item.$id, data);
                     toast({
                         variant: "default",
                         title: "Success", 
                         description: "Branch updated succesfully!"
                     });
                 } else {
-                    await createBranch(data);
+                    await createItem(data);
                     toast({
                         variant: "default",
                         title: "Success", 
@@ -81,15 +81,18 @@ import CancelButton from "../layout/cancel-button";
                 router.push("/branches");
                 router.refresh();
                 setIsLoading(false);
-            } catch (error) {
-                console.error("Creating branch failed: ", error);
+            } catch (error: any) {
                 toast({
                     variant: "destructive",
                     title: "Uh oh! Something went wrong.", 
-                    description: "There was an issue submitting your form please try later"
+                    description: error.message || "There was an issue submitting your form, please try later"
                 });
-                setIsLoading(false);
-            }
+                } finally {
+                //delay loading
+                setTimeout(() => {
+                    setIsLoading(false);
+                    }, 1000); 
+                }
         };
 
     return (

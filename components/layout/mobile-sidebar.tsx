@@ -24,7 +24,7 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
       <Sheet>
         <SheetTrigger>
           <Image
-            src="/icons/hamburger.svg"
+            src="/icons/icons/hamburger.svg"
             width={30}
             height={30}
             alt="menu"
@@ -37,7 +37,7 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
               src="/icons/logo.svg"
               width={34}
               height={34}
-              alt="Horizon logo"
+              alt="{siteConfig.name}"
             />
             <h1 className="text-26 font-ibm-plex-serif font-bold text-black-1">{siteConfig.name}</h1>
           </Link>
@@ -50,10 +50,9 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
                 return (
                   <SheetClose asChild key={item.route}>
                     <Link href={item.route} key={item.label}
-                      className={cn('mobilenav-sheet_close w-full', { 'bg-bank-gradient': isActive })}
-                    >
+                      className={cn('mobilenav-sheet_close w-full', { 'bg-green-main': isActive })}>
                         <Image 
-                          src={item.imgURL}
+                          src={item.icon}
                           alt={item.label}
                           width={20}
                           height={20}
@@ -61,9 +60,7 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
                             'brightness-[3] invert-0': isActive
                           })}
                         />
-                      <p className={cn("text-16 font-semibold text-black-2", { "text-white": isActive })}>
-                        {item.label}
-                      </p>
+                        <p className={cn("sidebar-label", { "!text-white": isActive })}> {item.label} </p>
                     </Link>
                   </SheetClose>
                 )

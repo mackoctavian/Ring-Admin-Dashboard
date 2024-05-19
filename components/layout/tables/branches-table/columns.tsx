@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Branch } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
+import { StateColumn } from "../state-column";
 
 export const columns: ColumnDef<Branch>[] = [
   {
@@ -49,8 +50,9 @@ export const columns: ColumnDef<Branch>[] = [
     header: "CLOSING TIME",
   },
   {
-    accessorKey: "status",
     header: "STATUS",
+    id: "status",
+    cell: ({ row }) => <StateColumn state={row.original.status} />,
   },
   {
     id: "actions",

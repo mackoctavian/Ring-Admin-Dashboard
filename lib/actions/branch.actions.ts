@@ -1,39 +1,44 @@
 'use server';
 
-import { ID, Query } from "node-appwrite";
+import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
 import { Branch, BranchDto } from "@/types";
+import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     BRANCHES_COLLECTION: BRANCH_COLLECTION_ID
   } = process.env;
 
-  export const createBranch = async (branch: BranchDto) => {
+  export const createItem = async (item: BranchDto) => {
     try {
       if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
+        throw Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
   
-      const newBranch = await database.createDocument(
+      const newItem = await database.createDocument(
         DATABASE_ID!,
         BRANCH_COLLECTION_ID!,
         ID.unique(),
         {
-          ...branch,
+          ...item,
         }
       )
   
-      return parseStringify(newBranch);
-    } catch (error) {
-      console.error(error);
+      return parseStringify(newItem);
+    } catch (error: any) {
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+      throw Error(errorMessage);
     }
   }
 
-  export const getBranches = async () => {
+  export const list = async ( ) => {
     try {
       if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
@@ -41,19 +46,67 @@ const {
 
       const { database } = await createAdminClient();
 
-      const branches = await database.listDocuments(
+      const items = await database.listDocuments(
         DATABASE_ID,
         BRANCH_COLLECTION_ID,
       );
 
-      return parseStringify(branches.documents);
+      return parseStringify(items.documents);
 
     }catch (error: any){
       console.error(error);
     }
   };
 
-  export const getBranch = async (id: string) => {
+  export const getItems = async (
+    q?: string,
+    status?: boolean | null,
+    limit?: number | null, 
+    offset?: number | 1,
+  ) => {
+    if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
+      throw new Error('Database ID or Collection ID is missing');
+    }
+  
+    try {
+      const { database } = await createAdminClient();
+  
+      const queries = [];
+
+      if ( limit ) {
+        queries.push(Query.limit(limit));
+        queries.push(Query.offset(offset!));
+      }
+  
+      if (q) {
+        queries.push(Query.search('name', q));
+      }
+  
+      if (status) {
+        queries.push(Query.equal('status', status));
+      }
+  
+      const items = await database.listDocuments(
+        DATABASE_ID,
+        BRANCH_COLLECTION_ID,
+        queries
+      );
+  
+      if (items.documents.length === 0) {
+        return [];
+      }
+  
+      return parseStringify(items.documents);
+    } catch (error: any) {
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+      throw Error(errorMessage);
+    }
+  }
+
+  export const getItem = async (id: string) => {
     try {
       if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
@@ -65,19 +118,23 @@ const {
 
       const { database } = await createAdminClient();
   
-      const branch = await database.listDocuments(
+      const item = await database.listDocuments(
         DATABASE_ID!,
         BRANCH_COLLECTION_ID!,
         [Query.equal('$id', id)]
       )
   
-      return parseStringify(branch.documents[0]);
-    } catch (error) {
-      console.log(error)
+      return parseStringify(item.documents[0]);
+    } catch (error: any) {
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+      throw Error(errorMessage);
     }
   }
 
-  export const deleteBranch = async ({ $id }: Branch) => {
+  export const deleteItem = async ({ $id }: Branch) => {
     try {
       if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
@@ -85,18 +142,22 @@ const {
 
       const { database } = await createAdminClient();
   
-      const branch = await database.deleteDocument(
+      const item = await database.deleteDocument(
         DATABASE_ID!,
         BRANCH_COLLECTION_ID!,
         $id);
   
-      return parseStringify(branch);
-    } catch (error) {
-      console.log(error)
+      return parseStringify(item);
+    } catch (error: any) {
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+      throw Error(errorMessage);
     }
   }
 
-  export const updateBranch = async (id: string, data: BranchDto) => {  
+  export const updateItem = async (id: string, data: BranchDto) => {  
     try {
       if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
@@ -104,14 +165,18 @@ const {
 
       const { database } = await createAdminClient();
   
-      const branch = await database.updateDocument(
+      const item = await database.updateDocument(
         DATABASE_ID!,
         BRANCH_COLLECTION_ID!,
         id,
         data);
   
-      return parseStringify(branch);
-    } catch (error) {
-      console.log(error)
+      return parseStringify(item);
+    } catch (error: any) {
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+      throw Error(errorMessage);
     }
   }

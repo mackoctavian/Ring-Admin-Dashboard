@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ProductUnit } from "@/types";
-import { createProductUnit, updateProductUnit } from "@/lib/actions/product-unit.actions"
+import { createItem, updateItem } from "@/lib/actions/product-unit.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 
@@ -29,17 +29,14 @@ import CancelButton from "../layout/cancel-button";
         status: z.boolean(),
     });
   
-  const ProductUnitForm = ({ unit }: { unit?: ProductUnit | null }) => {
+  const ProductUnitForm = ({ item }: { item?: ProductUnit | null }) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast()
 
     const form = useForm<z.infer<typeof formSchema>>({
       resolver: zodResolver(formSchema),
-      defaultValues: unit ? unit : {
-        name: "",
-        shortName: "",
-        business: "",
+      defaultValues: item ? item : {
         status: false,
       },
     });
@@ -54,33 +51,41 @@ import CancelButton from "../layout/cancel-button";
     }
 
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
-      setIsLoading(true);
-  
-      try {
-        if (unit) {
-            await updateProductUnit(unit.$id, data);
+        setIsLoading(true);
+    
+        try {
+            if (item) {
+                await updateItem(item.$id, data);
+                toast({
+                    variant: "default",
+                    title: "Success", 
+                    description: "Product unit updated succesfully!"
+                });
+            } else {
+                await createItem(data);
+                toast({
+                    variant: "default",
+                    title: "Success", 
+                    description: "Product unit created succesfully!"
+                });
+            }
+            
+            // Redirect to the list page after submission
+            router.push("/units");
+            router.refresh();
+            setIsLoading(false);
+        } catch (error: any) {
             toast({
-                variant: "default",
-                title: "Success", 
-                description: "Product unit updated succesfully!"
+                variant: "destructive",
+                title: "Uh oh! Something went wrong.", 
+                description: error.message || "There was an issue submitting your form, please try later"
             });
-        } else {
-            await createProductUnit(data);
-            toast({
-                variant: "default",
-                title: "Success", 
-                description: "Product unit created succesfully!"
-            });
-        }
-        
-        // Redirect to the units page after submission
-        router.push("/units");
-        router.refresh();
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Creating unit failed: ", error);
-        setIsLoading(false);
-      }
+            } finally {
+            //delay loading
+            setTimeout(() => {
+                setIsLoading(false);
+                }, 1000); 
+            }
     };
 
     return (
@@ -151,7 +156,7 @@ import CancelButton from "../layout/cancel-button";
                                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
                             </>
                             ) : (
-                            unit ? "Update unit" : "Save unit"
+                            item ? "Update unit" : "Save unit"
                         )}
                     </Button> 
                 </div>

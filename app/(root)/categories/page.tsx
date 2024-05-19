@@ -8,7 +8,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 
 import { columns } from "@/components/layout/tables/categories-table/columns";
-import { getCategories } from "@/lib/actions/category.actions";
+import { getItems } from "@/lib/actions/category.actions";
 import { CategoriesTable } from "@/components/layout/tables/categories-table/categories-table";
 
 const breadcrumbItems = [{ title: "Categories", link: "/categories" }];
@@ -22,13 +22,12 @@ type ParamsProps = {
 export default async function Page({ searchParams }: ParamsProps) {
   const page = Number(searchParams.page) || 1;
   const pageLimit = Number(searchParams.limit) || 10;
-  const q = searchParams.search || null;
+  const q = searchParams.search || null;  
   const offset = (page - 1) * pageLimit;
 
-  const data : Category[] = await getCategories();
+  const data : Category[] = await getItems(q?.toString(), '', null, null, null, offset);
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
-
 
   return (
     <>
@@ -36,7 +35,7 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Categories (${total})`} description="Manage categories" />
+            <Heading title={`Categories`} total={total.toString()} description="Manage categories" />
 
             <Link href={"/categories/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add New
@@ -48,7 +47,7 @@ export default async function Page({ searchParams }: ParamsProps) {
           searchKey="name"
           pageNo={page}
           columns={columns}
-          totalUsers={total}
+          total={total}
           data={data}
           pageCount={pageCount}
         />

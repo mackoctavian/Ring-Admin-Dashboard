@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Category } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
+import { StateColumn } from "../state-column";
 
 export const columns: ColumnDef<Category>[] = [
   {
@@ -30,7 +31,7 @@ export const columns: ColumnDef<Category>[] = [
   },
   {
     accessorKey: "type",
-    header: "CATEGORY TYPE",
+    header: "TYPE",
   },
   {
     accessorKey: "parent",
@@ -41,8 +42,9 @@ export const columns: ColumnDef<Category>[] = [
     header: "DESCRIPTION",
   },
   {
-    accessorKey: "status",
     header: "STATUS",
+    id: "status",
+    cell: ({ row }) => <StateColumn state={row.original.status} />,
   },
   {
     id: "actions",

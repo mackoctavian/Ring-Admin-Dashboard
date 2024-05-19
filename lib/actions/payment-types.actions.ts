@@ -3,59 +3,63 @@
 import { ID, Query } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Vendor, VendorDto } from "@/types";
+import { PaymentType, PaymentTypeDto } from "@/types";
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
-    VENDORS_COLLECTION: VENDOR_COLLECTION_ID
+    PAYMENT_TYPE_COLLECTION: PAYMENT_TYPE_COLLECTION_ID
   } = process.env;
 
-  export const createVendor = async (vendor: VendorDto) => {
+  export const createPaymentType = async (data: PaymentTypeDto) => {
     try {
-      if (!DATABASE_ID || !VENDOR_COLLECTION_ID) {
+      if (!DATABASE_ID || !PAYMENT_TYPE_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
   
-      const newItem = await database.createDocument(
+      const item = await database.createDocument(
         DATABASE_ID!,
-        VENDOR_COLLECTION_ID!,
+        PAYMENT_TYPE_COLLECTION_ID!,
         ID.unique(),
         {
-          ...vendor,
+          ...data,
         }
       )
   
-      return parseStringify(newItem);
+      return parseStringify(item);
     } catch (error) {
       console.error(error);
     }
   }
 
-  export const getVendors = async () => {
+  export const getPaymentTypes = async ( limit: number, offset: number, q: string ) => {
     try {
-      if (!DATABASE_ID || !VENDOR_COLLECTION_ID) {
+      if (!DATABASE_ID || !PAYMENT_TYPE_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
 
-      const items = await database.listDocuments(
+      const data = await database.listDocuments(
         DATABASE_ID,
-        VENDOR_COLLECTION_ID,
+        PAYMENT_TYPE_COLLECTION_ID,
+        [
+          Query.limit(limit),
+          Query.offset(offset)
+        ]
       );
 
-      return parseStringify(items.documents);
+      return parseStringify(data.documents);
 
     }catch (error: any){
       console.error(error);
     }
   };
 
-  export const getVendor = async (id: string) => {
+  export const getPaymentType = async (id: string) => {
     try {
-      if (!DATABASE_ID || !VENDOR_COLLECTION_ID) {
+      if (!DATABASE_ID || !PAYMENT_TYPE_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
@@ -65,52 +69,52 @@ const {
 
       const { database } = await createAdminClient();
   
-      const item = await database.listDocuments(
+      const data = await database.listDocuments(
         DATABASE_ID!,
-        VENDOR_COLLECTION_ID!,
+        PAYMENT_TYPE_COLLECTION_ID!,
         [Query.equal('$id', id)]
       )
   
-      return parseStringify(item.documents[0]);
+      return parseStringify(data.documents[0]);
     } catch (error) {
       console.log(error)
     }
   }
 
-  export const deleteVendor = async ({ $id }: Vendor) => {
+  export const deletePaymentType = async ({ $id }: PaymentType) => {
     try {
-      if (!DATABASE_ID || !VENDOR_COLLECTION_ID) {
+      if (!DATABASE_ID || !PAYMENT_TYPE_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
   
-      const item = await database.deleteDocument(
+      const data = await database.deleteDocument(
         DATABASE_ID!,
-        VENDOR_COLLECTION_ID!,
+        PAYMENT_TYPE_COLLECTION_ID!,
         $id);
   
-      return parseStringify(item);
+      return parseStringify(data);
     } catch (error) {
       console.log(error)
     }
   }
 
-  export const updateVendor = async (id: string, data: VendorDto) => {  
+  export const updatePaymentType = async (id: string, data: PaymentTypeDto) => {  
     try {
-      if (!DATABASE_ID || !VENDOR_COLLECTION_ID) {
+      if (!DATABASE_ID || !PAYMENT_TYPE_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
   
-      const item = await database.updateDocument(
+      const updatedDocument = await database.updateDocument(
         DATABASE_ID!,
-        VENDOR_COLLECTION_ID!,
+        PAYMENT_TYPE_COLLECTION_ID!,
         id,
         data);
   
-      return parseStringify(item);
+      return parseStringify(updatedDocument);
     } catch (error) {
       console.log(error)
     }

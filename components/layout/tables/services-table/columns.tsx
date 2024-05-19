@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Service } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
+import { StateColumn } from "../state-column";
 
 export const columns: ColumnDef<Service>[] = [
   {
@@ -49,8 +50,9 @@ export const columns: ColumnDef<Service>[] = [
     header: "DESCRIPTION",
   },
   {
-    accessorKey: "status",
     header: "STATUS",
+    id: "status",
+    cell: ({ row }) => <StateColumn state={row.original.status} />,
   },
   {
     id: "actions",

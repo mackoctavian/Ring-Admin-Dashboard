@@ -8,7 +8,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 
 import { columns } from "@/components/layout/tables/branches-table/columns";
-import { getBranches } from "@/lib/actions/branch.actions";
+import { getItems } from "@/lib/actions/branch.actions";
 import { BranchesTable } from "@/components/layout/tables/branches-table/branches-table";
 
 const breadcrumbItems = [{ title: "Branches", link: "/branches" }];
@@ -22,10 +22,10 @@ type ParamsProps = {
 export default async function Page({ searchParams }: ParamsProps) {
   const page = Number(searchParams.page) || 1;
   const pageLimit = Number(searchParams.limit) || 10;
-  const q = searchParams.search || null;
+  const q = searchParams.search || null;  
   const offset = (page - 1) * pageLimit;
 
-  const data : Branch[] = await getBranches();
+  const data : Branch[] = await getItems(q?.toString(), null, pageLimit, offset);
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
 
@@ -36,7 +36,7 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Branches (${total})`} description="Manage branches" />
+            <Heading title={`Branches`} total={total.toString()} description="Manage branches" />
 
             <Link href={"/branches/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add New
@@ -48,7 +48,7 @@ export default async function Page({ searchParams }: ParamsProps) {
           searchKey="name"
           pageNo={page}
           columns={columns}
-          totalUsers={total}
+          total={total}
           data={data}
           pageCount={pageCount}
         />
