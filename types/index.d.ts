@@ -13,6 +13,11 @@ declare enum CategoryType{
   PRODUCT = "PRODUCT",
 }
 
+declare enum DiscountType{
+  PERCENTAGE = "PERCENTAGE",
+  AMOUNT = "AMOUNT",
+}
+
 export enum Gender {
   MALE = "MALE",
   FEMALE = "FEMALE",
@@ -129,7 +134,7 @@ declare type DepartmentDto = {
 
 /* Department Data types */
 
-/* Category Data types */
+/* Category */
 
 declare type Category = {
   $id: string;
@@ -153,6 +158,35 @@ declare type CategoryDto = {
 };
 
 /* Category */
+
+/* Discount */
+declare type Discount = {
+  $id: string;
+  name: string;
+  code?: string;
+  type: DiscountType;
+  value: number;
+  redemptionStartDate?: Date;
+  redemptionEndDate?: Date;
+  redemptionLimit?: number;
+  description?: string;
+  $createdAt: Date;
+  $updatedAt: Date;
+  status: boolean;
+};
+
+declare type DiscountDto = {
+  name: string;
+  code?: string;
+  type: DiscountType;
+  value: number;
+  redemptionStartDate?: Date;
+  redemptionEndDate?: Date;
+  redemptionLimit?: number;
+  description?: string;
+  status: boolean;
+};
+/* Discount */
 
 
 
@@ -200,23 +234,72 @@ declare type PaymentTypeDto = {
 /* End Payment Types */
 
 
+/* Product */
+
 declare type Product = {
   $id: string;
   name: string;
   slug: string;
   sku: string;
+  image: string;
   quantity: number;
   quantityAlert?: number;
   allowDiscount: boolean;
-  expiryDate: Date;
+  manufactureDate?: Date;
+  expiryDate?: Date;
   price: number;
-  unit: ProductUnit;
-  category: Category;
+  unit?: ProductUnit;
+  category?: Category;
+  discount?: Discount;
   description?: string;
+  variant?: Variant[];
   status: boolean;
   $createdAt: Date;
   $updatedAt: Date;
 };
+
+declare type ProductDto = {
+  name: string;
+  slug: string;
+  sku: string;
+  image: string;
+  quantity: number;
+  quantityAlert?: number;
+  allowDiscount: boolean;
+  manufactureDate?: Date;
+  expiryDate?: Date;
+  price: number;
+  unit?: ProductUnit;
+  category?: Category;
+  discount?: Discount;
+  minimumSellingPrice?: number;
+  description?: string;
+  variant?: Variant[];
+  status: boolean;
+};
+
+declare type Variant = {
+  $id: string;
+  name: string;
+  product: ProductDto;
+  image: string;
+  quantity: number;
+  discount?: Discount;
+  status: boolean;
+  $createdAt: Date;
+  $updatedAt: Date;
+}
+
+declare type VariantDto = {
+  name: string;
+  product: ProductDto;
+  image: string;
+  quantity: number;
+  discount?: Discount;
+  status: boolean;
+}
+/* End Product */
+
 
 /* Service */
 

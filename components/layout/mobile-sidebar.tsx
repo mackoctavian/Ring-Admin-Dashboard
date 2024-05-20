@@ -16,11 +16,15 @@ import { sidebarLinks } from "@/constants";
 import React from "react";
 import { siteConfig } from "@/config/site";
 
-const MobileSidebar = ({ user }: MobileSidebarProps) => {
+interface Props {
+  user?: string;
+}
+
+export default function MobileSidebar({ user }: Props) {
   const pathname = usePathname();
 
   return (
-    <section className="w-fulll max-w-[264px]">
+    <section className="w-full max-w-[264px]">
       <Sheet>
         <SheetTrigger>
           <Image
@@ -44,39 +48,38 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
           <div className="mobilenav-sheet">
             <SheetClose asChild>
               <nav className="flex h-full flex-col gap-6 pt-16 text-white">
-                  {sidebarLinks.map((item) => {
-                const isActive = pathname === item.route || pathname.startsWith(`${item.route}/`)
-
-                return (
-                  <SheetClose asChild key={item.route}>
-                    <Link href={item.route} key={item.label}
-                      className={cn('mobilenav-sheet_close w-full', { 'bg-green-main': isActive })}>
-                        <Image 
-                          src={item.icon}
-                          alt={item.label}
-                          width={20}
-                          height={20}
-                          className={cn({
-                            'brightness-[3] invert-0': isActive
-                          })}
-                        />
-                        <p className={cn("sidebar-label", { "!text-white": isActive })}> {item.label} </p>
-                    </Link>
-                  </SheetClose>
-                )
-              })}
-
-              USER
+                {sidebarLinks.map((item, index) => {
+                  // Ensure item.route is defined
+                  if (item.route) {
+                    const isActive = pathname === item.route || pathname.startsWith(`${item.route}/`);
+                    
+                    return (
+                      <SheetClose asChild key={item.route || index}>
+                        <Link href={item.route} className={cn('mobilenav-sheet_close w-full flex items-center gap-2', { 'bg-green-main': isActive })}>
+                          <Image 
+                            src={item.icon!}
+                            alt={item.label!}
+                            width={20}
+                            height={20}
+                            className={cn({
+                              'brightness-[10] invert-0': isActive
+                            })}
+                          />
+                          <p className={cn('text-green-main', { '!text-white': isActive })}> {item.label} </p>
+                        </Link>
+                      </SheetClose>
+                    );
+                  }
+                  // Optionally, handle the case where item.route is undefined
+                  return null;
+                })}
+                USER
               </nav>
             </SheetClose>
-
-            Footer
             {/* <Footer user={user} type="mobile" /> */}
           </div>
         </SheetContent>
       </Sheet>
     </section>
-  )
+  );
 }
-
-export default MobileSidebar

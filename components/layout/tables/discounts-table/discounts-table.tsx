@@ -48,7 +48,7 @@ interface DataTableProps<TData, TValue> {
   };
 }
 
-export function ServicesTable<TData, TValue>({
+export function DiscountsTable<TData, TValue>({
   columns,
   data,
   pageNo,

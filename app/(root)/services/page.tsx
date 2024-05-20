@@ -48,7 +48,7 @@ export default async function Page({ searchParams }: ParamsProps) {
           searchKey="name"
           pageNo={page}
           columns={columns}
-          totalUsers={total}
+          total={total}
           data={data}
           pageCount={pageCount}
         />

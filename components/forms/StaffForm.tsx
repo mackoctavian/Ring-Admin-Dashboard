@@ -13,6 +13,14 @@ import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon } from "@radix-ui/react-icons"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input";
+import { Department, Staff } from "@/types";
+import { createItem, updateItem } from "@/lib/actions/staff.actions"
+import { useToast } from "@/components/ui/use-toast"
+import CancelButton from "../layout/cancel-button";
+import DepartmentSelector from "@/components/layout/department-selector"
+import CountrySelector from "../layout/country-selector";
 import {
   Form,
   FormControl,
@@ -34,14 +42,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Input } from "@/components/ui/input";
-import { Department, Staff } from "@/types";
-import { createItem, updateItem } from "@/lib/actions/staff.actions"
-import { useToast } from "@/components/ui/use-toast"
-import CancelButton from "../layout/cancel-button";
-import DepartmentSelector from "@/components/layout/department-selector"
 
-export enum Gender {
+
+ enum Gender {
     MALE = "MALE",
     FEMALE = "FEMALE",
     UNDISCLOSED = "UNDISCLOSED",
@@ -52,18 +55,28 @@ export enum Gender {
     const formSchema = z.object({
         name: z.string(),
         email: z.string().email("Invalid email address"),
-        phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-        code: z.string().optional(),
-        //department: z.object(Department),
+        phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
+        code: z.preprocess((val) => val === null ? undefined : val, z.string().optional()),
         gender: z.enum([Gender.UNDISCLOSED, Gender.MALE, Gender.FEMALE]),
-        dateOfBirth: z.date().optional(),
-        nationality: z.string().optional(),
-        joiningDate: z.date(),
+        dateOfBirth: z.preprocess((val) => {
+            if (val === null) return undefined;
+            if (typeof val === "string" && val.trim() !== "") {
+                return new Date(val);
+            }
+            return val;
+        }, z.date().optional()),
+        nationality: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+        joiningDate: z.preprocess((val) => {
+            if (typeof val === "string" && val.trim() !== "") {
+                return new Date(val);
+            }
+            return val;
+        }, z.date()),
         jobTitle: z.string(),
-        emergencyNumber: z.string().optional(),
-        address: z.string().optional(),
-        notes: z.string().optional(),
-        image: z.string().optional(),
+        emergencyNumber: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+        address: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+        notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+        image: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
         status: z.boolean(),
     });
   
@@ -76,7 +89,7 @@ export enum Gender {
             resolver: zodResolver(formSchema),
             defaultValues: item ? item : {
                 status: false,
-                gender: Gender.UNDISCLOSED,
+                notes: ''
             },
         });
 
@@ -86,6 +99,7 @@ export enum Gender {
                 title: "Uh oh! Something went wrong.", 
                 description: "There was an issue submitting your form please try later"
             });
+            console.error(errors);
         }
 
         const onSubmit = async (data: z.infer<typeof formSchema>) => {
@@ -118,19 +132,19 @@ export enum Gender {
                     title: "Uh oh! Something went wrong.", 
                     description: error.message || "There was an issue submitting your form, please try later"
                 });
-                } finally {
+            } finally {
                 //delay loading
                 setTimeout(() => {
                     setIsLoading(false);
-                    }, 1000); 
-                }
+                }, 1000); 
+            }
         };
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                     control={form.control}
                     name="name"
@@ -263,42 +277,48 @@ export enum Gender {
                             </FormItem>
                         )}
                         />
+
+                    <FormField
+                        control={form.control}
+                        name="nationality"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Nationality</FormLabel>
+                                <CountrySelector onChange={field.onChange} value={field.value} />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     
+
                     <FormField
                         control={form.control}
                         name="dateOfBirth"
                         render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Date of birth</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn( "font-normal", !field.value && "text-muted-foreground" )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Select date of birth</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                    date > new Date() || date < new Date("1970-01-01")
-                                    }
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
+                            <FormItem className="flex flex-col mt-2">
+                                <FormLabel>Date of birth</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
+                                            {field.value ? ( format(field.value, "PPP") ) : (
+                                                <span>Select date of birth</span>
+                                            )}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        disabled={ (date) => date > new Date() || date < new Date("1970-01-01") }
+                                        initialFocus
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
                             </FormItem>
                         )}
                     />
@@ -309,16 +329,7 @@ export enum Gender {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Department</FormLabel>
-                                    <FormControl>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                <SelectValue placeholder="Select department" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <DepartmentSelector />
-                                        </Select>
-                                    </FormControl>
+                                <DepartmentSelector onChange={field.onChange} value={field.value} />
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -328,7 +339,7 @@ export enum Gender {
                         control={form.control}
                         name="joiningDate"
                         render={({ field }) => (
-                            <FormItem className="flex flex-col">
+                            <FormItem className="flex flex-col mt-2">
                             <FormLabel>Date joined</FormLabel>
                             <Popover>
                                 <PopoverTrigger asChild>
@@ -362,10 +373,45 @@ export enum Gender {
                             </FormItem>
                         )}
                     />
-                    
-                    
-                    </div>
 
+                    <FormField
+                        control={form.control}
+                        name="emergencyNumber"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Emergency contact</FormLabel>
+                            <FormControl>
+                                <Input
+                                type="tel"
+                                placeholder="Enter emergency phone number"
+                                className="input-class"
+                                {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    
+                </div>
+                    <FormField
+                        control={form.control}
+                        name="notes"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Admin notes</FormLabel>
+                            <FormControl>
+                                <Textarea
+                                    placeholder="Any other important details about the employee"
+                                    className="resize-none"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                
             
             
 
@@ -398,7 +444,7 @@ export enum Gender {
                                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
                             </>
                             ) : (
-                            item ? "Update branch" : "Save branch"
+                            item ? "Update employee details" : "Save employee details"
                         )}
                     </Button> 
                 </div>

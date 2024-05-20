@@ -3,12 +3,8 @@ export type SiteConfig = typeof siteConfig
 export const siteConfig = {
   name: "Slide POS",
   description: "Business tools for small enterprises",
-  mainNav: [
-    {
-      title: "Home",
-      href: "/",
-    },
-  ],
+  logo: '/icons/logo.svg',
+  icon: '/icons/logo.svg',
   links: {
     twitter: "https://x.com/slide",
     github: "https://github.com/slide",

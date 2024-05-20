@@ -31,7 +31,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { BusinessForm } from "./BusinessForm";
 import { useToast } from "@/components/ui/use-toast"
 
 const AuthForm = ({ type }: { type: string }) => {
@@ -49,13 +48,7 @@ const AuthForm = ({ type }: { type: string }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: '',
-      firstName: "",
-      lastName: "",
-      city: "",
       country: country,
-      gender: "",
     },
   })
 
@@ -146,7 +139,7 @@ const AuthForm = ({ type }: { type: string }) => {
       </header>
       {user ? (
         <div className="flex flex-col gap-4">
-          <BusinessForm />
+          <h4>Business Form</h4>
         </div>
       ) : (
         <Form {...form}>
@@ -161,40 +154,35 @@ const AuthForm = ({ type }: { type: string }) => {
                 <CustomInput control={form.control} name='phoneNumber' label="Phone number" placeholder='Enter your phone number starting with country code' />
 
                 <FormField
-                  control={form.control}
-                  name="dateOfBirth"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Date of birth</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn("w-[240px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                              {field.value ? (
-                                format(new Date(field.value), "PPP")
-                              ) : (
-                                <span>Select date of birth</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={(date) => field.onChange(date.toISOString())}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </FormItem>
-                  )}
+                    control={form.control}
+                    name="dateOfBirth"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col mt-2">
+                            <FormLabel>Date of birth</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
+                                        {field.value ? ( format(field.value, "PPP") ) : (
+                                            <span>Select date of birth</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={ (date) => date > new Date() || date < new Date("1970-01-01") }
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                    )}
                 />
               </div>
 

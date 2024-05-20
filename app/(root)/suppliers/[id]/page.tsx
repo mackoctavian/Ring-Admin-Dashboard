@@ -9,10 +9,12 @@ const breadcrumbItems = [{ title: "Suppliers", link: "/suppliers" }, { title: "N
 
 const SupplierPage = async ({ params }: { params: { id: string } }) => {
     let item: Supplier | null = null;
+    let newItem = true;
 
     if (params.id && params.id !== "new") {
         try {
             item = await getItem(params.id);
+            newItem = false;
         } catch (error) {
             throw new Error("Error loading data" + error);
         }
@@ -24,7 +26,7 @@ const SupplierPage = async ({ params }: { params: { id: string } }) => {
                 <BreadCrumb items={breadcrumbItems} />
 
                 <div className="flex items-start justify-between">
-                    <Heading title={params.id ? `Edit supplier` : `Create supplier`} description={params.id ? "Edit your supplier" : "Add new supplier to your business"} />
+                    <Heading title={!newItem ? `Edit supplier` : `Create supplier`} description={!newItem ? "Edit your supplier" : "Add new supplier to your business"} />
                 </div>
                 <Separator />
 

@@ -10,10 +10,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { TimePicker } from "@/components/ui/time-picker";
 
 import {
@@ -32,12 +28,6 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
-
 
 import { Input } from "@/components/ui/input";
 import { Service } from "@/types";
@@ -47,13 +37,10 @@ import CancelButton from "../layout/cancel-button"
 import { Textarea } from "@/components/ui/textarea"
 import ProductCategorySelector from "@/components/layout/product-category-selector"
 
-
-
-
     const formSchema = z.object({
         name: z.string(),
         description: z.string().optional(),
-        category: z.string(),
+        category: z.any(),
         endTime: z.string().optional(),
         startTime: z.string().optional(),
         price: z.number(),
@@ -216,12 +203,12 @@ import ProductCategorySelector from "@/components/layout/product-category-select
                         <FormItem>
                             <FormLabel>Offering start time</FormLabel>
                             <FormControl>
-                                <TimePicker {...field} />
-                                {/* <Input
+                                {/* <TimePicker {...field} /> */}
+                                <Input
                                 placeholder="Select start time"
                                 className="input-class"
                                 {...field}
-                                /> */}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -235,12 +222,12 @@ import ProductCategorySelector from "@/components/layout/product-category-select
                         <FormItem>
                             <FormLabel>Offering end time</FormLabel>
                             <FormControl>
-                                <TimePicker {...field} />
-                                {/* <Input
+                                {/* <TimePicker {...field} /> */}
+                                <Input
                                 placeholder="Select start time"
                                 className="input-class"
                                 {...field}
-                                /> */}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

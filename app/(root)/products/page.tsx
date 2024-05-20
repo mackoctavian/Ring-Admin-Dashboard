@@ -2,16 +2,16 @@ import BreadCrumb from "@/components/layout/breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { Supplier } from "@/types";
+import { Product } from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
-import { columns } from "@/components/layout/tables/suppliers-table/columns";
-import { getItems } from "@/lib/actions/supplier.actions";
-import { SuppliersTable } from "@/components/layout/tables/suppliers-table/suppliers-table";
+import { columns } from "@/components/layout/tables/products-table/columns";
+import { getItems } from "@/lib/actions/product.actions";
+import { ProductsTable } from "@/components/layout/tables/products-table/products-table";
 
-const breadcrumbItems = [{ title: "Vendors", link: "/vendors" }];
+const breadcrumbItems = [{ title: "Products", link: "/products" }];
 
 type ParamsProps = {
   searchParams: {
@@ -25,9 +25,10 @@ export default async function Page({ searchParams }: ParamsProps) {
   const q = searchParams.search || null;  
   const offset = (page - 1) * pageLimit;
 
-  const data : Supplier[] = await getItems(q?.toString(), null, pageLimit, offset);
+  const data : Product[] = await getItems(q?.toString(), null, pageLimit, offset);
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
+
 
   return (
     <>
@@ -35,15 +36,15 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Suppliers`} total={total.toString()} description="Manage suppliers" />
+            <Heading title={`Products`} total={total.toString()} description="Manage products" />
 
-            <Link href={"/suppliers/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/products/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add New
             </Link>
         </div>
         <Separator />
 
-        <SuppliersTable
+        <ProductsTable
           searchKey="name"
           pageNo={page}
           columns={columns}

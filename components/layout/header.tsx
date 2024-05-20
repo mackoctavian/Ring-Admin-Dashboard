@@ -13,7 +13,7 @@ export default function Header() {
         <div className="hidden lg:block">
           <Link href="/" className="cursor-pointer flex items-center gap-2">
             <Image 
-              src="/icons/logo.svg"
+              src={siteConfig.logo}
               width={34}
               height={34}
               alt={siteConfig.name}

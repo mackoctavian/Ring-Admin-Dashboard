@@ -45,7 +45,7 @@ export const sidebarLinks = [
   },
   {
     icon: "/icons/icons/suppliers.svg",
-    route: "/vendors",
+    route: "/suppliers",
     label: "Suppliers",
   },
   {

@@ -8,6 +8,7 @@ import "./globals.css";
 import Providers from "@/components/layout/providers";
 import { Toaster } from "@/components/ui/toaster";
 import { cookies } from "next/headers";
+import { siteConfig } from "@/config/site"
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const ibmPlexSerif = IBM_Plex_Serif({
@@ -22,12 +23,12 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Slide POS",
-  description: "Modern business solutions for small scale enterprises.",
+  title: siteConfig.name,
+  description: siteConfig.description,
   icons: {
-    icon: '/icons/logo.svg'
+    icon: siteConfig.logo
   }
-};
+}
 
 export default async function RootLayout({
   children,
