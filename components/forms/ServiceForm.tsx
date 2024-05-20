@@ -37,10 +37,14 @@ import CancelButton from "../layout/cancel-button"
 import { Textarea } from "@/components/ui/textarea"
 import ProductCategorySelector from "@/components/layout/product-category-selector"
 
+
+
+
     const formSchema = z.object({
         name: z.string(),
         description: z.string().optional(),
-        category: z.any(),
+        category: z.string(),
+        
         endTime: z.string().optional(),
         startTime: z.string().optional(),
         price: z.number(),
@@ -203,12 +207,12 @@ import ProductCategorySelector from "@/components/layout/product-category-select
                         <FormItem>
                             <FormLabel>Offering start time</FormLabel>
                             <FormControl>
-                                {/* <TimePicker {...field} /> */}
-                                <Input
+                                <TimePicker {...field} />
+                                {/* <Input
                                 placeholder="Select start time"
                                 className="input-class"
                                 {...field}
-                                />
+                                /> */}
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -222,12 +226,12 @@ import ProductCategorySelector from "@/components/layout/product-category-select
                         <FormItem>
                             <FormLabel>Offering end time</FormLabel>
                             <FormControl>
-                                {/* <TimePicker {...field} /> */}
-                                <Input
+                                <TimePicker {...field} />
+                                {/* <Input
                                 placeholder="Select start time"
                                 className="input-class"
                                 {...field}
-                                />
+                                /> */}
                             </FormControl>
                             <FormMessage />
                         </FormItem>
