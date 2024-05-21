@@ -407,6 +407,50 @@ declare type StaffDto = {
 
 /* End Staff */
 
+
+
+/* Customer */
+
+declare type Customer = {
+  $id: string;
+  name: string;
+  email?: string;
+  phoneNumber?: string;
+  gender: Gender;
+  dateOfBirth?: Date;
+  nationality?: string;
+  lastVisitDate: Date;
+  registrationBranch?: Branch;
+  address?: string;
+  notes?: string;
+  allowNotifications: boolean;
+  status: boolean;
+  points: number;
+  totalSpend: number;
+  totalVisits: number;
+  $createdAt: Date;
+  $updatedAt: Date;
+}
+
+declare type CustomerDto = {
+  name: string;
+  email?: string;
+  phoneNumber?: string;
+  gender: Gender;
+  dateOfBirth?: Date;
+  nationality?: string;
+  lastVisitDate: Date;
+  registrationBranch?: Branch;
+  address?: string;
+  notes?: string;
+  allowNotifications: boolean;
+  status: boolean;
+  points: number;
+  totalSpend: number;
+  totalVisits: number;
+}
+
+/* End Customer */
 // ========================================
 
 

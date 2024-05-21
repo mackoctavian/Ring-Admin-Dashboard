@@ -59,7 +59,6 @@ import ProductCategorySelector from "@/components/layout/product-category-select
         const router = useRouter();
         const [isLoading, setIsLoading] = useState(false)
         const { toast } = useToast()
-        //const { watch, setValue } = useForm();
 
         const form = useForm<z.infer<typeof formSchema>>({
             resolver: zodResolver(formSchema),
@@ -122,12 +121,12 @@ import ProductCategorySelector from "@/components/layout/product-category-select
                 title: "Uh oh! Something went wrong.", 
                 description: error.message || "There was an issue submitting your form, please try later"
             });
-            } finally {
-            //delay loading
-            setTimeout(() => {
-                setIsLoading(false);
-                }, 1000); 
-            }
+        } finally {
+        //delay loading
+        setTimeout(() => {
+            setIsLoading(false);
+            }, 1000); 
+        }
     };
 
     return (

@@ -15,11 +15,10 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input";
-import { Department, Staff } from "@/types";
-import { createItem, updateItem } from "@/lib/actions/staff.actions"
+import { Customer } from "@/types";
+import { createItem, updateItem } from "@/lib/actions/customer.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
-import DepartmentSelector from "@/components/layout/department-selector"
 import CountrySelector from "../layout/country-selector";
 import {
   Form,
@@ -52,9 +51,15 @@ import {
 
     const phoneNumberRegex = /^[0-9]{10,15}$/;
 
+    //Image validation
+    const MAX_MB = 5; // Max size in MB
+    const MAX_UPLOAD_SIZE = MAX_MB * 1024 * 1024; // Convert MB to bytes
+    const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+
+    
     const formSchema = z.object({
         name: z.string(),
-        email: z.string().email("Invalid email address"),
+        email: z.string().email("Invalid email address").trim().max(18).min(10),
         phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
         code: z.preprocess((val) => val === null ? undefined : val, z.string().optional()),
         gender: z.enum([Gender.UNDISCLOSED, Gender.MALE, Gender.FEMALE]),
@@ -65,22 +70,37 @@ import {
             }
             return val;
         }, z.date().optional()),
-        nationality: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-        joiningDate: z.preprocess((val) => {
+        nationality: z.preprocess((val) => val === null ? "" : val, z.string().optional()),        
+        //TODO
+        registrationBranch: z.any(),
+
+        address: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+        notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+        allowNotifications: z.boolean(),
+        status: z.boolean(),
+        points: z.number(),
+        totalSpend: z.number(),
+        totalVisits: z.number(),
+        image: z.instanceof(File)
+        .optional()
+        .refine(
+            (file) => !file || file.size !== 0 || file.size <= MAX_UPLOAD_SIZE,
+            `Max image size is ${MAX_MB}MB`
+        )
+        .refine(
+            (file) => !file || file.type === "" || ACCEPTED_IMAGE_TYPES.includes(file.type),
+            "Only .jpg .jpeg and .png formats are supported"
+        ),
+        lastVisitDate: z.preprocess((val) => {
             if (typeof val === "string" && val.trim() !== "") {
                 return new Date(val);
             }
             return val;
         }, z.date()),
-        jobTitle: z.string(),
-        emergencyNumber: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-        address: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-        notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-        image: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-        status: z.boolean(),
+        
     });
   
-    const StaffForm = ({ item }: { item?: Staff | null }) => {
+    const CustomerForm = ({ item }: { item?: Customer | null }) => {
         const router = useRouter();
         const [isLoading, setIsLoading] = useState(false);
         const { toast } = useToast()
@@ -88,8 +108,12 @@ import {
         const form = useForm<z.infer<typeof formSchema>>({
             resolver: zodResolver(formSchema),
             defaultValues: item ? item : {
-                status: false,
-                notes: ''
+                status: true,
+                points: 0,
+                totalSpend: 0,
+                totalVisits: 1,
+                allowNotifications: true,
+                lastVisitDate: new Date(),
             },
         });
 
@@ -97,9 +121,9 @@ import {
             toast({
                 variant: "warning",
                 title: "Uh oh! Something went wrong.", 
-                description: "There was an issue submitting your form please try later"
+                description: JSON.stringify(errors)+ "There was an issue submitting your form please try again"
             });
-            console.error(errors);
+            console.error(JSON.stringify(errors));
         }
 
         const onSubmit = async (data: z.infer<typeof formSchema>) => {
@@ -109,21 +133,21 @@ import {
                 if (item) {
                     await updateItem(item.$id, data);
                     toast({
-                        variant: "default",
+                        variant: "success",
                         title: "Success", 
-                        description: "Employee details updated succesfully!"
+                        description: "Customer details updated succesfully!"
                     });
                 } else {
                     await createItem(data);
                     toast({
-                        variant: "default",
+                        variant: "success",
                         title: "Success", 
-                        description: "Employee added succesfully!"
+                        description: "Customer added succesfully!"
                     });
                 }
                 
                 // Redirect to the list page after submission
-                router.push("/staff");
+                router.push("/customers");
                 router.refresh();
                 setIsLoading(false);
             } catch (error: any) {
@@ -153,7 +177,7 @@ import {
                             <FormLabel>Full name</FormLabel>
                             <FormControl>
                                 <Input
-                                placeholder="Enter employee's name"
+                                placeholder="Enter customer's full name"
                                 className="input-class"
                                 {...field}
                                 />
@@ -168,11 +192,11 @@ import {
                         name="email"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Employee email address</FormLabel>
+                            <FormLabel>Email address</FormLabel>
                             <FormControl>
                                 <Input
                                 type="email"
-                                placeholder="Enter employee's email address"
+                                placeholder="Enter customer's email address"
                                 className="input-class"
                                 {...field}
                                 />
@@ -187,11 +211,11 @@ import {
                         name="phoneNumber"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Employee phone number</FormLabel>
+                            <FormLabel>Phone number</FormLabel>
                             <FormControl>
                                 <Input
                                 type="tel"
-                                placeholder="Enter employee's phone number"
+                                placeholder="Enter customer's phone number"
                                 className="input-class"
                                 {...field}
                                 />
@@ -206,28 +230,10 @@ import {
                         name="code"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Staff ID</FormLabel>
+                            <FormLabel>Customer Unique Code ( Auto generated )</FormLabel>
                             <FormControl>
                                 <Input
-                                placeholder="Enter employee's staff id"
-                                className="input-class"
-                                {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="jobTitle"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Job Title</FormLabel>
-                            <FormControl>
-                                <Input
-                                placeholder="Enter employee's job title"
+                                placeholder="Enter customer's unique code"
                                 className="input-class"
                                 {...field}
                                 />
@@ -245,7 +251,7 @@ import {
                             <FormLabel>Address</FormLabel>
                             <FormControl>
                                 <Input
-                                placeholder="Enter employee home address"
+                                placeholder="Enter customer's address"
                                 className="input-class"
                                 {...field}
                                 />
@@ -323,75 +329,6 @@ import {
                         )}
                     />
 
-                    <FormField
-                        control={form.control}
-                        name="department"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Department</FormLabel>
-                                <DepartmentSelector onChange={field.onChange} value={field.value} />
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="joiningDate"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col mt-2">
-                            <FormLabel>Date joined</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn( "font-normal", !field.value && "text-muted-foreground" )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Select date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                    date > new Date() || date < new Date("1970-01-01")
-                                    }
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="emergencyNumber"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Emergency contact</FormLabel>
-                            <FormControl>
-                                <Input
-                                type="tel"
-                                placeholder="Enter emergency phone number"
-                                className="input-class"
-                                {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
                     
                 </div>
                     <FormField
@@ -444,7 +381,7 @@ import {
                                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
                             </>
                             ) : (
-                            item ? "Update employee details" : "Save employee details"
+                            item ? "Update customer details" : "Save customer details"
                         )}
                     </Button> 
                 </div>
@@ -453,4 +390,4 @@ import {
         );
     };
   
-export default StaffForm;
+export default CustomerForm;

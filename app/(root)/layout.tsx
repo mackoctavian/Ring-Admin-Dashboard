@@ -11,7 +11,7 @@ export default function RootLayout({
     return (
         <>
             <Header />
-            <div className="flex h-screen overflow-x-hidden">
+            <div className="flex overflow-x-hidden">
                 <Sidebar />
                 <main className="w-full pt-16">{children}</main>
                 <Toaster />

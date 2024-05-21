@@ -3,10 +3,19 @@ import { type ClassValue, clsx } from "clsx";
 import qs from "query-string";
 import { twMerge } from "tailwind-merge";
 import { z } from "zod";
+import { nanoid } from 'nanoid';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+//generate sku
+export const generateSKU = (productName: string) => {
+  const prefix = 'sku';
+  const uniquePart = nanoid(6).toLowerCase();
+  const formattedName = productName.replace(/\s+/g, '').toLowerCase().substring(0, 4); // First 5 characters
+  return `${prefix}-${formattedName}-${uniquePart}`;
+};
 
 // FORMAT DATE TIME
 export const formatDateTime = (dateString: Date) => {
