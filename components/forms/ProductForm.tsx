@@ -123,9 +123,9 @@ const DiscountSchema = z.object({
 
         const onInvalid = (errors : any ) => {
             toast({
-                variant: "destructive",
+                variant: "warning",
                 title: "Uh oh! Something went wrong.", 
-                description: "There was an issue submitting your form please try again"
+                description: "Please complete filling the form before you submit"
             });
         }
             
