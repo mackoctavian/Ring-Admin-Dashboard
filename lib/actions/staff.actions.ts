@@ -9,7 +9,14 @@ import { getStatusMessage, HttpStatusCode } from '../status-handler';
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     STAFF_COLLECTION: STAFF_COLLECTION_ID
-  } = process.env;
+} = process.env;
+
+const transformRelationships = (data: any) => {
+  return {
+    ...data,
+    department: data.department
+  };
+};
 
   export const createItem = async (item: StaffDto) => {
     try {
@@ -18,18 +25,21 @@ const {
       }
 
       const { database } = await createAdminClient();
+      const transformedData = transformRelationships(item);
   
       const newItem = await database.createDocument(
         DATABASE_ID!,
         STAFF_COLLECTION_ID!,
         ID.unique(),
         {
-          ...item,
+          ...transformedData,
         }
       )
   
       return parseStringify(newItem);
     } catch (error: any) {
+      console.error(parseStringify(error));
+      
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
@@ -158,18 +168,22 @@ const {
   }
 
   export const updateItem = async (id: string, data: StaffDto) => {  
+    console.error(data);
     try {
       if (!DATABASE_ID || !STAFF_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
+      const transformedData = transformRelationships(data);
+
       const { database } = await createAdminClient();
-  
+
       const item = await database.updateDocument(
         DATABASE_ID!,
         STAFF_COLLECTION_ID!,
         id,
-        data);
+        transformedData,
+      );
   
       return parseStringify(item);
     } catch (error: any) {
@@ -177,6 +191,8 @@ const {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+      console.error(parseStringify(error));
+
       throw Error(errorMessage);
     }
   }

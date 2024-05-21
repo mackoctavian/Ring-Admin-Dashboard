@@ -67,9 +67,7 @@ export default function CountrySelector({ value, onChange }: Props) {
               <SelectLabel>Europe</SelectLabel>
               <SelectItem value="Albania">Albania</SelectItem>
               <SelectItem value="Andorra">Andorra</SelectItem>
-              <SelectItem value="Armenia">Armenia</SelectItem>
               <SelectItem value="Austria">Austria</SelectItem>
-              <SelectItem value="Azerbaijan">Azerbaijan</SelectItem>
               <SelectItem value="Belarus">Belarus</SelectItem>
               <SelectItem value="Belgium">Belgium</SelectItem>
               <SelectItem value="Bosnia and Herzegovina">Bosnia and Herzegovina</SelectItem>
@@ -88,7 +86,6 @@ export default function CountrySelector({ value, onChange }: Props) {
               <SelectItem value="Iceland">Iceland</SelectItem>
               <SelectItem value="Ireland">Ireland</SelectItem>
               <SelectItem value="Italy">Italy</SelectItem>
-              <SelectItem value="Kazakhstan">Kazakhstan</SelectItem>
               <SelectItem value="Kosovo">Kosovo</SelectItem>
               <SelectItem value="Latvia">Latvia</SelectItem>
               <SelectItem value="Liechtenstein">Liechtenstein</SelectItem>
@@ -185,8 +182,6 @@ export default function CountrySelector({ value, onChange }: Props) {
               <SelectItem value="Brunei">Brunei</SelectItem>
               <SelectItem value="Cambodia">Cambodia</SelectItem>
               <SelectItem value="China">China</SelectItem>
-              <SelectItem value="Cyprus">Cyprus</SelectItem>
-              <SelectItem value="Georgia">Georgia</SelectItem>
               <SelectItem value="India">India</SelectItem>
               <SelectItem value="Indonesia">Indonesia</SelectItem>
               <SelectItem value="Iran">Iran</SelectItem>
@@ -218,7 +213,6 @@ export default function CountrySelector({ value, onChange }: Props) {
               <SelectItem value="Tajikistan">Tajikistan</SelectItem>
               <SelectItem value="Thailand">Thailand</SelectItem>
               <SelectItem value="Timor-Leste">Timor-Leste</SelectItem>
-              <SelectItem value="Turkey">Turkey</SelectItem>
               <SelectItem value="Turkmenistan">Turkmenistan</SelectItem>
               <SelectItem value="United Arab Emirates">United Arab Emirates</SelectItem>
               <SelectItem value="Uzbekistan">Uzbekistan</SelectItem>

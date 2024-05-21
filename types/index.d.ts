@@ -131,7 +131,6 @@ declare type DepartmentDto = {
   shortName: string;
   status: boolean;
 }
-
 /* Department Data types */
 
 /* Category */

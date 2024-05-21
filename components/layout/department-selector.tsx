@@ -16,29 +16,44 @@ interface Props {
   onChange: (value: Department) => void;
 }
 
-export default function DepartmentSelector({ value, onChange }: Props) {
+const DepartmentSelector: React.FC<Props> = ({ value, onChange }) => {
   const [departments, setDepartments] = useState<Department[]>([]);
 
   useEffect(() => {
     async function fetchDepartments() {
-      const departmentsData = await list();
-      setDepartments(departmentsData);
+      try {
+        const departmentsData = await list();
+        setDepartments(departmentsData);
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+      }
     }
     fetchDepartments();
   }, []);
 
+  const handleSelectChange = (value: string) => {
+    const selectedDepartment = departments.find(dept => dept.$id === value);
+    if (selectedDepartment) {
+      onChange(selectedDepartment);
+    }
+  };
+
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value ? value.$id : ''} onValueChange={handleSelectChange}>
       <SelectTrigger>
-        <SelectValue placeholder="Select department" />
+        <SelectValue>
+          {value ? value.name : 'Select department'}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {departments.map((department) => (
-          <SelectItem key={department.$id} value={department}>
+          <SelectItem key={department.$id} value={department.$id}>
             {department.name}
           </SelectItem>
         ))}
       </SelectContent>
     </Select>
   );
-}
+};
+
+export default DepartmentSelector;
