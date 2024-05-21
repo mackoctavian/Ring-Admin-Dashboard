@@ -7,7 +7,7 @@ interface StateColumnProps {
 export const StateColumn = ({ state }: StateColumnProps): JSX.Element => {
  return (
         <>
-            <Badge variant={state ? "default" : "destructive"}>
+            <Badge variant={state ? "success" : "destructive"}>
                 {state ? "Active" : "Inactive"}
             </Badge>
         </>
