@@ -101,7 +101,6 @@ import {
           resolver: zodResolver(formSchema),
           defaultValues: item ? { ...item, department: item.department } : {
             status: false,
-            notes: ''
           },
         });
       

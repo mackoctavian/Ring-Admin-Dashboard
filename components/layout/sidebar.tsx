@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Sidebar() {
   return (
-    <section text-white className="sidebar">
+    <section className="sidebar">
       <ScrollArea>
       <nav className={cn(`relative hidden h-screen pt-16 lg:block w-72`)}>
         <DashboardNav   />

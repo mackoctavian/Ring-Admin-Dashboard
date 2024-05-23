@@ -2,16 +2,15 @@ import BreadCrumb from "@/components/layout/breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { Service } from "@/types";
+import { InventoryVariant } from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { columns } from "@/components/layout/tables/inventory-table/columns";
+import { getVariantItems } from "@/lib/actions/inventory.actions";
+import { InventoryTable } from "@/components/layout/tables/inventory-table/inventory-table";
 
-import { columns } from "@/components/layout/tables/services-table/columns";
-import { getServices } from "@/lib/actions/service.actions";
-import { ServicesTable } from "@/components/layout/tables/services-table/services-table";
-
-const breadcrumbItems = [{ title: "Services", link: "/services" }];
+const breadcrumbItems = [{ title: "Inventory", link: "/inventory" }];
 
 type ParamsProps = {
   searchParams: {
@@ -22,13 +21,12 @@ type ParamsProps = {
 export default async function Page({ searchParams }: ParamsProps) {
   const page = Number(searchParams.page) || 1;
   const pageLimit = Number(searchParams.limit) || 10;
-  const q = searchParams.search || null;
+  const q = searchParams.search || null;  
   const offset = (page - 1) * pageLimit;
 
-  const data : Service[] = await getServices();
+  const data : InventoryVariant[] = await getVariantItems(q?.toString(), null, null, offset);
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
-
 
   return (
     <>
@@ -36,15 +34,15 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Services`} total={total.toString()} description="Manage services" />
+            <Heading title={`Inventory`} total={total.toString()} description="Manage inventory" />
 
-            <Link href={"/services/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add New
+            <Link href={"/inventory/new"} className={cn(buttonVariants({ variant: "default" }))} >
+                <Plus className="mr-2 h-4 w-4" /> Add Inventory
             </Link>
         </div>
         <Separator />
 
-        <ServicesTable
+        <InventoryTable
           searchKey="name"
           pageNo={page}
           columns={columns}

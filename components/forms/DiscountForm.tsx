@@ -41,54 +41,15 @@ import {
     PopoverContent,
     PopoverTrigger,
   } from "@/components/ui/popover"
-
-  
-    enum DiscountType{
-        PERCENTAGE = "PERCENTAGE",
-        AMOUNT = "AMOUNT",
-    }
-
-    const formSchema = z.object({
-        name: z.string({
-            required_error: "Discount name is required",
-            invalid_type_error: "Discount name must be more than 2 characters long",
-        }).min(2),
-        type: z.enum([DiscountType.PERCENTAGE, DiscountType.AMOUNT], {
-            required_error: "Category type is required",
-            invalid_type_error: "Category type must be either 'Product' or 'Service'",
-        }),
-        value: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return parseFloat(val);
-            }
-            return val;
-        }, z.number()),
-        code: z.string().optional(),
-        redemptionStartDate: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return new Date(val);
-            }
-            return val;
-        }, z.date().optional()),
-        redemptionEndDate: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return new Date(val);
-            }
-            return val;
-        }, z.date().optional()),
-        redemptionLimit: z.preprocess((val) => val === null ? undefined : val, z.number().optional()),
-        description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-        status: z.boolean(),
-    });
-
-  
+import { DiscountSchema, DiscountType } from "@/types/data-schemas";
+    
     const DiscountForm = ({ item }: { item?: Discount | null }) => {
         const router = useRouter();
         const [isLoading, setIsLoading] = useState(false)
         const { toast } = useToast()
 
-        const form = useForm<z.infer<typeof formSchema>>({
-            resolver: zodResolver(formSchema),
+        const form = useForm<z.infer<typeof DiscountSchema>>({
+            resolver: zodResolver(DiscountSchema),
             defaultValues: item ? item : {
             type: DiscountType.PERCENTAGE,
             status: false,
@@ -97,13 +58,14 @@ import {
 
         const onInvalid = (errors : any ) => {
             toast({
-                variant: "destructive",
+                variant: "warning",
                 title: "Uh oh! Something went wrong.", 
                 description: "There was an issue submitting your form please try later"
             });
+            console.error(JSON.stringify(errors))
         }
         
-    const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    const onSubmit = async (data: z.infer<typeof DiscountSchema>) => {
         setIsLoading(true);
     
         try {

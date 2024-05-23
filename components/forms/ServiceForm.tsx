@@ -1,120 +1,121 @@
 'use client'
 
-import * as React from "react";
+import React, { useState, useEffect } from 'react';
+import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
 import { ReloadIcon } from "@radix-ui/react-icons"
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
-import { TimePicker } from "@/components/ui/time-picker";
-
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-
-
 import { Input } from "@/components/ui/input";
-import { Service } from "@/types";
+import { Service, Discount, Category } from "@/types";
 import { createService, updateService } from "@/lib/actions/service.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button"
 import { Textarea } from "@/components/ui/textarea"
-import ProductCategorySelector from "@/components/layout/product-category-selector"
-
-
-
-
-    const formSchema = z.object({
-        name: z.string(),
-        description: z.string().optional(),
-        category: z.string(),
-        
-        endTime: z.string().optional(),
-        startTime: z.string().optional(),
-        price: z.number(),
-        duration: z.string().optional(),
-        status: z.boolean(),
-        allowDiscount: z.boolean(),
-    });
+import CategorySelector from "@/components/layout/category-selector"
+import DiscountSelector from "../layout/discount-selector"
+import TimeSelector from "../layout/time-selector";
+import { CategoryType, ServiceSchema } from "@/types/data-schemas"
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+  } from "@/components/ui/form";
+  import {
+      Select,
+      SelectContent,
+      SelectItem,
+      SelectTrigger,
+      SelectValue,
+  } from "@/components/ui/select"
   
-    const ServiceForm = ({ item }: { item?: Service | null }) => {
-        const router = useRouter();
-        const [isLoading, setIsLoading] = useState(false);
-        const { toast } = useToast()
+const ServiceForm = ({ item }: { item?: Service | null }) => {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast()
+    const [selectedDiscount, setSelectedDiscount] = useState<Discount | undefined>(
+        item ? item.discount : undefined
+    );
+    const [selectedCategory, setSelectedCategory] = useState<Category | undefined>(
+        item ? item.category : undefined
+    );
+    
+    const form = useForm<z.infer<typeof ServiceSchema>>({
+        resolver: zodResolver(ServiceSchema),
+        defaultValues: item ? { ...item, discount: item.discount, category: item.category } : {
+            allowDiscount: true,
+            allowWalkin: true,
+            status: true,
+        },
+    });
 
-        const form = useForm<z.infer<typeof formSchema>>({
-            resolver: zodResolver(formSchema),
-            defaultValues: item ? item : {
-                status: false,
-                allowDiscount: false,
-            },
+    const onInvalid = (errors : any ) => {
+        console.error("Creating service failed: ", JSON.stringify(errors));
+        toast({
+            variant: "warning",
+            title: "Uh oh! Something went wrong.", 
+            description: "There was an issue submitting your form please try later"
         });
+    }
 
-        const onInvalid = (errors : any ) => {
-            console.error("Creating service failed: ", JSON.stringify(errors));
+    const onSubmit = async (data: z.infer<typeof ServiceSchema>) => {
+        setIsLoading(true);
+    
+        try {
+            if (item) {
+                await updateService(item.$id!, data);
+                toast({
+                    variant: "default",
+                    title: "Success", 
+                    description: "Service updated succesfully!"
+                });
+            } else {
+                await createService(data);
+                toast({
+                    variant: "default",
+                    title: "Success", 
+                    description: "Service created succesfully!"
+                });
+            }
+            
+            // Redirect to the list page after submission
+            router.push("/services");
+            router.refresh();
+            setIsLoading(false);
+        } catch (error) {
+            console.error("Creating service failed: ", error);
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.", 
                 description: "There was an issue submitting your form please try later"
             });
+            setIsLoading(false);
         }
+    };
 
-        const onSubmit = async (data: z.infer<typeof formSchema>) => {
-            setIsLoading(true);
-        
-            try {
-                if (item) {
-                    await updateService(item.$id, data);
-                    toast({
-                        variant: "default",
-                        title: "Success", 
-                        description: "Service updated succesfully!"
-                    });
-                } else {
-                    await createService(data);
-                    toast({
-                        variant: "default",
-                        title: "Success", 
-                        description: "Service created succesfully!"
-                    });
-                }
-                
-                // Redirect to the list page after submission
-                router.push("/services");
-                router.refresh();
-                setIsLoading(false);
-            } catch (error) {
-                console.error("Creating service failed: ", error);
-                toast({
-                    variant: "destructive",
-                    title: "Uh oh! Something went wrong.", 
-                    description: "There was an issue submitting your form please try later"
-                });
-                setIsLoading(false);
-            }
-        };
+    useEffect(() => {
+        if (item) {
+            setSelectedDiscount(item.discount);
+        }
+    }, [item]);
+
+    useEffect(() => {
+        if (item) {
+            setSelectedCategory(item.category);
+        }
+    }, [item]);
 
     return (        
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                     control={form.control}
                     name="name"
@@ -134,109 +135,184 @@ import ProductCategorySelector from "@/components/layout/product-category-select
                     />
 
                     <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Price</FormLabel>
-                            <FormControl>
-                                <Input
-                                type="number"
-                                placeholder="Enter service price"
-                                className="input-class"
-                                {...field}
-                                />
-                            </FormControl>
+                            <FormLabel>Service category</FormLabel>
+                            <CategorySelector 
+                            type={CategoryType.SERVICE}
+                            value={selectedCategory}
+                            onChange={(cat) => { setSelectedCategory(cat); field.onChange(cat); }}
+                            />
                             <FormMessage />
                         </FormItem>
                         )}
                     />
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
                     <FormField
                         control={form.control}
-                        name="category"
+                        name="price"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Service category</FormLabel>
+                                <FormLabel>Price</FormLabel>
                                     <FormControl>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                <SelectValue placeholder="Select category" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <ProductCategorySelector />
-                                        </Select>
+                                        <Input
+                                            type="number"
+                                            min="1"
+                                            placeholder="Enter service price"
+                                            className="input-class"
+                                            {...field}
+                                            />
                                     </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-
+                
                     <FormField
                         control={form.control}
                         name="allowDiscount"
                         render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Allow discount?</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={String(field.value)}>
+                            <FormItem>
+                                <FormLabel>Allow discount at counter *</FormLabel>
+                                <Select onValueChange={(value) => field.onChange(value === "true")} defaultValue={String(field.value)}>
                                     <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Allow discount on service?" />
-                                    </SelectTrigger>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Enable discounts at counter" />
+                                        </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                    <SelectItem value="false">No</SelectItem>
-                                    <SelectItem value="true">Yes</SelectItem>
+                                        <SelectItem value="true">Discounts ALLOWED at counter</SelectItem>
+                                        <SelectItem value="false">Discounts NOT allowed at counter</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+               
+                    <FormField
+                        control={form.control}
+                        name="discount"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Service discount</FormLabel>
+                            <DiscountSelector 
+                            value={selectedDiscount}
+                            onChange={(disc) => { setSelectedDiscount(disc); field.onChange(disc); }}
+                            />
                             <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    
+                    <FormField
+                        control={form.control}
+                        name="offeringStartTime"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Offering start time</FormLabel>
+                                <FormControl>
+                                    <TimeSelector onChange={field.onChange} value={field.value} />
+                                </FormControl>
+                                <FormMessage />
                             </FormItem>
                             )}
                         />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    
-                    <FormField
-                    control={form.control}
-                    name="startTime"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Offering start time</FormLabel>
-                            <FormControl>
-                                <TimePicker {...field} />
-                                {/* <Input
-                                placeholder="Select start time"
-                                className="input-class"
-                                {...field}
-                                /> */}
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
 
                     <FormField
-                    control={form.control}
-                    name="endTime"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Offering end time</FormLabel>
-                            <FormControl>
-                                <TimePicker {...field} />
-                                {/* <Input
-                                placeholder="Select start time"
-                                className="input-class"
-                                {...field}
-                                /> */}
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
+                        control={form.control}
+                        name="offeringEndTime"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Offering end time</FormLabel>
+                                <FormControl>
+                                    <TimeSelector {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+
+                    <FormField
+                        control={form.control}
+                        name="duration"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Average duration (mins)</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="number"
+                                            min="1"
+                                            placeholder="Average service duration"
+                                            className="input-class"
+                                            {...field}
+                                            />
+                                    </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+
+                    <FormField
+                        control={form.control}
+                        name="concurrentCustomers"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Maximum concurrent customers</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="number"
+                                            min="1"
+                                            placeholder="Maximum customers"
+                                            className="input-class"
+                                            {...field}
+                                            />
+                                    </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+
+                    <FormField
+                        control={form.control}
+                        name="allowWalkin"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Allow walk in's *</FormLabel>
+                                <Select onValueChange={(value) => field.onChange(value === "true")} defaultValue={String(field.value)}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Allow customer walk in's" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="true">Walk in ALLOWED</SelectItem>
+                                        <SelectItem value="false">Walk in NOT allowed</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
                         )}
-                    />
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="status"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Status</FormLabel>
+                                <FormControl>
+                                    <Switch
+                                        id="status"
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                            </FormItem>
+                            )}
+                        />
                 </div>
 
                     
@@ -260,22 +336,7 @@ import ProductCategorySelector from "@/components/layout/product-category-select
                 />
             
 
-                <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <FormControl>
-                            <Switch
-                                id="status"
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                        </FormControl>
-                    </FormItem>
-                    )}
-                />
+                
 
         
                 <div className="flex h-5 items-center space-x-4">

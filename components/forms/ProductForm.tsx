@@ -1,26 +1,27 @@
 'use client'
 
+import React, { useState, useEffect } from 'react';
+import * as z from "zod";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
 import { ReloadIcon } from "@radix-ui/react-icons"
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useForm, useFieldArray } from 'react-hook-form';
-import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input";
-import { Product } from "@/types";
+import { Product, Discount, Category, ProductUnit } from "@/types";
 import { createItem, updateItem } from "@/lib/actions/product.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
-import React, { useEffect } from 'react';
-import { format } from "date-fns"
-import { cn , generateSKU } from "@/lib/utils"
-import { Calendar } from "@/components/ui/calendar"
-import { CalendarIcon } from "@radix-ui/react-icons"
+import { generateSKU } from "@/lib/utils"
 import { Plus , Minus } from "lucide-react"
+import DiscountSelector from "../layout/discount-selector";
+import { CategoryType, ProductSchema } from "@/types/data-schemas"
+import CategorySelector from "@/components/layout/category-selector"
+import UnitSelector from "@/components/layout/unit-selector"
 import {
     Form,
     FormControl,
@@ -28,156 +29,127 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-  } from "@/components/ui/form";
-  import {
-      Select,
-      SelectContent,
-      SelectItem,
-      SelectTrigger,
-      SelectValue,
-    } from "@/components/ui/select"
-    
-  import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-  } from "@/components/ui/popover"
-import DiscountSelector from "../layout/discount-selector";
-
-//Image validation
-const MAX_MB = 5; // Max size in MB
-const MAX_UPLOAD_SIZE = MAX_MB * 1024 * 1024; // Convert MB to bytes
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
-
-
-const DiscountSchema = z.object({
-    $id: z.string(),
-    name: z.string(),
-    code: z.string().optional(),
-    type: z.string(),
-    value: z.number(),
-    redemptionStartDate: z.date().optional(),
-    redemptionEndDate: z.date().optional(),
-    redemptionLimit: z.number().optional(),
-    description: z.string().optional(),
-    status: z.boolean()
-  });
-
-    const formSchema = z.object({
-        name: z.string({
-            required_error: "Product name is required",
-            invalid_type_error: "Product name must be more than 2 characters long",
-        }).min(2),
-        slug: z.string(),
-        sku: z.string(),
-        price: z.number(),
-        category: z.any(),
-        unit: z.any(),
-        //discount: z.lazy(() => DiscountSchema).optional(),
-        discount: z.any(),
-        minimumSellingPrice: z.number().optional(),
-        description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-        allowDiscount: z.boolean(),
-        quantityAlert: z.number().optional(),
-        image: z.instanceof(File)
-        .optional()
-        .refine(
-            (file) => !file || file.size !== 0 || file.size <= MAX_UPLOAD_SIZE,
-            `Max image size is ${MAX_MB}MB`
-        )
-        .refine(
-            (file) => !file || file.type === "" || ACCEPTED_IMAGE_TYPES.includes(file.type),
-            "Only .jpg .jpeg and .png formats are supported"
-        ),
-       
-        status: z.boolean(),
-        variants: z.array(z.object({
-            variantName: z.string(),
-            variantImage: z.any(),
-            variantStatus: z.string()
-        })),
-        quantity: z.number(),
-    });
+} from "@/components/ui/form";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
   
-    const ProductForm = ({ item }: { item?: Product | null }) => {
-        const router = useRouter();
-        const [isLoading, setIsLoading] = useState(false)
-        const { toast } = useToast()
-        const [inputs, setInputs] = useState([{ id: 1 }]);
+const ProductForm = ({ item }: { item?: Product | null }) => {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast()
+    const [inputs, setInputs] = useState([{ id: 1 }]);
 
-        const form = useForm<z.infer<typeof formSchema>>({
-            resolver: zodResolver(formSchema),
-            defaultValues: item ? item : {
-                status: false,
-                quantity: 0,
-                variants: [{ variantName: '', variantImage: null, variantStatus: '' }]
-            },
+    const [selectedDiscount, setSelectedDiscount] = useState<Discount | undefined>(
+        item ? item.discount : undefined
+    );
+
+    const [selectedCategory, setSelectedCategory] = useState<Category | undefined>(
+        item ? item.category : undefined
+    );
+
+    const [selectedUnit, setSelectedUnit] = useState<ProductUnit | undefined>(
+        item ? item.unit : undefined
+    );
+    
+    const form = useForm<z.infer<typeof ProductSchema>>({
+        resolver: zodResolver(ProductSchema),
+        defaultValues: item ? { ...item, discount: item.discount, category: item.category } : {
+            quantity: 0,
+            allowDiscount: true,
+            status: true,
+        },
+    });
+
+    const onInvalid = (errors : any ) => {
+        console.error("Creating product failed: ", JSON.stringify(errors));
+        toast({
+            variant: "warning",
+            title: "Uh oh! Something went wrong.", 
+            description: "There was an issue submitting your form please try later"
         });
+    }
 
-        const { control } = form;
-        const { fields, append, remove } = useFieldArray({
-            control,
-            name: 'variants'
-        });
+const { control } = form;
+const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'variants'
+});
 
-        const onInvalid = (errors : any ) => {
-            toast({
-                variant: "warning",
-                title: "Uh oh! Something went wrong.", 
-                description: "Please complete filling the form before you submit"
-            });
+    
+    // Generate SKU and Slug
+    const nameValue = form.watch('name');
+    useEffect(() => {
+        if (nameValue) {
+            const generatedSKU = generateSKU(nameValue);
+            form.setValue('sku', generatedSKU);
+
+            const generatedSlug = nameValue.toLowerCase().replace(/\s+/g, '-');
+            form.setValue('slug', generatedSlug);
         }
-        
-        // Generate SKU and Slug
-        const nameValue = form.watch('name');
-        useEffect(() => {
-            if (nameValue) {
-                const generatedSKU = generateSKU(nameValue);
-                form.setValue('sku', generatedSKU);
+    }, [nameValue, form.setValue]);
 
-                const generatedSlug = nameValue.toLowerCase().replace(/\s+/g, '-');
-                form.setValue('slug', generatedSlug);
-            }
-        }, [nameValue, form.setValue]);
 
-        const onSubmit = async (data: z.infer<typeof formSchema>) => {
-            setIsLoading(true);
-        
-            try {
-                if (item) {
-                    await updateItem(item.$id, data);
-                    toast({
-                        variant: "default",
-                        title: "Success", 
-                        description: "Product updated succesfully!"
-                    });
-                } else {
-                    await createItem(data);
-                    toast({
-                        variant: "default",
-                        title: "Success", 
-                        description: "Product created succesfully!"
-                    });
-                }
-                
-                // Redirect to the list page after submission
-                router.push("/products");
-                router.refresh();
-                setIsLoading(false);
-            } catch (error: any) {
+    const onSubmit = async (data: z.infer<typeof ProductSchema>) => {
+        setIsLoading(true);
+    
+        try {
+            if (item && item.$id) {
+                await updateItem(item.$id, data);
                 toast({
-                    variant: "destructive",
-                    title: "Uh oh! Something went wrong.", 
-                    description: error.message || "There was an issue submitting your form, please try later"
+                    variant: "success",
+                    title: "Success", 
+                    description: "Product updated succesfully!"
                 });
-            } finally {
-            //delay loading
-            setTimeout(() => {
-                setIsLoading(false);
-                }, 1000); 
+            } else {
+                await createItem(data);
+                toast({
+                    variant: "success",
+                    title: "Success", 
+                    description: "Product created succesfully!"
+                });
             }
-        };
+            
+            // Redirect to the list page after submission
+            router.push("/products");
+            router.refresh();
+            setIsLoading(false);
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Uh oh! Something went wrong.", 
+                description: error.message || "There was an issue submitting your form, please try later"
+            });
+        } finally {
+        //delay loading
+        setTimeout(() => {
+            setIsLoading(false);
+            }, 1000); 
+        }
+    };
+
+    useEffect(() => {
+        if (item) {
+            setSelectedDiscount(item.discount);
+        }
+    }, [item]);
+
+    useEffect(() => {
+        if (item) {
+            setSelectedCategory(item.category);
+        }
+    }, [item]);
+
+    useEffect(() => {
+        if (item) {
+            setSelectedUnit(item.unit);
+        }
+    }, [item]);
 
     return (
         <Form {...form}>
@@ -238,20 +210,34 @@ const DiscountSchema = z.object({
                     />
 
                     
-
+                    <FormField
+                        control={form.control}
+                        name="barcodeid"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Barcode id</FormLabel>
+                            <FormControl>
+                                <Input
+                                placeholder="Bar code id"
+                                className="input-class"
+                                {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
                     <FormField
                         control={form.control}
                         name="category"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Category *</FormLabel>
-                            <FormControl>
-                                <Input
-                                    placeholder="Product category"
-                                    className="input-class"
-                                    {...field}
-                                />
-                            </FormControl>
+                            <FormLabel>Product category</FormLabel>
+                            <CategorySelector 
+                            type={CategoryType.PRODUCT}
+                            value={selectedCategory}
+                            onChange={(cat) => { setSelectedCategory(cat); field.onChange(cat); }}
+                            />
                             <FormMessage />
                         </FormItem>
                         )}
@@ -262,14 +248,11 @@ const DiscountSchema = z.object({
                         name="unit"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Unit *</FormLabel>
-                            <FormControl>
-                                <Input
-                                    placeholder="Stock intake unit"
-                                    className="input-class"
-                                    {...field}
-                                />
-                            </FormControl>
+                            <FormLabel>Unit</FormLabel>
+                            <UnitSelector 
+                                value={selectedUnit}
+                                onChange={(unt) => { setSelectedUnit(unt); field.onChange(unt); }}
+                            />
                             <FormMessage />
                         </FormItem>
                         )}
@@ -280,10 +263,11 @@ const DiscountSchema = z.object({
                         name="discount"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Product Discount</FormLabel>
-                            <FormControl>
-                                <DiscountSelector  {...field} />
-                            </FormControl>
+                            <FormLabel>Product discount</FormLabel>
+                            <DiscountSelector 
+                            value={selectedDiscount}
+                            onChange={(disc) => { setSelectedDiscount(disc); field.onChange(disc); }}
+                            />
                             <FormMessage />
                         </FormItem>
                         )}

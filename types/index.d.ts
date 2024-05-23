@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { Icons } from "@/components/icons";
+import  * as enums from "./data-schemas";
 
 declare type SearchParamProps = {
   params: { [key: string]: string };
@@ -7,22 +8,6 @@ declare type SearchParamProps = {
 };
 //=======================================
 export const phoneNumberRegex = /^[0-9]{10,15}$/;
-
-declare enum CategoryType{
-  SERVICE = "SERVICE",
-  PRODUCT = "PRODUCT",
-}
-
-declare enum DiscountType{
-  PERCENTAGE = "PERCENTAGE",
-  AMOUNT = "AMOUNT",
-}
-
-export enum Gender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-  UNDISCLOSED = "UNDISCLOSED",
-}
 
 declare type Country = {
   name: string;
@@ -103,10 +88,12 @@ declare type Business = {
 /* Product Unit Data types */
 
 declare type ProductUnit = {
-  $id: string;
+  $id?: string;
   name: string;
   shortName: string;
   status: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 };
 
 declare type ProductUnitDto = {
@@ -140,7 +127,8 @@ declare type Category = {
   name: string;
   slug: string;
   categoryType: CategoryType;
-  parent?: string;
+  parent?: Category;
+  discount?: Discount;
   description?: string;
   $createdAt: Date;
   $updatedAt: Date;
@@ -151,7 +139,8 @@ declare type CategoryDto = {
   name: string;
   slug: string;
   type: CategoryType;
-  parent?: string;
+  parent?: Category;
+  discount?: Discount;
   description?: string;
   status: boolean;
 };
@@ -160,7 +149,7 @@ declare type CategoryDto = {
 
 /* Discount */
 declare type Discount = {
-  $id: string;
+  $id?: string;
   name: string;
   code?: string;
   type: DiscountType;
@@ -169,8 +158,8 @@ declare type Discount = {
   redemptionEndDate?: Date;
   redemptionLimit?: number;
   description?: string;
-  $createdAt: Date;
-  $updatedAt: Date;
+  $createdAt?: Date;
+  $updatedAt?: Date;
   status: boolean;
 };
 
@@ -236,38 +225,33 @@ declare type PaymentTypeDto = {
 /* Product */
 
 declare type Product = {
-  $id: string;
+  $id?: string;
   name: string;
   slug: string;
   sku: string;
-  image: string;
   quantity: number;
   quantityAlert?: number;
   allowDiscount: boolean;
-  manufactureDate?: Date;
-  expiryDate?: Date;
-  price: number;
   unit?: ProductUnit;
   category?: Category;
   discount?: Discount;
   description?: string;
   variant?: Variant[];
   status: boolean;
-  $createdAt: Date;
-  $updatedAt: Date;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 };
 
 declare type ProductDto = {
   name: string;
   slug: string;
   sku: string;
-  image: string;
+  image?: File;
   quantity: number;
   quantityAlert?: number;
   allowDiscount: boolean;
   manufactureDate?: Date;
   expiryDate?: Date;
-  price: number;
   unit?: ProductUnit;
   category?: Category;
   discount?: Discount;
@@ -303,27 +287,31 @@ declare type VariantDto = {
 /* Service */
 
 declare type Service = {
-  $id: string;
+  $id?: string;
   name: string;
+  discount?: Discount;
   allowDiscount: boolean;
-  duration?: string;
+  allowWalkin: boolean;
+  duration?: number;
   price: number;
-  startTime?: string;
-  endTime?: string;
+  offeringStartTime?: string;
+  offeringEndTime?: string;
   category: Category;
   description?: string;
   status: boolean;
-  $createdAt: Date;
-  $updatedAt: Date;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 };
 
 declare type ServiceDto = {
   name: string;
+  discount?: Discount;
   allowDiscount: boolean;
-  duration?: string;
+  allowWalkin: boolean;
+  duration?: number;
   price: number;
-  startTime?: string;
-  endTime?: string;
+  offeringStartTime?: string;
+  offeringEndTime?: string;
   category: Category;
   description?: string;
   status: boolean;
@@ -450,6 +438,66 @@ declare type CustomerDto = {
 }
 
 /* End Customer */
+
+
+
+/* Stock */
+
+declare type Inventory = {
+  $id?: string;
+  title: string,
+  variants: InventoryVariant[],
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
+
+declare type InventoryVariant = {
+  $id?: string;
+  name: string,
+  quantity: number,
+  startingQuantity: number;
+  itemsPerUnit?: number,
+  unit?: ProductUnit,
+  lowQuantity: number,
+  barcodeId?: string,
+  image?: string,
+  inventory?: Inventory;
+  status: InventoryStatus,
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
+declare type Stock = {
+  $id?: string;
+  item: InvenvtoryVariant;
+  quantity: number;
+  staff?: Staff;
+  department?: Department;
+  supplier: Supplier;
+  value?: number;
+  description: string;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
+
+/* End Stock */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ========================================
 
 
@@ -486,35 +534,7 @@ declare type Transaction = {
   receiverBankId: string;
 };
 
-declare type Bank = {
-  $id: string;
-  accountId: string;
-  bankId: string;
-  accessToken: string;
-  fundingSourceUrl: string;
-  userId: string;
-  shareableId: string;
-};
 
-declare type AccountTypes =
-  | "depository"
-  | "credit"
-  | "loan "
-  | "investment"
-  | "other";
-
-declare type Category = "Food and Drink" | "Travel" | "Transfer";
-
-declare type CategoryCount = {
-  name: string;
-  count: number;
-  totalCount: number;
-};
-
-declare type Receiver = {
-  firstName: string;
-  lastName: string;
-};
 
 declare type TransferParams = {
   sourceFundingSourceUrl: string;

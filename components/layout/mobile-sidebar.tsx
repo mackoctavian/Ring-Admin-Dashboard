@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { sidebarLinks } from "@/constants";
+import { mainMenu } from "@/types/nav";
 import React from "react";
 import { siteConfig } from "@/config/site";
 
@@ -48,7 +48,7 @@ export default function MobileSidebar({ user }: Props) {
           <div className="mobilenav-sheet">
             <SheetClose asChild>
               <nav className="flex h-full flex-col gap-6 pt-16 text-white">
-                {sidebarLinks.map((item, index) => {
+                {mainMenu.map((item, index) => {
                   // Ensure item.route is defined
                   if (item.route) {
                     const isActive = pathname === item.route || pathname.startsWith(`${item.route}/`);

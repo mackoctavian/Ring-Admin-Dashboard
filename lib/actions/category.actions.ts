@@ -3,7 +3,8 @@
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Category , CategoryDto, CategoryType } from "@/types";
+import { Category , CategoryDto } from "@/types";
+import { CategoryType } from "@/types/data-schemas";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 
 const {

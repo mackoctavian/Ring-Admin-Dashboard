@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/select";
 import { list } from "@/lib/actions/department.actions"
 import { Department } from "@/types";
-import { parseStringify } from "@/lib/utils";
 
 interface Props {
   value?: Department;
@@ -39,7 +38,7 @@ const DepartmentSelector: React.FC<Props> = ({ value, onChange }) => {
   };
 
   return (
-    <Select value={value ? value.$id : ''} onValueChange={handleSelectChange}>
+    <Select value={value ? value.$id : 'Select Department'} onValueChange={handleSelectChange}>
       <SelectTrigger>
         <SelectValue>
           {value ? value.name : 'Select department'}

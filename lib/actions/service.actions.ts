@@ -1,16 +1,17 @@
 'use server';
 
-import { ID, Query } from "node-appwrite";
+import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
 import { Service, ServiceDto } from "@/types";
+import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     SERVICES_COLLECTION: SERVICE_COLLECTION_ID
   } = process.env;
 
-  export const createService = async (service: ServiceDto) => {
+  export const createService = async (service: Service) => {
     try {
       if (!DATABASE_ID || !SERVICE_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
@@ -18,7 +19,7 @@ const {
 
       const { database } = await createAdminClient();
   
-      const item = await database.createDocument(
+      const newItem = await database.createDocument(
         DATABASE_ID!,
         SERVICE_COLLECTION_ID!,
         ID.unique(),
@@ -27,9 +28,13 @@ const {
         }
       )
   
-      return parseStringify(item);
-    } catch (error) {
-      console.error(error);
+      return parseStringify(newItem);
+    } catch (error: any) {
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+      throw Error(JSON.stringify(error));
     }
   }
 
@@ -83,6 +88,10 @@ const {
         throw new Error('Database ID or Collection ID is missing');
       }
 
+      if ( !$id ){
+        throw new Error('Document ID is missing');
+      }
+
       const { database } = await createAdminClient();
   
       const item = await database.deleteDocument(
@@ -96,10 +105,14 @@ const {
     }
   }
 
-  export const updateService = async (id: string, data: ServiceDto) => {  
+  export const updateService = async (id: string, data: Service) => {  
     try {
       if (!DATABASE_ID || !SERVICE_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
+      }
+
+      if ( !id ){
+        throw new Error('Document ID is missing');
       }
 
       const { database } = await createAdminClient();

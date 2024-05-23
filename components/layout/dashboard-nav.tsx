@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { sidebarLinks } from "@/constants";
+import { mainMenu } from "@/types/nav";
 import { Separator } from "@/components/ui/separator"
 // import Footer from "@/components/layout/Footer"
 
@@ -16,7 +16,7 @@ export default function DashboardNav({ user, setOpen }: Props) {
 
   return (
     <>
-      {sidebarLinks.map((item, index) => {
+      {mainMenu.map((item, index) => {
         if (item.type === 'separator') {
           return <Separator key={index} className="my-2" />;
         }

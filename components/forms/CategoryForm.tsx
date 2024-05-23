@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
 import { ReloadIcon } from "@radix-ui/react-icons"
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import React, { useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
@@ -26,86 +26,70 @@ import {
     SelectValue,
   } from "@/components/ui/select"
 import { Input } from "@/components/ui/input";
-import { Category } from "@/types";
+import { Category, Discount } from "@/types";
+import { CategoryType, CategorySchema } from "@/types/data-schemas";
 import { createItem, updateItem } from "@/lib/actions/category.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
-import React, { useEffect } from 'react';
-import ProductCategorySelector from "@/components/layout/product-category-selector"
+import CategorySelector from "@/components/layout/category-selector";
+import DiscountSelector from "../layout/discount-selector";
 
+ const CategoryForm = ({ item }: { item?: Category | null }) => {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false)
+    const { toast } = useToast()
 
-    enum CategoryType{
-        SERVICE = "SERVICE",
-        PRODUCT = "PRODUCT",
-    }
-
-    const formSchema = z.object({
-        slug: z.string().min(1),
-        type: z.enum([CategoryType.SERVICE, CategoryType.PRODUCT], {
-            required_error: "Category type is required",
-            invalid_type_error: "Category type must be either 'Product' or 'Service'",
-        }),
-        name: z.string({
-            required_error: "Product category name is required",
-            invalid_type_error: "Product category name must be more than 2 characters long",
-          }).min(2),
-        parent: z.string().optional(),
-        description: z.string().optional(),
-        status: z.boolean(),
+    const [selectedParent, setSelectedParent] = useState<Category | undefined>(
+        item ? item.parent : undefined
+    );
+    const [selectedDiscount, setSelectedDiscount] = useState<Discount | undefined>(
+        item ? item.discount : undefined
+    );
+    
+    const form = useForm<z.infer<typeof CategorySchema>>({
+        resolver: zodResolver(CategorySchema),
+        defaultValues: item ? { ...item, parent: item.parent, discount: item.discount } : {
+            type: CategoryType.PRODUCT,
+            description: '',
+            status: false,
+        },
     });
 
-  
-    const CategoryForm = ({ item }: { item?: Category | null }) => {
-        const router = useRouter();
-        const [isLoading, setIsLoading] = useState(false)
-        const { toast } = useToast()
-
-        const form = useForm<z.infer<typeof formSchema>>({
-            resolver: zodResolver(formSchema),
-            defaultValues: item ? item : {
-            name: "",
-            slug: "",
-            type: CategoryType.PRODUCT, //default
-            parent: "",
-            description: "",
-            status: false,
-            },
+    const onInvalid = (errors : any ) => {
+        toast({
+            variant: "warning",
+            title: "Uh oh! Something went wrong.", 
+            description: "There was an issue submitting your form please try later"
         });
+        console.error(JSON.stringify(errors));
+    }
 
-        const onInvalid = (errors : any ) => {
-            toast({
-                variant: "destructive",
-                title: "Uh oh! Something went wrong.", 
-                description: "There was an issue submitting your form please try later"
-            });
+    
+    const nameValue = form.watch('name');
+    useEffect(() => {
+        if (nameValue) {
+            const generatedSlug = nameValue.toLowerCase().replace(/\s+/g, '-');
+            form.setValue('slug', generatedSlug);
         }
-
-        
-        const nameValue = form.watch('name');
-        useEffect(() => {
-            if (nameValue) {
-                const generatedSlug = nameValue.toLowerCase().replace(/\s+/g, '-');
-                form.setValue('slug', generatedSlug);
-            }
-        }, [nameValue, form.setValue]);
+    }, [nameValue, form.setValue]);
         
 
         
-    const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    const onSubmit = async (data: z.infer<typeof CategorySchema>) => {
         setIsLoading(true);
     
         try {
             if (item) {
                 await updateItem(item.$id, data);
                 toast({
-                    variant: "default",
+                    variant: "success",
                     title: "Success", 
                     description: "Product category updated succesfully!"
                 });
             } else {
                 await createItem(data);
                 toast({
-                    variant: "default",
+                    variant: "success",
                     title: "Success", 
                     description: "Product category created succesfully!"
                 });
@@ -128,6 +112,18 @@ import ProductCategorySelector from "@/components/layout/product-category-select
             }, 1000); 
         }
     };
+
+    useEffect(() => {
+        if (item) {
+          setSelectedParent(item.parent);
+        }
+      }, [item]);
+
+    useEffect(() => {
+        if (item) {
+          setSelectedDiscount(item.discount);
+        }
+    }, [item]);
 
     return (
         <Form {...form}>
@@ -172,13 +168,43 @@ import ProductCategorySelector from "@/components/layout/product-category-select
                             </FormItem>
                         )}
                         />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                    <FormField
+                        control={form.control}
+                        name="parent"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Parent category</FormLabel>
+                                <CategorySelector
+                                type={ form.watch("type") }
+                                value={selectedParent}
+                                onChange={(cat) => { setSelectedParent(cat); field.onChange(cat); }}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="discount"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Discount</FormLabel>
+                                <DiscountSelector
+                                value={selectedDiscount}
+                                onChange={(disc) => { setSelectedDiscount(disc); field.onChange(disc); }}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                    />
+
                     <FormField
                         control={form.control}
                         name="slug"
                         render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="hidden">
                                 <FormLabel>Slug ( Auto-Generated )</FormLabel>
                                 <FormControl>
                                     <Input
@@ -188,26 +214,6 @@ import ProductCategorySelector from "@/components/layout/product-category-select
                                     {...field}
                                     />
                                 </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="parent"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Parent category</FormLabel>
-                                    <FormControl>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                <SelectValue placeholder="Select parent" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <ProductCategorySelector type={ form.watch("type") }  />
-                                        </Select>
-                                    </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}

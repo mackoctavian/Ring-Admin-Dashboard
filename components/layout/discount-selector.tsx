@@ -1,4 +1,3 @@
-"use client";
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -7,33 +6,43 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  SelectGroup,
-  SelectLabel,
 } from "@/components/ui/select";
 import { list } from "@/lib/actions/discount.actions"
 import { Discount } from "@/types";
-import { parseStringify } from "@/lib/utils";
 
 interface Props {
   value?: Discount;
   onChange: (value: Discount) => void;
 }
 
-export default function DiscountSelector({ value, onChange }: Props) {
+const DiscountSelector: React.FC<Props> = ({ value, onChange }) => {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
 
   useEffect(() => {
     async function fetchDiscounts() {
-      const discountsData = await list();
-      setDiscounts(discountsData);
+      try {
+        const discountsData = await list();
+        setDiscounts(discountsData);
+      } catch (error) {
+        console.error('Error fetching discounts:', error);
+      }
     }
     fetchDiscounts();
   }, []);
 
+  const handleSelectChange = (value: string) => {
+    const selectedDiscount = discounts.find(disc => disc.$id === value);
+    if (selectedDiscount) {
+      onChange(selectedDiscount);
+    }
+  };
+
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value ? value.$id : 'Select Discount'} onValueChange={handleSelectChange}>
       <SelectTrigger>
-        <SelectValue placeholder="Select discount" />
+        <SelectValue>
+          {value ? value.name : 'Select Discount'}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {discounts.map((discount) => (
@@ -44,4 +53,6 @@ export default function DiscountSelector({ value, onChange }: Props) {
       </SelectContent>
     </Select>
   );
-}
+};
+
+export default DiscountSelector;

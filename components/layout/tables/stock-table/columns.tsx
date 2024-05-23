@@ -1,10 +1,10 @@
 "use client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { InventoryCategory } from "@/data/models/inventory-category-model";
+import { Stock } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 
-export const columns: ColumnDef<InventoryCategory>[] = [
+export const columns: ColumnDef<Stock>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -21,28 +21,28 @@ export const columns: ColumnDef<InventoryCategory>[] = [
         aria-label="Select row"
       />
     ),
-    enableSorting: true,
+    enableSorting: false,
     enableHiding: false,
   },
   {
-    accessorKey: "categoryName",
-    header: "NAME",
+    accessorKey: "item",
+    header: "ITEM",
   },
   {
-    accessorKey: "categorySlug",
-    header: "SLUG",
+    accessorKey: "quantity",
+    header: "QUANTITY",
   },
   {
-    accessorKey: "categoryType",
-    header: "TYPE",
+    accessorKey: "supplier",
+    header: "SUPPLIER",
   },
   {
-    accessorKey: "parent",
-    header: "PARENT ",
+    accessorKey: "value",
+    header: "VALUE",
   },
   {
-    accessorKey: "description",
-    header: "DESCRIPTION",
+    accessorKey: "createdAt",
+    header: "DATE",
   },
   {
     id: "actions",

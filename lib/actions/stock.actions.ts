@@ -3,27 +3,28 @@
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Product, ProductDto } from "@/types";
+import { Stock } from "@/types";
+import { CategoryType } from "@/types/data-schemas";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
-    PRODUCTS_COLLECTION: PRODUCTS_COLLECTION_ID,
+    STOCK_VARIANTS_COLLECTION: STOCK_VARIANTS_COLLECTION,
+    STOCK_COLLECTION: STOCK_COLLECTION_ID
   } = process.env;
 
-  export const createItem = async (item: Product) => {
+
+  export const createItem = async (item: Stock) => {
     try {
-      if (!DATABASE_ID || !PRODUCTS_COLLECTION_ID) {
+      if (!DATABASE_ID || !STOCK_COLLECTION_ID) {
         throw Error('Database ID or Collection ID is missing');
       }
-
-      console.error(JSON.stringify(item) );
 
       const { database } = await createAdminClient();
   
       const newItem = await database.createDocument(
         DATABASE_ID!,
-        PRODUCTS_COLLECTION_ID!,
+        STOCK_COLLECTION_ID!,
         ID.unique(),
         {
           ...item,
@@ -36,13 +37,13 @@ const {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
-      throw Error(JSON.stringify(error));
+      throw Error(errorMessage);
     }
   }
 
   export const list = async ( ) => {
     try {
-      if (!DATABASE_ID || !PRODUCTS_COLLECTION_ID) {
+      if (!DATABASE_ID || !STOCK_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
@@ -50,7 +51,7 @@ const {
 
       const items = await database.listDocuments(
         DATABASE_ID,
-        PRODUCTS_COLLECTION_ID,
+        STOCK_COLLECTION_ID,
       );
 
       return parseStringify(items.documents);
@@ -62,11 +63,13 @@ const {
 
   export const getItems = async (
     q?: string,
+    parent?: string | null | 'NOT_EMPTY',
+    type?: CategoryType | null,
     status?: boolean | null,
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    if (!DATABASE_ID || !PRODUCTS_COLLECTION_ID) {
+    if (!DATABASE_ID || !STOCK_COLLECTION_ID) {
       throw new Error('Database ID or Collection ID is missing');
     }
   
@@ -83,14 +86,14 @@ const {
       if (q) {
         queries.push(Query.search('name', q));
       }
-  
+
       if (status) {
         queries.push(Query.equal('status', status));
       }
   
       const items = await database.listDocuments(
         DATABASE_ID,
-        PRODUCTS_COLLECTION_ID,
+        STOCK_COLLECTION_ID,
         queries
       );
   
@@ -110,7 +113,7 @@ const {
 
   export const getItem = async (id: string) => {
     try {
-      if (!DATABASE_ID || !PRODUCTS_COLLECTION_ID) {
+      if (!DATABASE_ID || !STOCK_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
@@ -122,7 +125,7 @@ const {
   
       const item = await database.listDocuments(
         DATABASE_ID!,
-        PRODUCTS_COLLECTION_ID!,
+        STOCK_COLLECTION_ID!,
         [Query.equal('$id', id)]
       )
   
@@ -136,9 +139,9 @@ const {
     }
   }
 
-  export const deleteItem = async ({ $id }: Product) => {
+  export const deleteItem = async ({ $id }: Stock) => {
     try {
-      if (!DATABASE_ID || !PRODUCTS_COLLECTION_ID) {
+      if (!DATABASE_ID || !STOCK_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
@@ -146,7 +149,7 @@ const {
   
       const item = await database.deleteDocument(
         DATABASE_ID!,
-        PRODUCTS_COLLECTION_ID!,
+        STOCK_COLLECTION_ID!,
         $id);
   
       return parseStringify(item);
@@ -159,9 +162,9 @@ const {
     }
   }
 
-  export const updateItem = async (id: string, data: ProductDto) => {  
+  export const updateItem = async (id: string, data: Stock) => {  
     try {
-      if (!DATABASE_ID || !PRODUCTS_COLLECTION_ID) {
+      if (!DATABASE_ID || !STOCK_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
 
@@ -169,7 +172,7 @@ const {
   
       const item = await database.updateDocument(
         DATABASE_ID!,
-        PRODUCTS_COLLECTION_ID!,
+        STOCK_COLLECTION_ID!,
         id,
         data);
   

@@ -40,7 +40,7 @@ export default async function Page({ searchParams }: ParamsProps) {
             <Heading title={`Product units`} total={total.toString()} description="Manage product units" />
 
             <Link href={"/units/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add New
+                <Plus className="mr-2 h-4 w-4" /> Add Unit
             </Link>
         </div>
         <Separator />

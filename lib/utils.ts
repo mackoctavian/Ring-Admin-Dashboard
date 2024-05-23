@@ -75,14 +75,24 @@ export const formatDateTime = (dateString: Date) => {
   };
 };
 
-export function formatAmount(amount: number): string {
+export function formatAmount(value: number): string {
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "TZS",
     minimumFractionDigits: 2,
   });
 
-  return formatter.format(amount);
+  return formatter.format(value);
+}
+
+export function formatPercentage(value: number): string {
+  const formatter = new Intl.NumberFormat("en-US", {
+    style: "percent",
+    currency: "%",
+    minimumFractionDigits: 1,
+  });
+
+  return formatter.format(value);
 }
 
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));

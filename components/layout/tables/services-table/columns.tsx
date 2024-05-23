@@ -4,6 +4,7 @@ import { Service } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { StateColumn } from "../state-column";
+import { MoneyColumn } from "../money-colum";
 
 export const columns: ColumnDef<Service>[] = [
   {
@@ -30,12 +31,21 @@ export const columns: ColumnDef<Service>[] = [
     header: "NAME",
   },
   {
-    accessorKey: "price",
-    header: "PRICE",
+    accessorKey: "category.name",
+    header: "CATEGORY",
   },
   {
-    accessorKey: "duration",
+    header: "COST",
+    id: "price",
+    cell: ({ row }) => <MoneyColumn value={row.original.price} />,
+  },
+  {
+    id: "duration",
     header: "DURATION",
+    cell: ({ row }) => {
+      const duration = row.original.duration;
+      return duration ? `${duration} mins` : "";
+    },
   },
   {
     accessorKey: "offeringStartTime",
@@ -44,10 +54,6 @@ export const columns: ColumnDef<Service>[] = [
   {
     accessorKey: "offeringEndTime",
     header: "END TIME",
-  },
-  {
-    accessorKey: "description",
-    header: "DESCRIPTION",
   },
   {
     header: "STATUS",

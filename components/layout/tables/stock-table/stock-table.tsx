@@ -40,7 +40,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey: string;
   pageNo: number;
-  totalUsers: number;
+  total: number;
   pageSizeOptions?: number[];
   pageCount: number;
   searchParams?: {
@@ -48,12 +48,12 @@ interface DataTableProps<TData, TValue> {
   };
 }
 
-export function InventoryCategoryTable<TData, TValue>({
+export function StockTable<TData, TValue>({
   columns,
   data,
   pageNo,
   searchKey,
-  totalUsers,
+  total,
   pageCount,
   pageSizeOptions = [10, 20, 30, 40, 50],
 }: DataTableProps<TData, TValue>) {
@@ -67,10 +67,6 @@ export function InventoryCategoryTable<TData, TValue>({
   const per_page = searchParams?.get("limit") ?? "10";
   const perPageAsNumber = Number(per_page);
   const fallbackPerPage = isNaN(perPageAsNumber) ? 10 : perPageAsNumber;
-
-  /* this can be used to get the selectedrows 
-  console.log("value", table.getFilteredSelectedRowModel());
-  */
 
   // Create query string
   const createQueryString = React.useCallback(
@@ -107,9 +103,8 @@ export function InventoryCategoryTable<TData, TValue>({
         scroll: false,
       },
     );
+  }, [pageIndex, pageSize, createQueryString, pathname, router]);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageIndex, pageSize]);
 
   const table = useReactTable({
     data,
@@ -128,33 +123,7 @@ export function InventoryCategoryTable<TData, TValue>({
 
   const searchValue = table.getColumn(searchKey)?.getFilterValue() as string;
 
-  // React.useEffect(() => {
-  //   if (debounceValue.length > 0) {
-  //     router.push(
-  //       `${pathname}?${createQueryString({
-  //         [selectedOption.value]: `${debounceValue}${
-  //           debounceValue.length > 0 ? `.${filterVariety}` : ""
-  //         }`,
-  //       })}`,
-  //       {
-  //         scroll: false,
-  //       }
-  //     )
-  //   }
-
-  //   if (debounceValue.length === 0) {
-  //     router.push(
-  //       `${pathname}?${createQueryString({
-  //         [selectedOption.value]: null,
-  //       })}`,
-  //       {
-  //         scroll: false,
-  //       }
-  //     )
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [debounceValue, filterVariety, selectedOption.value])
-
+  
   React.useEffect(() => {
     if (searchValue?.length > 0) {
       router.push(
@@ -182,8 +151,6 @@ export function InventoryCategoryTable<TData, TValue>({
     }
 
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchValue]);
 
   return (
@@ -204,12 +171,7 @@ export function InventoryCategoryTable<TData, TValue>({
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                      {header.isPlaceholder ? null : flexRender( header.column.columnDef.header, header.getContext(), )}
                     </TableHead>
                   );
                 })}
@@ -219,10 +181,7 @@ export function InventoryCategoryTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -256,16 +215,9 @@ export function InventoryCategoryTable<TData, TValue>({
               <p className="whitespace-nowrap text-sm font-medium">
                 Rows per page
               </p>
-              <Select
-                value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => {
-                  table.setPageSize(Number(value));
-                }}
-              >
+              <Select value={`${table.getState().pagination.pageSize}`} onValueChange={(value) => { table.setPageSize(Number(value)); }}>
                 <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue
-                    placeholder={table.getState().pagination.pageSize}
-                  />
+                  <SelectValue placeholder={table.getState().pagination.pageSize} />
                 </SelectTrigger>
                 <SelectContent side="top">
                   {pageSizeOptions.map((pageSize) => (
@@ -289,35 +241,32 @@ export function InventoryCategoryTable<TData, TValue>({
               variant="outline"
               className="hidden h-8 w-8 p-0 lg:flex"
               onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <DoubleArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
+              disabled={!table.getCanPreviousPage()}>
+                <DoubleArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button
               aria-label="Go to previous page"
               variant="outline"
               className="h-8 w-8 p-0"
               onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
+              disabled={!table.getCanPreviousPage()} >
+                <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button
               aria-label="Go to next page"
               variant="outline"
               className="h-8 w-8 p-0"
               onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+              disabled={!table.getCanNextPage()}>
+                <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button
               aria-label="Go to last page"
               variant="outline"
               className="hidden h-8 w-8 p-0 lg:flex"
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}>
-              <DoubleArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+              disabled={!table.getCanNextPage()} >
+                <DoubleArrowRightIcon className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </div>
