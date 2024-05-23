@@ -39,7 +39,7 @@ export default async function Page({ searchParams }: ParamsProps) {
             <Heading title={`Services`} total={total.toString()} description="Manage services" />
 
             <Link href={"/services/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add New
+                <Plus className="mr-2 h-4 w-4" /> Add Service
             </Link>
         </div>
         <Separator />

@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: ParamsProps) {
             <Heading title={`Suppliers`} total={total.toString()} description="Manage suppliers" />
 
             <Link href={"/suppliers/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add New
+                <Plus className="mr-2 h-4 w-4" /> Add Supplier
             </Link>
         </div>
         <Separator />

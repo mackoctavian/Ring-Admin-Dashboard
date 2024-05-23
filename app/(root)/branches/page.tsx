@@ -39,7 +39,7 @@ export default async function Page({ searchParams }: ParamsProps) {
             <Heading title={`Branches`} total={total.toString()} description="Manage branches" />
 
             <Link href={"/branches/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add New
+                <Plus className="mr-2 h-4 w-4" /> Add Branch / Location
             </Link>
         </div>
         <Separator />
