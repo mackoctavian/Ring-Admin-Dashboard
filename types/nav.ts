@@ -18,17 +18,17 @@ export const mainMenu = [
     },
     { type: 'separator' },
     {
-      route: "/sales-reports",
+      route: "/#",
       icon: "/icons/icons/sales-report.svg",
       label: "Sales Reports",
     },
     {
-      route: "/inventory-reports",
+      route: "/#",
       icon: "/icons/icons/inventory-report.svg",
       label: "Inventory Reports",
     },
     {
-      route: "/profit-and-loss",
+      route: "/#",
       icon: "/icons/icons/invoices.svg",
       label: "Profit & Loss Report",
     },
