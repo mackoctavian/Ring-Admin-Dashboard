@@ -32,6 +32,7 @@ const {
   
       return parseStringify(newItem);
     } catch (error: any) {
+      console.error(JSON.stringify(error));
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
@@ -86,18 +87,25 @@ const {
         queries.push(Query.search('name', q));
       }
   
-      // if (parent !== undefined) {
-      //   if (parent === null) {
-      //     queries.push(Query.isNull('parent'));
-      //   } else if (parent === '') {
-      //     queries.push(Query.equal('parent', ''));
-      //   } else if (parent === 'NOT_EMPTY') {
-      //     queries.push(Query.isNotNull('parent'));
-      //     queries.push(Query.notEqual('parent', ''));
-      //   } else {
-      //     queries.push(Query.search('parent', parent));
-      //   }
-      // }
+      if (parent !== undefined) {
+        // Return null parent
+        if (parent === null) {
+          queries.push(Query.isNull('parent'));
+
+        // Return results that have a parent
+        } else if (parent === 'NOT_EMPTY') {
+          queries.push(Query.isNotNull('parent'));
+          queries.push(Query.notEqual('parent', ''));
+        
+        // Return search data  
+        } else if (parent !== '') {
+          queries.push(Query.search('parent', parent));
+       
+        // Return all records 
+        } else {
+          //do nothing
+        }
+      }
   
       if (type) {
         queries.push(Query.search('type', type));
@@ -119,6 +127,8 @@ const {
   
       return parseStringify(items.documents);
     } catch (error: any) {
+      console.error( JSON.stringify(error) );
+
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);

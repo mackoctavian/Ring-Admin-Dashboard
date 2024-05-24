@@ -9,9 +9,9 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Stock } from "@/types";
-import { StockSchema, InventoryStatus, StockVariantSchema } from "@/types/data-schemas";
-import { createItem, updateItem } from "@/lib/actions/stock.actions";
+import { InventoryVariant, Staff, Supplier, Department } from "@/types";
+import { StockSchema } from "@/types/data-schemas";
+import { createItem } from "@/lib/actions/stock.actions";
 import { useToast } from "@/components/ui/use-toast";
 import CancelButton from "../layout/cancel-button";
 import DepartmentSelector from "@/components/layout/department-selector";
@@ -28,47 +28,30 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-
-const formSchema = z.object({
-  items: z.array(
-    z.object({
-      item: z.object({
-        $id: z.string(),
-        name: z.string(),
-      }),
-      quantity: z.number().min(1, "Quantity must be at least 1"),
-      staff: z
-        .object({
-          $id: z.string(),
-          name: z.string(),
-        })
-        .optional(),
-      department: z
-        .object({
-          $id: z.string(),
-          name: z.string(),
-        })
-        .optional(),
-      supplier: z.object({
-        $id: z.string(),
-        name: z.string(),
-      }),
-      value: z.number().optional(),
-    })
-  ).min(1, "At least one item is required"),
+export const StockIntakeSchema = z.object({
+  items: z
+    .array(StockSchema)
+    .min(1, "There must be at least one record before submitting"),
 });
 
-type FormSchemaType = z.infer<typeof formSchema>;
 
-const StockForm = () => {
+const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVariant[] | undefined, staff: Staff[], suppliers: Supplier[], departments: Department[] }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  const form = useForm<FormSchemaType>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof StockIntakeSchema>>({
+    resolver: zodResolver(StockIntakeSchema),
     defaultValues: {
-      items: [{ item: { $id: "", name: "" }, quantity: 1, staff: undefined, department: undefined, supplier: { $id: "", name: "" }, value: undefined }],
+      items: [
+        { 
+          item: undefined, 
+          quantity: 1, 
+          staff: undefined, 
+          department: undefined, 
+          supplier: undefined, 
+        }
+      ],
     },
   });
 
@@ -86,12 +69,12 @@ const StockForm = () => {
     console.error("Recording stock intake failed: ", JSON.stringify(errors));
   };
 
-  const onSubmit = async (data: FormSchemaType) => {
+  const onSubmit = async (data: z.infer<typeof StockIntakeSchema>) => {
     setIsLoading(true);
 
     try {
       console.info("Submitted data", JSON.stringify(data));
-      await createItem(data); // Implement createItem function
+      await createItem(data.items);
       toast({
         variant: "success",
         title: "Success",
@@ -99,7 +82,7 @@ const StockForm = () => {
       });
 
       router.push("/stock");
-      setIsLoading(false);
+      router.refresh();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -118,6 +101,7 @@ const StockForm = () => {
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
         {fields.map((field, index) => (
           <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 border p-4 rounded-md">
+            
             <FormField
               control={form.control}
               name={`items.${index}.item`}
@@ -126,14 +110,16 @@ const StockForm = () => {
                   <FormLabel>Item</FormLabel>
                   <FormControl>
                     <InventorySelector
-                      value={field.value.$id}
-                      onChange={(value) => field.onChange({ $id: value.$id, name: value.name })}
+                       value={field.value}
+                       item={item}
+                       onChange={(inventoryItem) => field.onChange(inventoryItem)}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            
             <FormField
               control={form.control}
               name={`items.${index}.quantity`}
@@ -147,54 +133,7 @@ const StockForm = () => {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name={`items.${index}.staff`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Staff</FormLabel>
-                  <FormControl>
-                    <StaffSelector
-                      value={field.value?.$id || ""}
-                      onChange={(value) => field.onChange(value ? { $id: value.$id, name: value.name } : undefined)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={`items.${index}.department`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Department</FormLabel>
-                  <FormControl>
-                    <DepartmentSelector
-                      value={field.value?.$id || ""}
-                      onChange={(value) => field.onChange(value ? { $id: value.$id, name: value.name } : undefined)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={`items.${index}.supplier`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Supplier</FormLabel>
-                  <FormControl>
-                    <SupplierSelector
-                      value={field.value.$id}
-                      onChange={(value) => field.onChange({ $id: value.$id, name: value.name })}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             <FormField
               control={form.control}
               name={`items.${index}.value`}
@@ -209,12 +148,65 @@ const StockForm = () => {
               )}
             />
 
+            <FormField
+              control={form.control}
+              name={`items.${index}.staff`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Staff</FormLabel>
+                  <FormControl>
+                    <StaffSelector
+                      value={field.value}
+                      staff={staff}
+                      onChange={(staffItem) => field.onChange(staffItem)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name={`items.${index}.department`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Department</FormLabel>
+                  <FormControl>
+                    <DepartmentSelector
+                      value={field.value}
+                      departments={departments}
+                      onChange={(department) => field.onChange(department)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={`items.${index}.supplier`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Supplier</FormLabel>
+                  <FormControl>
+                    <SupplierSelector
+                      value={field.value}
+                      suppliers={suppliers}
+                      onChange={(supplier) => field.onChange(supplier)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+
             <Button
               variant="destructive"
               type="button"
               onClick={() => fields.length > 1 && remove(index)}
-              disabled={fields.length === 1}
-            >
+              disabled={fields.length === 1}>
               Remove Item
             </Button>
           </div>
@@ -224,20 +216,21 @@ const StockForm = () => {
           type="button"
           onClick={() =>
             append({
-              item: { $id: "", name: "" },
+              item: undefined,
               quantity: 1,
               staff: undefined,
               department: undefined,
-              supplier: { $id: "", name: "" },
+              supplier: undefined,
               value: undefined,
             })
-          }
-        >
+          }>
           Add Item
         </Button>
 
         <div className="flex h-5 items-center space-x-4">
           <CancelButton />
+          
+          <Separator orientation="vertical" />
 
           <Button type="submit" disabled={isLoading}>
             {isLoading ? (
@@ -245,7 +238,7 @@ const StockForm = () => {
                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
               </>
             ) : (
-              "Save Stock Intake"
+              "Record Stock Intake"
             )}
           </Button>
         </div>

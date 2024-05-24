@@ -9,12 +9,14 @@ import { getStatusMessage, HttpStatusCode } from '../status-handler';
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
-    STOCK_VARIANTS_COLLECTION: STOCK_VARIANTS_COLLECTION,
+    INVENTORY_VARIANTS_COLLECTION: INVENTORY_COLLECTION_ID,
     STOCK_COLLECTION: STOCK_COLLECTION_ID
   } = process.env;
 
 
-  export const createItem = async (item: Stock) => {
+  export const createItem = async (items: Stock[]) => {
+    let response = null;
+
     try {
       if (!DATABASE_ID || !STOCK_COLLECTION_ID) {
         throw Error('Database ID or Collection ID is missing');
@@ -22,17 +24,25 @@ const {
 
       const { database } = await createAdminClient();
   
-      const newItem = await database.createDocument(
-        DATABASE_ID!,
-        STOCK_COLLECTION_ID!,
-        ID.unique(),
-        {
-          ...item,
-        }
-      )
+      for (const item of items) {
+        //increase item quantity
+        item.item.quantity =  item.item.quantity + item.quantity;
+
+        response = await database.createDocument(
+          DATABASE_ID!,
+          STOCK_COLLECTION_ID!,
+          ID.unique(),
+          {
+            ...item,
+          }
+        )
+      }
+      
   
-      return parseStringify(newItem);
+      return parseStringify(response);
     } catch (error: any) {
+      console.error(parseStringify(error));
+
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);

@@ -14,13 +14,11 @@ const {
   } = process.env;
 
 
-  export const createItem = async (item: Inventory) => {
+  export const createItem = async (items: Inventory) => {
     try {
       if (!DATABASE_ID || !INVENTORY_COLLECTION_ID) {
         throw Error('Database ID or Collection ID is missing');
       }
-
-      
 
       const { database } = await createAdminClient();
   
@@ -29,14 +27,12 @@ const {
         INVENTORY_COLLECTION_ID!,
         ID.unique(),
         {
-          ...item,
+          ...items,
         }
       )
   
       return parseStringify(newItem);
     } catch (error: any) {
-      console.log("ACTIONS DATA ERROR" + JSON.stringify(error));
-
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);

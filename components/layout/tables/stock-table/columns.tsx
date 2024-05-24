@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Stock } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
+import { MoneyColumn } from "../money-colum";
 
 export const columns: ColumnDef<Stock>[] = [
   {
@@ -25,7 +26,7 @@ export const columns: ColumnDef<Stock>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "item",
+    accessorKey: "item.name",
     header: "ITEM",
   },
   {
@@ -33,15 +34,16 @@ export const columns: ColumnDef<Stock>[] = [
     header: "QUANTITY",
   },
   {
-    accessorKey: "supplier",
+    accessorKey: "supplier.name",
     header: "SUPPLIER",
   },
   {
-    accessorKey: "value",
-    header: "VALUE",
+    header: "COST",
+    id: "value",
+    cell: ({ row }) => <MoneyColumn value={row.original.value} />,
   },
   {
-    accessorKey: "createdAt",
+    accessorKey: "$createdAt",
     header: "DATE",
   },
   {

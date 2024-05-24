@@ -31,7 +31,7 @@ import { CategoryType, CategorySchema } from "@/types/data-schemas";
 import { createItem, updateItem } from "@/lib/actions/category.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
-import CategorySelector from "@/components/layout/category-selector";
+import ParentCategorySelector from "@/components/layout/parent-category-selector";
 import DiscountSelector from "../layout/discount-selector";
 
  const CategoryForm = ({ item }: { item?: Category | null }) => {
@@ -64,7 +64,6 @@ import DiscountSelector from "../layout/discount-selector";
         console.error(JSON.stringify(errors));
     }
 
-    
     const nameValue = form.watch('name');
     useEffect(() => {
         if (nameValue) {
@@ -73,7 +72,6 @@ import DiscountSelector from "../layout/discount-selector";
         }
     }, [nameValue, form.setValue]);
         
-
         
     const onSubmit = async (data: z.infer<typeof CategorySchema>) => {
         setIsLoading(true);
@@ -175,7 +173,7 @@ import DiscountSelector from "../layout/discount-selector";
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Parent category</FormLabel>
-                                <CategorySelector
+                                <ParentCategorySelector
                                 type={ form.watch("type") }
                                 value={selectedParent}
                                 onChange={(cat) => { setSelectedParent(cat); field.onChange(cat); }}

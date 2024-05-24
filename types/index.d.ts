@@ -325,7 +325,7 @@ declare type ServiceDto = {
 /* Supplier */
 
 declare type Supplier = {
-  $id: string;
+  $id?: string | undefined;
   name: string;
   phoneNumber: string;
   email?: string;
@@ -333,8 +333,8 @@ declare type Supplier = {
   description?: string;
   contactPerson?: string;
   status: boolean;
-  $createdAt: Date;
-  $updatedAt: Date;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
 
 declare type SupplierDto = {
@@ -354,7 +354,7 @@ declare type SupplierDto = {
 /* Staff */
 
 declare type Staff = {
-  $id: string;
+  $id?: string | undefined;
   name: string;
   email: string;
   phoneNumber: string;
@@ -370,8 +370,8 @@ declare type Staff = {
   department?: Department;
   image?: string;
   status: boolean;
-  $createdAt: Date;
-  $updatedAt: Date;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
 
 declare type StaffDto = {
@@ -476,7 +476,6 @@ declare type Stock = {
   department?: Department;
   supplier: Supplier;
   value?: number;
-  description: string;
   $createdAt?: Date;
   $updatedAt?: Date;
 }

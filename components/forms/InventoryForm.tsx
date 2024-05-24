@@ -22,14 +22,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { stringify } from "flatted";
 import UnitSelector from "../layout/unit-selector";
-
 
 const InventoryForm = ({ item, units }: { item?: { title: string; variants: InventoryVariant[] } | null, units: ProductUnit[] | null }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const isEditMode = Boolean(item);
 
   const form = useForm<z.infer<typeof InventorySchema>>({
     resolver: zodResolver(InventorySchema),
@@ -41,7 +40,7 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
         },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray({
     control: form.control,
     name: "variants",
   });
@@ -52,16 +51,26 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
       title: "Uh oh! Something went wrong.",
       description: "There was an issue submitting your form please try later",
     });
-    console.error("Creating inventory failed: ", stringify(errors));
+    console.error("Creating inventory failed: ", JSON.stringify(errors));
   };
 
   const onSubmit = async (data: z.infer<typeof InventorySchema>) => {
     setIsLoading(true);
 
     try {
-      //transform to appwrite object
-      if ( item && item.$id ) {
-        console.info( data );
+      // Update the status of each variant based on the quantities
+      data.variants = data.variants.map(variant => {
+        if (variant.startingQuantity === 0) {
+          variant.status = InventoryStatus.OUT_OF_STOCK;
+        } else if (variant.startingQuantity <= variant.lowQuantity) {
+          variant.status = InventoryStatus.LOW_STOCK;
+        } else {
+          variant.status = InventoryStatus.IN_STOCK;
+        }
+        return variant;
+      });
+
+      if (isEditMode && item?.$id) {
         await updateItem(item.$id, data);
         toast({
           variant: "success",
@@ -69,7 +78,7 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
           description: "Inventory item updated successfully!",
         });
       } else {
-        console.info( "Submitted data" + JSON.stringify(data) );
+        console.info("Submitted data" + JSON.stringify(data));
         await createItem(data);
         toast({
           variant: "success",
@@ -79,6 +88,7 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
       }
 
       router.push("/inventory");
+      router.refresh();
       setIsLoading(false);
     } catch (error: any) {
       toast({
@@ -92,6 +102,27 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
       }, 1000);
     }
   };
+
+  // Update variant status whenever startingQuantity or lowQuantity changes
+  useEffect(() => {
+    fields.forEach((field, index) => {
+      const startingQuantity = form.watch(`variants.${index}.startingQuantity`);
+      const lowQuantity = form.watch(`variants.${index}.lowQuantity`);
+
+      let status;
+      if (startingQuantity === 0) {
+        status = InventoryStatus.OUT_OF_STOCK;
+      } else if (startingQuantity <= lowQuantity) {
+        status = InventoryStatus.LOW_STOCK;
+      } else {
+        status = InventoryStatus.IN_STOCK;
+      }
+
+      if (status !== field.status) {
+        update(index, { ...field, status });
+      }
+    });
+  }, [fields, form]);
 
   return (
     <Form {...form}>
@@ -125,6 +156,7 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
                 </FormItem>
               )}
             />
+            
             <FormField
               control={form.control}
               name={`variants.${index}.startingQuantity`}
@@ -132,12 +164,13 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
                 <FormItem>
                   <FormLabel>Starting quantity</FormLabel>
                   <FormControl>
-                    <Input type="number" min="0" placeholder="Starting quantity" className="input-class" {...field} />
+                    <Input type="number" min="0" placeholder="Starting quantity" className="input-class" {...field} readOnly={isEditMode} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name={`variants.${index}.quantity`}
@@ -145,12 +178,13 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
                 <FormItem className='hidden'>
                   <FormLabel>Quantity</FormLabel>
                   <FormControl>
-                    <Input type="number" min="0" placeholder="Quantity" value={form.watch(`variants.${index}.startingQuantity`)}  />
+                    <Input type="number" min="0" placeholder="Quantity" value={form.watch(`variants.${index}.startingQuantity`)} readOnly />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name={`variants.${index}.lowQuantity`}
@@ -164,6 +198,7 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name={`variants.${index}.itemsPerUnit`}
@@ -208,9 +243,9 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
               )}
             />
 
-          <FormField
+            <FormField
               control={form.control}
-              name={`variants.${index}.barcodeid`}
+              name={`variants.${index}.barcodeId`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Bar code id</FormLabel>
@@ -221,18 +256,18 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
                 </FormItem>
               )}
             />
-            
+
             <Button
               variant="destructive"
               type="button"
               onClick={() => fields.length > 1 && remove(index)}
-              disabled={fields.length === 1} >
+              disabled={fields.length === 1}>
               Remove Item
             </Button>
           </div>
         ))}
 
-        <Button type="button"  onClick={() => append({ name: "", quantity: 0, startingQuantity: 0, lowQuantity: 1, status: InventoryStatus.OUT_OF_STOCK, unit: undefined })}>
+        <Button type="button" onClick={() => append({ name: "", quantity: 0, startingQuantity: 0, lowQuantity: 1, status: InventoryStatus.OUT_OF_STOCK, unit: undefined })}>
           Add Item
         </Button>
 
