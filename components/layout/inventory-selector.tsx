@@ -47,7 +47,7 @@ const InventorySelector: React.FC<Props> = ({ value, onChange }) => {
       <SelectContent>
         {inventory.map((inventoryItem) => (
           <SelectItem key={inventoryItem.$id} value={inventoryItem.$id}>
-            { inventoryItem!.inventory.title + " " + inventoryItem.name }
+            { inventoryItem.inventory.title + " " + inventoryItem.name }
           </SelectItem>
         ))}
       </SelectContent>

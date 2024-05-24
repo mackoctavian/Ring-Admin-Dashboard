@@ -88,16 +88,16 @@ return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Supplier name</FormLabel>
+                        <FormLabel>Business name</FormLabel>
                         <FormControl>
                             <Input
-                            placeholder="Enter supplier's full name"
+                            placeholder="Enter business name"
                             className="input-class"
                             {...field}
                             />

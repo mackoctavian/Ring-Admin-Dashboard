@@ -103,25 +103,6 @@ export const SupplierSchema = z.object({
     }, z.date().optional()),
 });
 
-export const ProductUnitSchema = z.object({
-    $id: z.string().optional(),
-    shortName: z.string().min(1),
-    name: z.string().min(1),
-    status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-});
-
 export const DiscountSchema = z.object({
     $id: z.string().optional(),
     name: z.string({
@@ -245,37 +226,10 @@ export const ServiceSchema = z.object({
     }, z.date().optional()),
 });
 
-export const ProductSchema = z.object({
+export const ProductUnitSchema = z.object({
     $id: z.string().optional(),
-    name: z.string({
-        required_error: "Product name is required",
-        invalid_type_error: "Product name must be more than 2 characters long",
-    }).min(2),
-    slug: z.string(),
-    sku: z.string(),
-    category: z.any(),
-    unit: ProductUnitSchema,
-    barcodeId: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim().length === 13) {
-            return val;
-        }
-        return null;
-    }, z.string().nullable().optional()),
-    discount: DiscountSchema.nullable().optional(),
-    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    allowDiscount: z.boolean(),
-    quantityAlert: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return parseInt(val);
-        }
-        return val;
-    }, z.number().nonnegative().optional()),
-    quantity: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return parseInt(val);
-        }
-        return val;
-    }, z.number().nonnegative()),
+    shortName: z.string().min(1),
+    name: z.string().min(1),
     status: z.boolean(),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -290,47 +244,6 @@ export const ProductSchema = z.object({
         return val;
     }, z.date().optional()),
 });
-
-// export const StockVariantSchema = z.object({
-//     $id: z.string().optional(),
-//     name: z.string(),
-//     quantity: z.number().nonnegative(),
-//     itemsPerUnit: z.number().nonnegative(),
-//     unit: ProductUnitSchema,
-//     status: z.nativeEnum(InventoryStatus),
-//     $createdAt: z.preprocess((val) => {
-//         if (typeof val === "string" && val.trim() !== "") {
-//             return new Date(val);
-//         }
-//         return val;
-//     }, z.date().optional()),
-//     $updatedAt: z.preprocess((val) => {
-//         if (typeof val === "string" && val.trim() !== "") {
-//             return new Date(val);
-//         }
-//         return val;
-//     }, z.date().optional()),
-// });
-
-// export const StockSchema = z.object({
-//     $id: z.string().optional(),
-//     name: z.string(),
-//     quantity: z.number().nonnegative(),
-//     variants: StockVariantSchema,
-//     status: z.nativeEnum(InventoryStatus),
-//     $createdAt: z.preprocess((val) => {
-//         if (typeof val === "string" && val.trim() !== "") {
-//             return new Date(val);
-//         }
-//         return val;
-//     }, z.date().optional()),
-//     $updatedAt: z.preprocess((val) => {
-//         if (typeof val === "string" && val.trim() !== "") {
-//             return new Date(val);
-//         }
-//         return val;
-//     }, z.date().optional()),
-// });
 
 export const InventoryVariantSchema = z.object({
     $id: z.string().optional(),
@@ -429,3 +342,70 @@ export const StockSchema = z.object({
         return val;
     }, z.date().optional()),
 });
+
+export const ProductSchema = z.object({
+    $id: z.string().optional(),
+    name: z.string({
+        required_error: "Product name is required",
+        invalid_type_error: "Product name must be more than 2 characters long",
+    }).min(2),
+    slug: z.string(),
+    sku: z.string(),
+    category: CategorySchema,
+    discount: DiscountSchema.nullable().optional(),
+    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+    allowDiscount: z.boolean(),
+    image: z.string().optional(),
+    status: z.boolean(),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+});
+
+
+export const InventoryUsageSchema = z.object({
+    $id: z.string().optional(),
+    item: InventoryVariantSchema,
+
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+});
+
+// export const StockSchema = z.object({
+//     $id: z.string().optional(),
+//     name: z.string(),
+//     quantity: z.number().nonnegative(),
+//     variants: StockVariantSchema,
+//     status: z.nativeEnum(InventoryStatus),
+//     $createdAt: z.preprocess((val) => {
+//         if (typeof val === "string" && val.trim() !== "") {
+//             return new Date(val);
+//         }
+//         return val;
+//     }, z.date().optional()),
+//     $updatedAt: z.preprocess((val) => {
+//         if (typeof val === "string" && val.trim() !== "") {
+//             return new Date(val);
+//         }
+//         return val;
+//     }, z.date().optional()),
+// });

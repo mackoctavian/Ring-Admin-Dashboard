@@ -95,6 +95,16 @@ export function formatPercentage(value: number): string {
   return formatter.format(value);
 }
 
+export function formatNumber(value: number): string {
+  const formatter = new Intl.NumberFormat("en-US", {
+    style: "decimal",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+
+  return formatter.format(value);
+}
+
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
 
 export const removeSpecialCharacters = (value: string) => {

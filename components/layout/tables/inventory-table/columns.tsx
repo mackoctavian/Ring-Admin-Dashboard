@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Inventory, InventoryVariant } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
+import { InventoryItemNameColumn } from "./inventory-fullname-cell";
 
 export const columns: ColumnDef<InventoryVariant>[] = [
   {
@@ -28,6 +29,7 @@ export const columns: ColumnDef<InventoryVariant>[] = [
   {
     accessorKey: "inventory.title",
     header: "TITLE",
+    cell: ({ row }) => <InventoryItemNameColumn data={row.original} />,
   },
   {
     accessorKey: "name",

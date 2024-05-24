@@ -23,7 +23,7 @@ const CategorySelector: React.FC<Props> = ({ value, onChange, type }) => {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const categoriesData = await getItems( '', '', type, null, null, 0);
+        const categoriesData = await getItems( '', 'NOT_EMPTY', type, null, null, 0);
         setCategories(categoriesData);
       } catch (error) {
         console.error('Error fetching categories:', error);

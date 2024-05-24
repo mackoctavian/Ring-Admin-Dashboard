@@ -175,7 +175,7 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
               control={form.control}
               name={`variants.${index}.quantity`}
               render={({ field }) => (
-                <FormItem className='hidden'>
+                <FormItem className='h-idden'>
                   <FormLabel>Quantity</FormLabel>
                   <FormControl>
                     <Input type="number" min="0" placeholder="Quantity" value={form.watch(`variants.${index}.startingQuantity`)} readOnly />
