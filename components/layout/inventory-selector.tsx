@@ -41,13 +41,13 @@ const InventorySelector: React.FC<Props> = ({ value, onChange }) => {
     <Select value={value ? value.$id : 'Select inventory item'} onValueChange={handleSelectChange}>
       <SelectTrigger>
         <SelectValue>
-          {value ? value.name : 'Select inventory item'}
+          {value ? value.inventory?.title + " " + value.name : 'Select inventory item'}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {inventory.map((inventoryItem) => (
           <SelectItem key={inventoryItem.$id} value={inventoryItem.$id}>
-            { inventoryItem.inventory.title + " " + inventoryItem.name }
+            { inventoryItem.inventory?.title + " " + inventoryItem.name }
           </SelectItem>
         ))}
       </SelectContent>

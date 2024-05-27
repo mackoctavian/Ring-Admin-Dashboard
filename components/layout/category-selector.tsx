@@ -13,24 +13,24 @@ import { CategoryType } from '@/types/data-schemas';
 
 interface Props {
   value?: Category;
-  onChange: (value: Category) => void;
   type?: CategoryType;
+  onChange: (value: Category) => void;
 }
 
-const CategorySelector: React.FC<Props> = ({ value, onChange, type }) => {
-  const [categories, setCategories] = useState<Category[]>([]);
+const CategorySelector: React.FC<Props> = ({ value, type, onChange }) => {
+  const [categories, setCategory] = useState<Category[]>([]);
 
   useEffect(() => {
-    async function fetchCategories() {
+    async function fetchCategory() {
       try {
-        const categoriesData = await getItems( '', 'NOT_EMPTY', type, null, null, 0);
-        setCategories(categoriesData);
+        const categoriesData = await getItems( '', 'IS_CHILD', type, true, null, 1 );
+        setCategory(categoriesData);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
     }
-    fetchCategories();
-  }, [type]);
+    fetchCategory();
+  }, []);
 
   const handleSelectChange = (value: string) => {
     const selectedCategory = categories.find(cat => cat.$id === value);
@@ -40,10 +40,10 @@ const CategorySelector: React.FC<Props> = ({ value, onChange, type }) => {
   };
 
   return (
-    <Select value={value ? value.$id : 'Select Category'} onValueChange={handleSelectChange}>
+    <Select value={value ? value.$id : 'Select category'} onValueChange={handleSelectChange}>
       <SelectTrigger>
         <SelectValue>
-          {value ? value.name : 'Select Category'}
+          {value ? value.name : 'Select category'}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>

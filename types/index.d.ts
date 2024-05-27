@@ -6,8 +6,6 @@ declare type SearchParamProps = {
   params: { [key: string]: string };
   searchParams: { [key: string]: string | string[] | undefined };
 };
-//=======================================
-export const phoneNumberRegex = /^[0-9]{10,15}$/;
 
 declare type Country = {
   name: string;
@@ -127,21 +125,12 @@ declare type Category = {
   name: string;
   slug: string;
   categoryType: CategoryType;
-  parent?: Category;
+  parent?: string;
   discount?: Discount;
   description?: string;
+  childrenCount: number;
   $createdAt: Date;
   $updatedAt: Date;
-  status: boolean;
-};
-
-declare type CategoryDto = {
-  name: string;
-  slug: string;
-  type: CategoryType;
-  parent?: Category;
-  discount?: Discount;
-  description?: string;
   status: boolean;
 };
 
@@ -298,6 +287,8 @@ declare type Service = {
   offeringEndTime?: string;
   category: Category;
   description?: string;
+  inventoryItems?: InventoryItemUsage[];
+  concurrentCustomers: number;
   status: boolean;
   $createdAt?: Date;
   $updatedAt?: Date;
@@ -320,6 +311,25 @@ declare type ServiceDto = {
 
 /* End Service */
 
+/* Inventory Usage */
+declare type ServiceInventoryItemUsage = {
+  $id?: string | undefined;
+  item: InventoryVariant | null;
+  service: Service | null;
+  amountUsed: number;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
+declare type ProductInventoryItemUsage = {
+  $id?: string | undefined;
+  item: InventoryVariant | null;
+  service: Product | null;
+  amountUsed: number;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+/* End Inventory Usage */
 
 
 /* Supplier */
@@ -479,14 +489,41 @@ declare type Stock = {
   $createdAt?: Date;
   $updatedAt?: Date;
 }
-
-
 /* End Stock */
 
 
+/* Expense */
+declare type Expense = {
+  $id?: string;
+  name: string;
+  category: string;
+  currency: string;
+  tax: number;
+  amount: number;
+  staff?: Staff;
+  vendor?: Supplier;
+  department?: Department;
+  expenseDate: Date;
+  dueDate: Date;
+  document?: string;
+  description: string;
+  status: string;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
 
-
-
+declare type ExpensePayment = {
+  $id?: string;
+  expense: Expense;
+  paymentDate: Date;
+  receipt?: string;
+  amount: number;
+  paymentMethod: PaymentMethod; 
+  description?: string;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+/* End Expense */
 
 
 

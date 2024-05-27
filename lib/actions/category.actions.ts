@@ -3,7 +3,7 @@
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Category , CategoryDto } from "@/types";
+import { Category } from "@/types";
 import { CategoryType } from "@/types/data-schemas";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 
@@ -12,15 +12,20 @@ const {
     CATEGORIES_COLLECTION: CATEGORY_COLLECTION_ID
   } = process.env;
 
+  const cleanCategoryData = (item: any) => {
+    const { $databaseId, $collectionId, $id, $createdAt, $updatedAt, $permissions, ...cleanedItem } = item;
+    return cleanedItem;
+  };
 
-  export const createItem = async (item: CategoryDto) => {
+
+  export const createItem = async (item: Category) => {
     try {
       if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
         throw Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
-  
+
       const newItem = await database.createDocument(
         DATABASE_ID!,
         CATEGORY_COLLECTION_ID!,
@@ -29,6 +34,13 @@ const {
           ...item,
         }
       )
+
+      //increment parent child count
+      if ( item.parent ) {
+        const parent : Category = await getItem(item.parent);
+        parent.childrenCount = (parent.childrenCount || 0) + 1;
+        await updateItem(item.parent, cleanCategoryData(parent));
+      }
   
       return parseStringify(newItem);
     } catch (error: any) {
@@ -63,7 +75,7 @@ const {
 
   export const getItems = async (
     q?: string,
-    parent?: string | null | 'NOT_EMPTY',
+    parent?: string | null | 'IS_PARENT' | 'IS_CHILD',
     type?: CategoryType | null,
     status?: boolean | null,
     limit?: number | null, 
@@ -82,60 +94,130 @@ const {
         queries.push(Query.limit(limit));
         queries.push(Query.offset(offset!));
       }
-  
-      if (q) {
-        queries.push(Query.search('name', q));
-      }
-  
-      if (parent !== undefined) {
-        // Return null parent
-        if (parent === null) {
-          queries.push(Query.isNull('parent'));
 
-        // Return results that have a parent
-        } else if (parent === 'NOT_EMPTY') {
-          queries.push(Query.isNotNull('parent'));
-          queries.push(Query.notEqual('parent', ''));
-        
-        // Return search data  
-        } else if (parent !== '') {
-          queries.push(Query.search('parent', parent));
-       
-        // Return all records 
-        } else {
-          //do nothing
-        }
+      //This is a parent element
+      if ( parent === 'IS_PARENT'){
+        queries.push( Query.greaterThan('childrenCount', 0) );
       }
-  
+
+      //This is a child element
+      if ( parent === 'IS_CHILD'){
+        queries.push( Query.equal('childrenCount', 0) );
+      }
+
+      //Select * with specific type
       if (type) {
         queries.push(Query.search('type', type));
       }
 
+ 
+      if (q) {
+        queries.push(Query.search('name', q));
+      }
+  
       if (status) {
         queries.push(Query.equal('status', status));
       }
-  
+        
       const items = await database.listDocuments(
         DATABASE_ID,
         CATEGORY_COLLECTION_ID,
         queries
       );
-  
+
       if (items.documents.length === 0) {
         return [];
       }
-  
-      return parseStringify(items.documents);
-    } catch (error: any) {
-      console.error( JSON.stringify(error) );
 
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-      throw Error(errorMessage);
+    return parseStringify(items.documents);
+  } catch (error: any) {
+    console.error( JSON.stringify(error) );
+
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+    if (error instanceof AppwriteException) {
+      errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
+    throw Error(errorMessage);
   }
+}
+
+
+  // export const getItems = async (
+  //   q?: string,
+  //   parent?: string | null | 'NOT_EMPTY',
+  //   type?: CategoryType | null,
+  //   status?: boolean | null,
+  //   limit?: number | null, 
+  //   offset?: number | 1,
+  // ) => {
+  //   if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
+  //     throw new Error('Database ID or Collection ID is missing');
+  //   }
+    
+  
+  //   try {
+  //     const { database } = await createAdminClient();
+  
+  //     const queries = [];
+
+  //     if ( limit ) {
+  //       queries.push(Query.limit(limit));
+  //       queries.push(Query.offset(offset!));
+  //     }
+  
+  //     if (q) {
+  //       queries.push(Query.search('name', q));
+  //     }
+  
+  //     if (parent !== undefined) {
+  //       // Return null parent
+  //       if (parent === null) {
+  //         queries.push(Query.isNull('parent'));
+
+  //       // Return results that have a parent
+  //       } else if (parent === 'NOT_EMPTY') {
+  //         queries.push(Query.isNotNull('parent'));
+  //         queries.push(Query.notEqual('parent', ''));
+        
+  //       // Return search data  
+  //       } else if (parent !== '') {
+  //         queries.push(Query.search('parent', parent));
+       
+  //       // Return all records 
+  //       } else {
+  //         //do nothing
+  //       }
+  //     }
+  
+  //     if (type) {
+  //       queries.push(Query.search('type', type));
+  //     }
+
+  //     if (status) {
+  //       queries.push(Query.equal('status', status));
+  //     }
+  
+  //     const items = await database.listDocuments(
+  //       DATABASE_ID,
+  //       CATEGORY_COLLECTION_ID,
+  //       queries
+  //     );
+  
+  //     if (items.documents.length === 0) {
+  //       return [];
+  //     }
+  
+  //     return parseStringify(items.documents);
+  //   } catch (error: any) {
+  //     console.error( JSON.stringify(error) );
+
+  //     let errorMessage = 'Something went wrong with your request, please try again later.';
+  //     if (error instanceof AppwriteException) {
+  //       errorMessage = getStatusMessage(error.code as HttpStatusCode);
+  //     }
+  //     throw Error(errorMessage);
+  //   }
+  // }
 
   export const getItem = async (id: string) => {
     try {
@@ -188,7 +270,7 @@ const {
     }
   }
 
-  export const updateItem = async (id: string, data: CategoryDto) => {  
+  export const updateItem = async (id: string, data: Category ) => {  
     try {
       if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
@@ -204,6 +286,7 @@ const {
   
       return parseStringify(item);
     } catch (error: any) {
+      console.error(error);
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);

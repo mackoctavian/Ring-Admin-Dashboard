@@ -1,14 +1,14 @@
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import BreadCrumb from "@/components/layout/breadcrumb";
-import { getItem } from '@/lib/actions/service.actions';
-import { Service } from "@/types";
-import ServiceForm from "@/components/forms/ServiceForm";
+import { getItem } from '@/lib/actions/expense.actions';
+import { Expense } from "@/types";
+import ExpenseForm from "@/components/forms/ExpenseForm";
 
-const breadcrumbItems = [{ title: "Services", link: "/services" }, { title: "New", link: "" } ];
+const breadcrumbItems = [{ title: "Expenses", link: "/expenses" }, { title: "New", link: "" } ];
 
-const ServicePage = async ({ params }: { params: { id: string } }) => {
-    let item: Service | null = null;
+const ExpensePage = async ({ params }: { params: { id: string } }) => {
+    let item: Expense | null = null;
     let newItem = true;
 
     if (params.id && params.id !== "new") {
@@ -26,14 +26,14 @@ const ServicePage = async ({ params }: { params: { id: string } }) => {
                 <BreadCrumb items={breadcrumbItems} />
 
                 <div className="flex items-start justify-between">
-                    <Heading title={!newItem ? `Edit service` : `Create service`} description={!newItem ? "Edit your service" : "Add new service to your business"} />
+                    <Heading title={!newItem ? `Edit expense` : `Create expense`} description={!newItem ? "Edit your expense" : "Record new expense to your business"} />
                 </div>
                 <Separator />
 
-                <ServiceForm item={item} />
+                <ExpenseForm item={item} />
             </div>
         </>
     );
 };
 
-export default ServicePage;
+export default ExpensePage;

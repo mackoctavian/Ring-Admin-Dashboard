@@ -2,16 +2,16 @@ import BreadCrumb from "@/components/layout/breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { Service } from "@/types";
+import { Expense } from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
-import { columns } from "@/components/layout/tables/services-table/columns";
-import { getItems } from "@/lib/actions/service.actions";
-import { ServicesTable } from "@/components/layout/tables/services-table/services-table";
+import { columns } from "@/components/layout/tables/expenses-table/columns";
+import { getItems } from "@/lib/actions/expense.actions";
+import { ExpensesTable } from "@/components/layout/tables/expenses-table/expenses-table";
 
-const breadcrumbItems = [{ title: "Services", link: "/services" }];
+const breadcrumbItems = [{ title: "Expenses", link: "/expenses" }];
 
 type ParamsProps = {
   searchParams: {
@@ -22,13 +22,12 @@ type ParamsProps = {
 export default async function Page({ searchParams }: ParamsProps) {
   const page = Number(searchParams.page) || 1;
   const pageLimit = Number(searchParams.limit) || 10;
-  const q = searchParams.search || null;
+  const q = searchParams.search || null;  
   const offset = (page - 1) * pageLimit;
 
-  const data : Service[] = await getItems();
+  const data : Expense[] = await getItems(q?.toString(), null, null, offset);
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
-
 
   return (
     <>
@@ -36,16 +35,16 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Services`} total={total.toString()} description="Manage services" />
+            <Heading title={`Expenses`} total={total.toString()} description="Manage expenses" />
 
-            <Link href={"/services/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add Service
+            <Link href={"/expenses/new"} className={cn(buttonVariants({ variant: "default" }))} >
+                <Plus className="mr-2 h-4 w-4" /> Record Expense
             </Link>
         </div>
         <Separator />
 
-        <ServicesTable
-          searchKey="name"
+        <ExpensesTable
+          searchKey="title"
           pageNo={page}
           columns={columns}
           total={total}

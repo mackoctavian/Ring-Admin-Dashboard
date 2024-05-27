@@ -51,6 +51,7 @@ import DiscountSelector from "../layout/discount-selector";
         defaultValues: item ? { ...item, parent: item.parent, discount: item.discount } : {
             type: CategoryType.PRODUCT,
             description: '',
+            childrenCount: 0,
             status: false,
         },
     });

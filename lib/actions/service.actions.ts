@@ -38,7 +38,7 @@ const {
     }
   }
 
-  export const getServices = async () => {
+  export const getItems = async () => {
     try {
       if (!DATABASE_ID || !SERVICE_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
@@ -58,7 +58,7 @@ const {
     }
   };
 
-  export const getService = async (id: string) => {
+  export const getItem = async (id: string) => {
     try {
       if (!DATABASE_ID || !SERVICE_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
@@ -115,6 +115,8 @@ const {
         throw new Error('Document ID is missing');
       }
 
+      console.log(data);
+
       const { database } = await createAdminClient();
   
       const item = await database.updateDocument(
@@ -124,7 +126,11 @@ const {
         data);
   
       return parseStringify(item);
-    } catch (error) {
-      console.log(error)
+    } catch (error: any) {
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+      throw Error(JSON.stringify(error));
     }
   }

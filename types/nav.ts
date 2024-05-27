@@ -110,6 +110,11 @@ export const mainMenu = [
       label: "Discounts",
     },
     {
+      icon: "/icons/icons/invoices.svg",
+      route: "/expenses",
+      label: "Expenses",
+    },
+    {
       icon: "/icons/icons/campaigns.svg",
       route: "/#",
       label: "Campaigns",
