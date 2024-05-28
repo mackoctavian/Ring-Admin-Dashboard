@@ -4,6 +4,8 @@ import { Stock } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { MoneyColumn } from "../money-colum";
+import { DateTimeColumn } from "../date-colum";
+import { NumberColumn } from "../number-column";
 
 export const columns: ColumnDef<Stock>[] = [
   {
@@ -30,8 +32,9 @@ export const columns: ColumnDef<Stock>[] = [
     header: "ITEM",
   },
   {
-    accessorKey: "quantity",
     header: "QUANTITY",
+    id: "quantity",
+    cell: ({ row }) => <NumberColumn value={row.original.quantity} />,
   },
   {
     accessorKey: "supplier.name",
@@ -43,8 +46,9 @@ export const columns: ColumnDef<Stock>[] = [
     cell: ({ row }) => <MoneyColumn value={row.original.value} />,
   },
   {
-    accessorKey: "$createdAt",
     header: "DATE",
+    id: "intakeDate",
+    cell: ({ row }) => <DateTimeColumn value={row.original.$createdAt} />,
   },
   {
     id: "actions",

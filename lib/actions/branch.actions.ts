@@ -72,6 +72,7 @@ const {
       const { database } = await createAdminClient();
   
       const queries = [];
+      queries.push(Query.orderDesc("$createdAt"));
 
       if ( limit ) {
         queries.push(Query.limit(limit));

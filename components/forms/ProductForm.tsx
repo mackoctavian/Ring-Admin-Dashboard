@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import * as z from "zod";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
-import { ReloadIcon } from "@radix-ui/react-icons"
+import { Cross2Icon, PlusIcon, ReloadIcon } from "@radix-ui/react-icons"
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { Separator } from "@/components/ui/separator"
@@ -22,10 +21,7 @@ import DiscountSelector from "../layout/discount-selector";
 import { CategoryType, ProductSchema } from "@/types/data-schemas"
 import CategorySelector from "@/components/layout/category-selector"
 import InventorySelector from "@/components/layout/inventory-selector"
-
 import { Heading } from "@/components/ui/heading";
-
-
 import {
     Form,
     FormControl,
@@ -42,573 +38,382 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-const useProductForm = (item?: Product | null) => {
-    const [isLoading, setIsLoading] = useState(false);
-    const { toast } = useToast();
-    const [selectedDiscount, setSelectedDiscount] = useState<Discount | undefined>(item?.discount);
-    const [selectedCategory, setSelectedCategory] = useState<Category | undefined>(item?.category);
-    const [hasVariants, setHasVariants] = useState(false);
+const ProductForm = ({ item }: { item?: Product | null }) => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
   
-    const form = useForm<z.infer<typeof ProductSchema>>({
-      resolver: zodResolver(ProductSchema),
-      defaultValues: item
-        ? { ...item, discount: item.discount, category: item.category }
-        : {
-            quantity: 0,
-            allowDiscount: true,
-            status: true,
-          },
-    });
-  
-    const { watch, setValue, handleSubmit, control } = form;
-    const { fields: variantFields, append: addVariant, remove: removeVariant } = useFieldArray({
-      control,
-      name: 'productVariants'
-    });
-    const { fields: inventoryFields, append: addInventoryItem, remove: removeInventoryItem } = useFieldArray({
-      control,
-      name: 'ProductInventoryItems'
-    });
-  
-    // Generate SKU and Slug
-    useEffect(() => {
-      const nameValue = watch('name');
-      if (nameValue) {
-        const generatedSKU = generateSKU(nameValue);
-        setValue('sku', generatedSKU);
-  
-        const generatedSlug = nameValue.toLowerCase().replace(/\s+/g, '-');
-        setValue('slug', generatedSlug);
-      }
-    }, [watch('name'), setValue]);
-  
-    useEffect(() => {
-      if (item) {
-        setSelectedDiscount(item.discount);
-        setSelectedCategory(item.category);
-      }
-    }, [item]);
-  
-    return {
-      form,
-      isLoading,
-      setIsLoading,
-      selectedDiscount,
-      setSelectedDiscount,
-      selectedCategory,
-      setSelectedCategory,
-      toast,
-      handleSubmit,
-      variantFields,
-      addVariant,
-      removeVariant,
-      inventoryFields,
-      addInventoryItem,
-      removeInventoryItem,
-      hasVariants,
-      setHasVariants,
-    };
-  };
-  
-  const ProductForm = ({ item }: { item?: Product | null }) => {
-    const router = useRouter();
-    const {
-      form,
-      isLoading,
-      setIsLoading,
-      selectedDiscount,
-      setSelectedDiscount,
-      selectedCategory,
-      setSelectedCategory,
-      toast,
-      handleSubmit,
-      variantFields,
-      addVariant,
-      removeVariant,
-      inventoryFields,
-      addInventoryItem,
-      removeInventoryItem,
-      hasVariants,
-      setHasVariants,
-    } = useProductForm(item);
-  
-    const onSubmit: SubmitHandler<z.infer<typeof ProductSchema>> = async (data) => {
-      setIsLoading(true);
-      try {
-        if (item && item.$id) {
-          await updateItem(item.$id, data);
-          toast({
-            variant: "success",
-            title: "Success",
-            description: "Product updated successfully!",
-          });
-        } else {
-          await createItem(data);
-          toast({
-            variant: "success",
-            title: "Success",
-            description: "Product created successfully!",
-          });
-        }
-        router.push("/products");
-        router.refresh();
-      } catch (error: any) {
-        toast({
-          variant: "destructive",
-          title: "Uh oh! Something went wrong.",
-          description: error.message || "There was an issue submitting your form, please try later",
-        });
-      } finally {
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 1000);
-      }
-    };
-  
-    const onInvalid = (errors: any) => {
-      console.error("Creating product failed: ", JSON.stringify(errors));
-      toast({
+  const form = useForm<z.infer<typeof ProductSchema>>({
+    resolver: zodResolver(ProductSchema),
+      defaultValues: item ? item : {
+      status: false,
+    },
+  });
+
+  const onInvalid = (errors : any ) => {
+    toast({
         variant: "warning",
-        title: "Uh oh! Something went wrong.",
-        description: "There was an issue submitting your form please try later",
-      });
-    };
-  
-    useEffect(() => {
-      if (hasVariants) {
-        // Clear and disable inventory items on the parent object when variants are selected
-        removeInventoryItem();
+        title: "Uh oh! Something went wrong.", 
+        description: "There was an issue submitting your form please try later"
+    });
+    console.error(JSON.stringify(errors))
+  }
+
+  const onSubmit = async (data: z.infer<typeof ProductSchema>) => {
+    setIsLoading(true);
+    try {
+        toast({
+          variant: "default",
+          title: "Success", 
+          description: "Discount updated succesfully!"
+        });
+      
+      // Redirect to the list page after submission
+      router.push("/products");
+      router.refresh();
+      setIsLoading(false);
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.", 
+            description: error.message || "There was an issue submitting your form, please try later"
+        });
+    } finally {
+      //delay loading
+      setTimeout(() => {
+          setIsLoading(false);
+          }, 1000); 
       }
-    }, [hasVariants, removeInventoryItem]);
-  
-    return (
-      <Form {...form}>
-        <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-            <div className="flex items-end">
-                <Switch
-                    id="hasVariants"
-                    checked={hasVariants}
-                    onCheckedChange={() => setHasVariants(!hasVariants)}
-                />
-                <label htmlFor="hasVariants" className="cursor-pointer">&nbsp;  Enable Variants</label>
-            </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product name *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Product name"
-                      className="input-class"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="sku"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product SKU (Auto generated) *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Product sku (eg. SKU-001)"
-                      className="input-class"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="slug"
-              render={({ field }) => (
-                <FormItem className="hidden">
-                  <FormLabel>Product Slug (Auto generated) *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Product slug"
-                      className="input-class"
-                      disabled
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product category *</FormLabel>
-                  <CategorySelector
-                    type={CategoryType.PRODUCT}
-                    value={selectedCategory}
-                    onChange={(cat) => { setSelectedCategory(cat); field.onChange(cat); }}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product image *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="file"
-                      placeholder="Product image"
-                      className="input-class"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {!hasVariants && (
-              <>
-                <FormField
+    }
+
+  const [variants, setVariants] = useState([{ id: Date.now(), name: '', price: '', minPrice: '', discount: '', allowDiscount: false, status: false, inventory: [] }]);
+
+  const handleAddVariant = () => {
+    setVariants([...variants, { id: Date.now(), name: '', price: '', minPrice: '', discount: '', allowDiscount: false, status: false, inventory: [] }]);
+  };
+
+  const handleRemoveVariant = (id) => {
+    setVariants(variants.filter(variant => variant.id !== id));
+  };
+
+  const handleVariantChange = (id, field, value) => {
+    setVariants(variants.map(variant => variant.id === id ? { ...variant, [field]: value } : variant));
+  };
+
+  const handleAddInventory = (variantId) => {
+    setVariants(variants.map(variant => variant.id === variantId ? { ...variant, inventory: [...variant.inventory, { id: Date.now(), item: '', amount: '' }] } : variant));
+  };
+
+  const handleRemoveInventory = (variantId, inventoryId) => {
+    setVariants(variants.map(variant => variant.id === variantId ? { ...variant, inventory: variant.inventory.filter(inv => inv.id !== inventoryId) } : variant));
+  };
+
+  const handleInventoryChange = (variantId, inventoryId, field, value) => {
+    setVariants(variants.map(variant => variant.id === variantId ? { ...variant, inventory: variant.inventory.map(inv => inv.id === inventoryId ? { ...inv, [field]: value } : inv) } : variant));
+  };
+
+  return (
+    <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <FormField
                   control={form.control}
-                  name="discount"
+                  name="name"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Product discount</FormLabel>
-                      <DiscountSelector
-                        value={selectedDiscount}
-                        onChange={(disc) => { setSelectedDiscount(disc); field.onChange(disc); }}
-                      />
+                  <FormItem>
+                      <FormLabel>Product name *</FormLabel>
+                      <FormControl>
+                          <Input
+                          placeholder="Product name"
+                          className="input-class"
+                          {...field}
+                          />
+                      </FormControl>
                       <FormMessage />
-                    </FormItem>
+                  </FormItem>
                   )}
-                />
-                <FormField
+              />
+              <FormField
                   control={form.control}
-                  name="allowDiscount"
+                  name="sku"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Allow discount at counter *</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(value === "true")} defaultValue={String(field.value)}>
+                  <FormItem>
+                      <FormLabel>Product SKU *</FormLabel>
+                      <FormControl>
+                          <Input
+                          placeholder="Product sku ( Auto-generated )"
+                          className="input-class"
+                          {...field}
+                          />
+                      </FormControl>
+                      <FormMessage />
+                  </FormItem>
+                  )}
+              />
+
+              <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                  <FormItem>
+                      <FormLabel>Product category *</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Enable discounts at counter" />
-                          </SelectTrigger>
+                          <CategorySelector type={CategoryType.PRODUCT} {...field} />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="false">Discounts ALLOWED at counter</SelectItem>
-                          <SelectItem value="true">Discounts NOT allowed at counter</SelectItem>
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
-                    </FormItem>
+                  </FormItem>
                   )}
-                />
+              />
+
+              <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                  <FormItem>
+                      <FormLabel>Product image *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="file"
+                            placeholder="Product image"
+                            className="input-class"
+                            {...field}
+                            />
+                        </FormControl>
+                      <FormMessage />
+                  </FormItem>
+                  )}
+              />
+      </div>
+
+      <div className="space-y-4">
+        {variants.map(variant => (
+          <div key={variant.id} className="space-y-2 border p-4 rounded-md">
+            <div className="flex justify-between items-center">
+              <h2 className='text-base font-bold'>Variant</h2>
+              {variants.length > 1 && (
+                <Button type="button" onClick={() => handleRemoveVariant(variant.id)} variant="link">
+                  <Cross2Icon className="mr-2 h-4 w-4" /> Remove variant
+                </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
-                  name="minPrice"
+                  name={`variant-name-${variant.id}`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Minimum Price *</FormLabel>
+                      <FormLabel>Variant name *</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
-                          placeholder="Minimum Price"
-                          className="input-class"
+                          placeholder="Variant name"
                           {...field}
+                          value={variant.name}
+                          onChange={(e) => handleVariantChange(variant.id, 'name', e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
-                  name="price"
+                  name={`variant-price-${variant.id}`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Product Price *</FormLabel>
+                      <FormLabel>Variant price *</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
-                          placeholder="Product price"
-                          className="input-class"
+                          placeholder="Variant price"
                           {...field}
+                          value={variant.name}
+                          onChange={(e) => handleVariantChange(variant.id, 'price', e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col items-start space-y-2">
-                            <FormLabel className="cursor-pointer">Status</FormLabel>
-                            <FormControl>
-                                <Switch
-                                    id="status"
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
+
+
                 <FormField
                   control={form.control}
-                  name="description"
+                  name={`variant-barcode-${variant.id}`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Product Description *</FormLabel>
+                      <FormLabel>Variant barcode *</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="Short description of the product"
-                          className="resize-none"
+                        <Input
+                          placeholder="Variant barcode"
                           {...field}
+                          value={variant.barcode}
+                          onChange={(e) => handleVariantChange(variant.id, 'barcode', e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 
 
-              </>
-            )}
-            </div>
-
-          <Separator />
-          {!hasVariants && inventoryFields.map((item, index) => (
-            <div key={item.id} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name={`ProductInventoryItems.${index}.inventoryItem`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Inventory Item</FormLabel>
-                    <InventorySelector
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name={`ProductInventoryItems.${index}.amountUsed`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Amount Used</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Amount Used"
-                        className="input-class"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button type="button" variant="destructive">Remove Item</Button>
-
-            </div>
-          ))}
-          {!hasVariants && <Button type="button" onClick={() => addInventoryItem({})}>Add Inventory Item</Button>}
-          
-          
-          {hasVariants && (
-            <>
-              {variantFields.map((variant, index) => (
-                <div key={variant.id} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name={`productVariants.${index}.name`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Variant Name *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Variant name"
-                            className="input-class"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`productVariants.${index}.price`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Variant Price *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="Variant price"
-                            className="input-class"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`productVariants.${index}.discount`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Variant Discount</FormLabel>
-                        <DiscountSelector
-                          value={field.value}
-                          onChange={field.onChange}
+                <FormField
+                  control={form.control}
+                  name={`variant-minPrice-${variant.id}`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Variant minimum price</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Variant minimum price"
+                          {...field}
+                          value={variant.minPrice}
+                          onChange={(e) => handleVariantChange(variant.id, 'minPrice', e.target.value)}
                         />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`productVariants.${index}.allowDiscount`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Allow discount at counter *</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(value === "true")} defaultValue={String(field.value)}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Enable discounts at counter" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="false">Discounts ALLOWED at counter</SelectItem>
-                            <SelectItem value="true">Discounts NOT allowed at counter</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`productVariants.${index}.minPrice`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Minimum Price *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="Minimum Price"
-                            className="input-class"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`productVariants.${index}.status`}
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col items-start space-y-2">
-                            <FormLabel className="cursor-pointer">Status *</FormLabel>
-                            <FormControl>
-                                <Switch
-                                    id={`productVariants.${index}.status`}
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                            </FormControl>
-                        </FormItem>
-                    )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
 
-                  {variant.ProductInventoryItems?.map((item, idx) => (
-                    <div key={item.id} className="grid grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name={`productVariants.${index}.ProductInventoryItems.${idx}.inventoryItem`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Inventory Item</FormLabel>
-                            <InventoryItemSelector
-                              value={field.value}
-                              onChange={field.onChange}
+                <FormField
+                  control={form.control}
+                  name={`variant-discount-${variant.id}`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Variant discount</FormLabel>
+                        <FormControl>
+                          <DiscountSelector 
+                            value={variant.discount} 
+                            onChange={(value) => handleVariantChange(variant.id, 'discount', value)} 
                             />
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`productVariants.${index}.ProductInventoryItems.${idx}.amountUsed`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Amount Used</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="Amount Used"
-                                className="input-class"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                        </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    </div>
-                  ))}
-                  <div className="flex h-5 items-center space-x-4">
-                    <Button type="button" onClick={() => addInventoryItem({})}>Add Inventory Item to Variant</Button>
-                    <Separator orientation="vertical" />
-                    <Button type="button" variant="destructive" onClick={() => removeVariant(index)}>Remove Variant</Button>
+                <FormField
+                  control={form.control}
+                  name={`variant-allowDiscount-${variant.id}`}
+                  render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Allow discount at counter *</FormLabel>
+                          <Select onChange={(e) => handleVariantChange(variant.id, 'allowDiscount', e.target.value)} value={variant.allowDiscount} defaultValue={variant.allowDiscount}>
+                              <FormControl>
+                                  <SelectTrigger>
+                                      <SelectValue placeholder="Enable discounts at counter" />
+                                  </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  <SelectItem value="true">Discounts ALLOWED at counter</SelectItem>
+                                  <SelectItem value="false">Discounts NOT allowed at counter</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                  )}
+              />
+
+              <FormField
+                  control={form.control}
+                  name={`variant-status-${variant.id}`}
+                  render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <FormControl>
+                              <Switch
+                                  id={`variant-status-${variant.id}`}
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                              />
+                          </FormControl>
+                      </FormItem>
+                  )}
+              />
+            
+            </div>
+
+            <div className="space-y-2">
+              {variant.inventory.map(inv => (
+                <div key={inv.id} className="space-y-2 p-2 rounded-md">
+
+                  <Separator className="my-7" />
+                  <div className="flex justify-between items-center">
+                    <h5 className="text-md font-medium">Inventory Item</h5>
                   </div>
-                  
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name={`inventory-item-${inv.id}`} 
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Status</FormLabel>
+                              <FormControl>
+                                <InventorySelector 
+                                  value={inv.item} 
+                                  onChange={(value) => handleInventoryChange(variant.id, inv.id, 'item', value)} />
+                              </FormControl>
+                          </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`inventory-amount-${inv.id}`}
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Amount used</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Amount used"
+                                  type="number"
+                                  step="0.01"
+                                  {...field}
+                                  value={inv.amount}
+                                  onChange={(e) => handleInventoryChange(variant.id, inv.id, 'amount', e.target.value)}
+                                />
+                              </FormControl>
+                          </FormItem>
+                      )}
+                    />
+                    <Button type="button" className='mt-7' onClick={() => handleRemoveInventory(variant.id, inv.id)}  variant='destructive'>
+                        Remove item
+                    </Button> 
+                    
+                  </div>
                 </div>
               ))}
-              <Button type="button" onClick={() => addVariant({})}>Add Variant</Button>
-            </>
-          )}
-          
-          <Separator  />
+              <Button type="button" onClick={() =>  handleAddInventory(variant.id)}  variant="link">
+                <PlusIcon className="mr-2 h-4 w-4" /> Add inventory item
+              </Button>
 
-          <div className="flex h-5 items-center space-x-4">
+            </div>
+          </div>
+        ))}
+        <Button type="button" onClick={handleAddVariant}  variant="ghost" className="float-right">
+          <PlusIcon className="mr-2 h-4 w-4" /> Add variant
+        </Button>
+      </div>
+
+        <div className="flex h-5 items-center space-x-4">
             <CancelButton />
             <Separator orientation="vertical" />
-            <Button type="submit">
-              {isLoading ? (
-                <>
-                  <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-                </>
-              ) : (
-                item ? "Update product" : "Create product"
-              )}
+            <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                    <>
+                        <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
+                    </>
+                ) : (
+                    item ? "Update product" : "Save product"
+                )}
             </Button>
-          </div>
-        </form>
-      </Form>
-    );
-  };
-  
-  export default ProductForm;
+        </div>
+      </form>
+    </Form>
+  );
+};
+
+export default ProductForm;

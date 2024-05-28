@@ -1,12 +1,11 @@
 "use client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Expense } from "@/types";
+import { Section } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
-import { NumberColumn } from "../number-column";
-import { DateTimeColumn } from "../date-colum";
+import { StateColumn } from "../state-column";
 
-export const columns: ColumnDef<Expense>[] = [
+export const columns: ColumnDef<Section>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -28,27 +27,21 @@ export const columns: ColumnDef<Expense>[] = [
   },
   {
     accessorKey: "name",
-    header: "TITLE",
+    header: "NAME",
   },
   {
-    accessorKey: "category",
-    header: "CATEGORY",
+    accessorKey: "type",
+    header: "TYPE",
   },
   {
-    header: "AMOUNT",
-    id: "amount",
-    cell: ({ row }) => <NumberColumn suffix={row.original.currency} value={row.original.amount} />,
+    accessorKey: "description",
+    header: "DESCRIPTION",
   },
   {
-    id: "dueDate",
-    header: "DUE DATE",
-    cell: ({ row }) => <DateTimeColumn value={row.original.dueDate}  />,
-  },
-  {
-    accessorKey: "status",
     header: "STATUS",
+    id: "status",
+    cell: ({ row }) => <StateColumn state={row.original.status} />,
   },
-  
   {
     id: "actions",
     cell: ({ row }) => <CellAction data={row.original} />,

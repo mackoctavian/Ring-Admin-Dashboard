@@ -61,11 +61,11 @@ export const mainMenu = [
       route: "/units",
       label: "Units",
     },
-    {
-      icon: "/icons/icons/stock-transfer.svg",
-      route: "/stock-transfer",
-      label: "Stock Transfer",
-    },
+    // {
+    //   icon: "/icons/icons/stock-transfer.svg",
+    //   route: "/stock-transfer",
+    //   label: "Stock Transfer",
+    // },
     
   
     {
@@ -133,6 +133,11 @@ export const mainMenu = [
       icon: "/icons/icons/departments.svg",
       route: "/departments",
       label: "Departments",
+    },
+    {
+      icon: "/icons/icons/departments.svg",
+      route: "/sections",
+      label: "Spaces & sections",
     },
     {
       icon: "/icons/icons/staff.svg",

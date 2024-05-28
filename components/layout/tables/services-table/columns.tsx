@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { StateColumn } from "../state-column";
 import { MoneyColumn } from "../money-colum";
+import { DateTimeColumn } from "../date-colum";
 
 export const columns: ColumnDef<Service>[] = [
   {
@@ -48,12 +49,14 @@ export const columns: ColumnDef<Service>[] = [
     },
   },
   {
-    accessorKey: "offeringStartTime",
     header: "START TIME",
+    id: "offeringStartTime",
+    cell: ({ row }) => <DateTimeColumn value={row.original.offeringStartTime} type="timeOnly" />,
   },
   {
-    accessorKey: "offeringEndTime",
+    id: "offeringEndTime",
     header: "END TIME",
+    cell: ({ row }) => <DateTimeColumn value={row.original.offeringEndTime} type="timeOnly" />,
   },
   {
     header: "STATUS",

@@ -4,6 +4,17 @@ import { Discount } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { StateColumn } from "../state-column";
+import { NumberColumn } from "../number-column";
+
+
+const getSuffix = (type: string) => {
+  if (type === 'PERCENTAGE') {
+      return ' %';
+  } else if (type === 'AMOUNT') {
+      return ' TSH';
+  }
+  return '';
+};
 
 export const columns: ColumnDef<Discount>[] = [
   {
@@ -38,8 +49,9 @@ export const columns: ColumnDef<Discount>[] = [
     header: "TYPE",
   },
   {
-    accessorKey: "value",
     header: "VALUE",
+    id: "value",
+    cell: ({ row }) => <NumberColumn suffix={getSuffix(row.original.type)} value={row.original.value} />,
   },
   {
     header: "STATUS",
@@ -51,3 +63,4 @@ export const columns: ColumnDef<Discount>[] = [
     cell: ({ row }) => <CellAction data={row.original} />,
   },
 ];
+

@@ -2,16 +2,16 @@ import BreadCrumb from "@/components/layout/breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { Expense } from "@/types";
+import { Section } from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
-import { columns } from "@/components/layout/tables/expenses-table/columns";
-import { getItems } from "@/lib/actions/expense.actions";
-import { ExpensesTable } from "@/components/layout/tables/expenses-table/expenses-table";
+import { columns } from "@/components/layout/tables/sections-table/columns";
+import { getItems } from "@/lib/actions/section.actions";
+import { SectionsTable } from "@/components/layout/tables/sections-table/sections-table";
 
-const breadcrumbItems = [{ title: "Expenses", link: "/expenses" }];
+const breadcrumbItems = [{ title: "Spaces & Sections", link: "/sections" }];
 
 type ParamsProps = {
   searchParams: {
@@ -25,9 +25,10 @@ export default async function Page({ searchParams }: ParamsProps) {
   const q = searchParams.search || null;  
   const offset = (page - 1) * pageLimit;
 
-  const data : Expense[] = await getItems(q?.toString(), null, null, offset);
+  const data : Section[] = await getItems(q?.toString(), null, pageLimit, offset);
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
+
 
   return (
     <>
@@ -35,15 +36,15 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Expenses`} total={total.toString()} description="Manage expenses" />
+            <Heading title={`Spaces & sections`} total={total.toString()} description="Manage rooms, spaces and sections" />
 
-            <Link href={"/expenses/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Record Expense
+            <Link href={"/sections/new"} className={cn(buttonVariants({ variant: "default" }))} >
+                <Plus className="mr-2 h-4 w-4" /> Add Space / Section
             </Link>
         </div>
         <Separator />
 
-        <ExpensesTable
+        <SectionsTable
           searchKey="name"
           pageNo={page}
           columns={columns}

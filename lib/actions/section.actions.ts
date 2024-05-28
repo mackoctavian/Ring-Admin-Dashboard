@@ -3,18 +3,18 @@
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { DiscountDto, Discount } from "@/types";
+import { Section } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 
 const {
   APPWRITE_DATABASE: DATABASE_ID,
-  DISCOUNTS_COLLECTION: DISCOUNTS_COLLECTION_ID
+  SECTIONS_COLLECTION: SECTIONS_COLLECTION_ID
 } = process.env;
 
 
-export const createItem = async (item: DiscountDto) => {
+export const createItem = async (item: Section) => {
   try {
-    if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
+    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
       throw Error('Database ID or Collection ID is missing');
     }
 
@@ -22,7 +22,7 @@ export const createItem = async (item: DiscountDto) => {
 
     const newItem = await database.createDocument(
       DATABASE_ID!,
-      DISCOUNTS_COLLECTION_ID!,
+      SECTIONS_COLLECTION_ID!,
       ID.unique(),
       {
         ...item,
@@ -41,7 +41,7 @@ export const createItem = async (item: DiscountDto) => {
 
 export const list = async ( ) => {
   try {
-    if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
+    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
       throw new Error('Database ID or Collection ID is missing');
     }
 
@@ -49,7 +49,7 @@ export const list = async ( ) => {
 
     const items = await database.listDocuments(
       DATABASE_ID,
-      DISCOUNTS_COLLECTION_ID,
+      SECTIONS_COLLECTION_ID,
     );
 
     return parseStringify(items.documents);
@@ -65,7 +65,7 @@ export const getItems = async (
   limit?: number | null, 
   offset?: number | 1,
 ) => {
-  if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
+  if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
     throw new Error('Database ID or Collection ID is missing');
   }
 
@@ -73,7 +73,6 @@ export const getItems = async (
     const { database } = await createAdminClient();
 
     const queries = [];
-    queries.push(Query.orderDesc("$createdAt"));
 
     if ( limit ) {
       queries.push(Query.limit(limit));
@@ -90,7 +89,7 @@ export const getItems = async (
 
     const items = await database.listDocuments(
       DATABASE_ID,
-      DISCOUNTS_COLLECTION_ID,
+      SECTIONS_COLLECTION_ID,
       queries
     );
 
@@ -110,7 +109,7 @@ export const getItems = async (
 
 export const getItem = async (id: string) => {
   try {
-    if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
+    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
       throw new Error('Database ID or Collection ID is missing');
     }
 
@@ -122,7 +121,7 @@ export const getItem = async (id: string) => {
 
     const item = await database.listDocuments(
       DATABASE_ID!,
-      DISCOUNTS_COLLECTION_ID!,
+      SECTIONS_COLLECTION_ID!,
       [Query.equal('$id', id)]
     )
 
@@ -136,9 +135,9 @@ export const getItem = async (id: string) => {
   }
 }
 
-export const deleteItem = async ({ $id }: Discount) => {
+export const deleteItem = async ({ $id }: Section) => {
   try {
-    if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
+    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
       throw new Error('Database ID or Collection ID is missing');
     }
 
@@ -146,7 +145,7 @@ export const deleteItem = async ({ $id }: Discount) => {
 
     const item = await database.deleteDocument(
       DATABASE_ID!,
-      DISCOUNTS_COLLECTION_ID!,
+      SECTIONS_COLLECTION_ID!,
       $id);
 
     return parseStringify(item);
@@ -159,9 +158,9 @@ export const deleteItem = async ({ $id }: Discount) => {
   }
 }
 
-export const updateItem = async (id: string, data: DiscountDto) => {  
+export const updateItem = async (id: string, data: Section) => {  
   try {
-    if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
+    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
       throw new Error('Database ID or Collection ID is missing');
     }
 
@@ -169,7 +168,7 @@ export const updateItem = async (id: string, data: DiscountDto) => {
 
     const item = await database.updateDocument(
       DATABASE_ID!,
-      DISCOUNTS_COLLECTION_ID!,
+      SECTIONS_COLLECTION_ID!,
       id,
       data);
 

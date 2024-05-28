@@ -18,54 +18,57 @@ export const generateSKU = (productName: string) => {
 };
 
 // FORMAT DATE TIME
-export const formatDateTime = (dateString: Date) => {
+export const formatDateTime = (input: string) => {
+  let date: Date;
+
+  if (input.includes('T') || input.includes('-')) {
+    date = new Date(input);
+  } else {
+    // If the input is time-only like "00:30", assume today's date
+    const today = new Date();
+    const [hours, minutes] = input.split(':').map(Number);
+    date = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes);
+  }
+
+  const locale = "en-US"; // Use a consistent locale
+  const timeZone = "UTC"; // Use a consistent time zone
+
   const dateTimeOptions: Intl.DateTimeFormatOptions = {
-    weekday: "short", // abbreviated weekday name (e.g., 'Mon')
-    month: "short", // abbreviated month name (e.g., 'Oct')
-    day: "numeric", // numeric day of the month (e.g., '25')
-    hour: "numeric", // numeric hour (e.g., '8')
-    minute: "numeric", // numeric minute (e.g., '30')
-    hour12: true, // use 12-hour clock (true) or 24-hour clock (false)
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+    timeZone: timeZone,
   };
 
   const dateDayOptions: Intl.DateTimeFormatOptions = {
-    weekday: "short", // abbreviated weekday name (e.g., 'Mon')
-    year: "numeric", // numeric year (e.g., '2023')
-    month: "2-digit", // abbreviated month name (e.g., 'Oct')
-    day: "2-digit", // numeric day of the month (e.g., '25')
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: timeZone,
   };
 
   const dateOptions: Intl.DateTimeFormatOptions = {
-    month: "short", // abbreviated month name (e.g., 'Oct')
-    year: "numeric", // numeric year (e.g., '2023')
-    day: "numeric", // numeric day of the month (e.g., '25')
+    month: "short",
+    year: "numeric",
+    day: "numeric",
+    timeZone: timeZone,
   };
 
   const timeOptions: Intl.DateTimeFormatOptions = {
-    hour: "numeric", // numeric hour (e.g., '8')
-    minute: "numeric", // numeric minute (e.g., '30')
-    hour12: true, // use 12-hour clock (true) or 24-hour clock (false)
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+    timeZone: timeZone,
   };
 
-  const formattedDateTime: string = new Date(dateString).toLocaleString(
-    "en-TZ",
-    dateTimeOptions
-  );
-
-  const formattedDateDay: string = new Date(dateString).toLocaleString(
-    "en-TZ",
-    dateDayOptions
-  );
-
-  const formattedDate: string = new Date(dateString).toLocaleString(
-    "en-TZ",
-    dateOptions
-  );
-
-  const formattedTime: string = new Date(dateString).toLocaleString(
-    "en-TZ",
-    timeOptions
-  );
+  const formattedDateTime: string = date.toLocaleString(locale, dateTimeOptions);
+  const formattedDateDay: string = date.toLocaleString(locale, dateDayOptions);
+  const formattedDate: string = date.toLocaleString(locale, dateOptions);
+  const formattedTime: string = date.toLocaleString(locale, timeOptions);
 
   return {
     dateTime: formattedDateTime,
@@ -74,6 +77,7 @@ export const formatDateTime = (dateString: Date) => {
     timeOnly: formattedTime,
   };
 };
+
 
 export function formatAmount(value: number): string {
   const formatter = new Intl.NumberFormat("en-US", {

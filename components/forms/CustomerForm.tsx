@@ -121,7 +121,7 @@ import {
             toast({
                 variant: "warning",
                 title: "Uh oh! Something went wrong.", 
-                description: JSON.stringify(errors)+ "There was an issue submitting your form please try again"
+                description: "There was an issue submitting your form please try again"
             });
             console.error(JSON.stringify(errors));
         }
@@ -168,7 +168,7 @@ import {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <FormField
                     control={form.control}
                     name="name"

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input";
 import { Expense, Staff, Department, Supplier } from "@/types";
-import { ExpenseSchema } from "@/types/data-schemas";
+import { ExpenseSchema, ExpenseStatus } from "@/types/data-schemas";
 import { createItem, updateItem } from "@/lib/actions/expense.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
@@ -60,7 +60,8 @@ import SupplierSelector from "../layout/supplier-selector";
     const form = useForm<z.infer<typeof ExpenseSchema>>({
         resolver: zodResolver(ExpenseSchema),
         defaultValues: item ? { ...item, staff: item.staff, department: item.department, vendor: item.vendor } : {
-            tax: 0
+            tax: 0,
+            status: ExpenseStatus.UNPAID
             // type: CategoryType.PRODUCT,
             // description: '',
             // status: false,

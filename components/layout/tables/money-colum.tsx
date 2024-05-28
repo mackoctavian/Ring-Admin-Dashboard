@@ -1,11 +1,15 @@
 import { formatAmount } from "@/lib/utils"
 
 interface MoneyColumnProps {
-    value: number;
+    value?: number | null;
   }
 
 export const MoneyColumn = ({ value }: MoneyColumnProps): JSX.Element => {
- return (
+    if (!value) {
+        return <></>;
+    }
+
+    return (
         <>
             { formatAmount(value) }
         </>

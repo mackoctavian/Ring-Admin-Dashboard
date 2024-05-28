@@ -45,15 +45,31 @@ export enum PaymentMethod{
     OTHER = "Other"
 }
 
+export enum SectionType{
+    ROOM = "ROOM",
+    TABLE = "TABLE",
+    SEAT = "SEAT",
+}
 
 export const DepartmentSchema = z.object({
-    $id: z.string(),
+    $id: z.string().optional(),
     name: z.string(),
     shortName: z.string(),
     status: z.boolean(),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
 });
     
-
 export const StaffSchema = z.object({
     $id: z.union([z.string(), z.undefined()]),
     name: z.string(),
@@ -473,6 +489,7 @@ export const ExpenseSchema = z.object({
     currency: z.string(),
     staff: StaffSchema.nullable().optional(),
     department: DepartmentSchema.nullable().optional(),
+    vendor: SupplierSchema.nullable().optional(),
     expenseDate: z.date().optional(),
     dueDate: z.date().optional(),
     document: z.string().optional(),
@@ -525,23 +542,30 @@ export const ExpensePaymentSchema = z.object({
     }, z.date().optional()),
 });
 
+export const SectionSchema = z.object({
+    $id: z.string().optional(),
+    name: z.string({
+        required_error: "Section name is required",
+        invalid_type_error: "Section name must be more than 2 characters long",
+    }).min(2),
+    type: z.enum([SectionType.ROOM, SectionType.SEAT, SectionType.TABLE], {
+        required_error: "Section type is required",
+        invalid_type_error: "Select a valid section type",
+    }),
+    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+    status: z.boolean(),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+});
 
-// export const StockSchema = z.object({
-//     $id: z.string().optional(),
-//     name: z.string(),
-//     quantity: z.number().nonnegative(),
-//     variants: StockVariantSchema,
-//     status: z.nativeEnum(InventoryStatus),
-//     $createdAt: z.preprocess((val) => {
-//         if (typeof val === "string" && val.trim() !== "") {
-//             return new Date(val);
-//         }
-//         return val;
-//     }, z.date().optional()),
-//     $updatedAt: z.preprocess((val) => {
-//         if (typeof val === "string" && val.trim() !== "") {
-//             return new Date(val);
-//         }
-//         return val;
-//     }, z.date().optional()),
-// });
+

@@ -507,7 +507,7 @@ declare type Expense = {
   dueDate: Date;
   document?: string;
   description: string;
-  status: string;
+  status: ExpenseStatus;
   $createdAt?: Date;
   $updatedAt?: Date;
 }
@@ -527,9 +527,18 @@ declare type ExpensePayment = {
 
 
 
+/* Section */
+declare type Section = {
+  $id?: string;
+  name: string;
+  type: SectionType;
+  description: string;
+  status: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
 
-
-
+/* End Section */
 
 
 
@@ -641,7 +650,6 @@ declare interface PaginationProps {
 declare interface PlaidLinkProps {
   user: User;
   variant?: "primary" | "ghost";
-  dwollaCustomerId?: string;
 }
 
 declare interface AuthFormProps {
@@ -678,109 +686,4 @@ declare interface RightSidebarProps {
 
 declare interface SiderbarProps {
   user: User;
-}
-
-declare interface RecentTransactionsProps {
-  accounts: Account[];
-  transactions: Transaction[];
-  appwriteItemId: string;
-  page: number;
-}
-
-declare interface TransactionHistoryTableProps {
-  transactions: Transaction[];
-  page: number;
-}
-
-declare interface CategoryBadgeProps {
-  category: string;
-}
-
-declare interface TransactionTableProps {
-  transactions: Transaction[];
-}
-
-declare interface CategoryProps {
-  category: CategoryCount;
-}
-
-declare interface DoughnutChartProps {
-  accounts: Account[];
-}
-
-declare interface PaymentTransferFormProps {
-  accounts: Account[];
-}
-
-// Actions
-declare interface getAccountsProps {
-  userId: string;
-}
-
-declare interface getAccountProps {
-  appwriteItemId: string;
-}
-
-declare interface getInstitutionProps {
-  institutionId: string;
-}
-
-declare interface getTransactionsProps {
-  accessToken: string;
-}
-
-declare interface CreateFundingSourceOptions {
-  customerId: string; // Dwolla Customer ID
-  fundingSourceName: string; // Dwolla Funding Source Name
-  plaidToken: string; // Plaid Account Processor Token
-  _links: object; // Dwolla On Demand Authorization Link
-}
-
-declare interface CreateTransactionProps {
-  name: string;
-  amount: string;
-  senderId: string;
-  senderBankId: string;
-  receiverId: string;
-  receiverBankId: string;
-  email: string;
-}
-
-declare interface getTransactionsByBankIdProps {
-  bankId: string;
-}
-
-declare interface signInProps {
-  email: string;
-  password: string;
-}
-
-declare interface getUserInfoProps {
-  userId: string;
-}
-
-declare interface exchangePublicTokenProps {
-  publicToken: string;
-  user: User;
-}
-
-declare interface createBankAccountProps {
-  accessToken: string;
-  userId: string;
-  accountId: string;
-  bankId: string;
-  fundingSourceUrl: string;
-  shareableId: string;
-}
-
-declare interface getBanksProps {
-  userId: string;
-}
-
-declare interface getBankProps {
-  documentId: string;
-}
-
-declare interface getBankByAccountIdProps {
-  accountId: string;
 }
