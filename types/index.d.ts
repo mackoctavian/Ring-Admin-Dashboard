@@ -211,62 +211,38 @@ declare type PaymentTypeDto = {
 
 
 /* Product */
-
 declare type Product = {
   $id?: string;
   name: string;
   sku: string;
-  quantity: number;
-  quantityAlert?: number;
-  allowDiscount: boolean;
-  unit?: ProductUnit;
-  category?: Category;
-  discount?: Discount;
-  description?: string;
-  variant?: Variant[];
-  status: boolean;
+  image?: string;
+  category: Category;
+  variants: ProductVariant[];
   $createdAt?: Date;
   $updatedAt?: Date;
 };
 
-declare type ProductDto = {
+declare type ProductVariant = {
+  $id?: string;
   name: string;
-  slug: string;
-  sku: string;
-  image?: File;
-  quantity: number;
-  quantityAlert?: number;
+  price: number;
+  minPrice?: number;
+  discount?: Discount;
+  image?: string;
   allowDiscount: boolean;
-  manufactureDate?: Date;
-  expiryDate?: Date;
-  unit?: ProductUnit;
-  category?: Category;
-  discount?: Discount;
-  minimumSellingPrice?: number;
-  description?: string;
-  variant?: Variant[];
   status: boolean;
-};
-
-declare type Variant = {
-  $id: string;
-  name: string;
-  product: ProductDto;
-  image: string;
-  quantity: number;
-  discount?: Discount;
-  status: boolean;
-  $createdAt: Date;
-  $updatedAt: Date;
+  inventoryItems: ProductInventoryItemUsage[];
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
 
-declare type VariantDto = {
-  name: string;
-  product: ProductDto;
-  image: string;
-  quantity: number;
-  discount?: Discount;
-  status: boolean;
+declare type ProductInventoryItemUsage = {
+  $id?: string;
+  item: InventoryVariant;
+  productVariant: ProductVariant;
+  amountUsed: number;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
 /* End Product */
 
@@ -319,14 +295,7 @@ declare type ServiceInventoryItemUsage = {
   $updatedAt?: Date;
 }
 
-declare type ProductInventoryItemUsage = {
-  $id?: string | undefined;
-  item: InventoryVariant | null;
-  service: Product | null;
-  amountUsed: number;
-  $createdAt?: Date;
-  $updatedAt?: Date;
-}
+
 /* End Inventory Usage */
 
 

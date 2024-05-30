@@ -38,7 +38,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-const ProductForm = ({ item }) => {
+const ProductForm = ({ item }: { item?: Product | null }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -46,13 +46,7 @@ const ProductForm = ({ item }) => {
   const form = useForm({
     resolver: zodResolver(ProductSchema),
     defaultValues: item || {
-      status: false,
       variants: [{
-        id: Date.now(),
-        name: '',
-        price: '',
-        minPrice: '',
-        discount: '',
         allowDiscount: false,
         status: false,
         inventoryItems: []
@@ -60,10 +54,10 @@ const ProductForm = ({ item }) => {
     },
   });
 
-  const [usageItems, setUsageItems] = useState<ProductInventoryItemUsage[]>(form.getValues("inventoryItems") || []);
-  useEffect(() => {
-    form.setValue('inventoryItems', usageItems);
-  }, [usageItems, form]);
+  // const [usageItems, setUsageItems] = useState<ProductInventoryItemUsage[]>(form.getValues("inventoryItems") || []);
+  // useEffect(() => {
+  //   form.setValue('inventoryItems', usageItems);
+  // }, [usageItems, form]);
 
   const { control, handleSubmit, setValue, getValues, watch, formState: { errors } } = form;
   const { fields: variants, append: addVariant, remove: removeVariant } = useFieldArray({
@@ -72,28 +66,28 @@ const ProductForm = ({ item }) => {
   });
 
   const handleAddVariant = () => {
-    addVariant({ id: Date.now(), name: '', price: '', minPrice: '', discount: '', allowDiscount: false, status: false, inventoryItems: [] });
+    addVariant({ name: '', price: 0, allowDiscount: false, status: false, inventoryItems: [] });
   };
 
   const handleRemoveVariant = (index: number) => {
     removeVariant(index);
   };
 
-  const handleAddInventory = (variantIndex: string) => {
-    const inventoryItems = getValues(`variants.${variantIndex}.inventoryItems`);
-    const newInventoryItem = { id: Date.now(), item: '', amount: '' };
+  const handleAddInventory = (variantIndex: number) => {
+    const inventoryItems : ProductInventoryItemUsage[] = getValues(`variants.${variantIndex}.inventoryItems`);
+    const newInventoryItem = { item: null, amountUsed: 0 };
     const updatedInventory = [...inventoryItems, newInventoryItem];
     setValue(`variants.${variantIndex}.inventoryItems`, updatedInventory, { shouldValidate: true, shouldDirty: true });
   };
 
-  const handleRemoveInventory = (variantIndex: string, inventoryId: string) => {
-    const inventoryItems = getValues(`variants.${variantIndex}.inventoryItems`);
-    const updatedInventory = inventoryItems.filter((i) => i.id !== inventoryId);
+  const handleRemoveInventory = (variantIndex: number, inventoryId: string) => {
+    const inventoryItems : ProductInventoryItemUsage[] = getValues(`variants.${variantIndex}.inventoryItems`);
+    const updatedInventory = inventoryItems.filter((i) => i.$id !== inventoryId);
     setValue(`variants.${variantIndex}.inventoryItems`, updatedInventory, { shouldValidate: true, shouldDirty: true });
   };
   
 
-  const onInvalid = (errors) => {
+  const onInvalid = (errors: any) => {
     toast({
       variant: 'warning',
       title: 'Uh oh! Something went wrong.',
@@ -102,9 +96,10 @@ const ProductForm = ({ item }) => {
     console.error(JSON.stringify(errors));
   };
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: z.infer<typeof ProductSchema>) => {
     console.log(JSON.stringify(data))
     setIsLoading(true);
+    await createItem(data)
     try {
       toast({
         variant: 'default',
@@ -121,6 +116,7 @@ const ProductForm = ({ item }) => {
         title: 'Uh oh! Something went wrong.',
         description: JSON.stringify(error) || 'There was an issue submitting your form, please try later',
       });
+      setIsLoading(false);
     } finally {
       setTimeout(() => {
         setIsLoading(false);
@@ -300,7 +296,7 @@ const ProductForm = ({ item }) => {
 
               <div className="space-y-2">
                 {variant.inventoryItems.map((inv, inventoryIndex) => (
-                  <div key={inv.id} className="space-y-2 p-2 rounded-md">
+                  <div key={inv.$id} className="space-y-2 p-2 rounded-md">
                     <Separator className="my-7" />
                     <div className="flex justify-between items-center">
                       <h5 className="text-md font-medium">Inventory Item</h5>
@@ -335,12 +331,12 @@ const ProductForm = ({ item }) => {
                                 {...field}
                               />
                             </FormControl>
-                            <FormMessage>{errors.variants?.[variantIndex]?.inventoryItems?.[inventoryIndex]?.amount?.message}</FormMessage>
+                            <FormMessage>{errors.variants?.[variantIndex]?.inventoryItems?.[inventoryIndex]?.amountUsed?.message}</FormMessage>
                           </FormItem>
                         )}
                       />
 
-                      <Button type="button" className="mt-7" onClick={() => handleRemoveInventory(variantIndex, inv.id)} variant="destructive">
+                      <Button type="button" className="mt-7" onClick={() => handleRemoveInventory(variantIndex, inv.$id)} variant="destructive">
                         Remove item
                       </Button>
                     </div>

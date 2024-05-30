@@ -3,7 +3,7 @@
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Product, ProductDto } from "@/types";
+import { Product } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 
 const {
@@ -159,7 +159,7 @@ const {
     }
   }
 
-  export const updateItem = async (id: string, data: ProductDto) => {  
+  export const updateItem = async (id: string, data: Product) => {  
     try {
       if (!DATABASE_ID || !PRODUCTS_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');

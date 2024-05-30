@@ -426,7 +426,7 @@ export const ProductInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
 );
 
 export const ProductVariantSchema = z.object({
-    id: z.number(),
+    id: z.string().optional(),
     name: z.string(),
     price: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -440,7 +440,7 @@ export const ProductVariantSchema = z.object({
         }
         return val;
     }, z.number().nonnegative().optional()),
-    discount: z.string().optional(),
+    discount: DiscountSchema.nullable().optional(),
     allowDiscount: z.boolean(),
     status: z.boolean(),
     inventoryItems: z.array(ProductInventoryUsageSchema).optional(), 
