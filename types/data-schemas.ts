@@ -357,6 +357,123 @@ export const StockSchema = z.object({
     }, z.date().optional()),
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+    
+// export const ProductSchema = z.object({
+//     $id: z.string().optional(),
+//     name: z.string({
+//         required_error: "Product name is required",
+//         invalid_type_error: "Product name must be more than 2 characters long",
+//     }).min(2),
+//     sku: z.string(),
+//     category: CategorySchema,
+//     discount: DiscountSchema.nullable().optional(),
+//     description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+//     allowDiscount: z.boolean(),
+//     image: z.string().optional(),
+//     status: z.boolean(),
+//     inventoryItems: z.array(ProductInventoryUsageSchema).optional(),
+//     $createdAt: z.preprocess((val) => {
+//         if (typeof val === "string" && val.trim() !== "") {
+//             return new Date(val);
+//         }
+//         return val;
+//     }, z.date().optional()),
+//     $updatedAt: z.preprocess((val) => {
+//         if (typeof val === "string" && val.trim() !== "") {
+//             return new Date(val);
+//         }
+//         return val;
+//     }, z.date().optional()),
+// });
+
+
+export const ProductInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
+    z.object({
+        $id: z.string().optional(),
+        item: InventoryVariantSchema,
+        amountUsed: z.preprocess((val) => {
+            if (typeof val === "string" && val.trim() !== "") {
+                return parseFloat(val);
+            }
+            return val;
+        }, z.number().nonnegative()),
+        product: ProductSchema.nullable().optional(),
+        $createdAt: z.preprocess((val) => {
+            if (typeof val === "string" && val.trim() !== "") {
+                return new Date(val);
+            }
+            return val;
+        }, z.date().optional()),
+        $updatedAt: z.preprocess((val) => {
+            if (typeof val === "string" && val.trim() !== "") {
+                return new Date(val);
+            }
+            return val;
+        }, z.date().optional()),
+    })
+);
+
+export const ProductVariantSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+    price: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
+    minPrice: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative().optional()),
+    discount: z.string().optional(),
+    allowDiscount: z.boolean(),
+    status: z.boolean(),
+    inventoryItems: z.array(ProductInventoryUsageSchema).optional(), 
+  });
+
+
+export const ProductSchema = z.object({
+    $id: z.string().optional(),
+    name: z.string(),
+    sku: z.string(),
+    category: CategorySchema,
+    image: z.any().optional(),
+    variants: z.array(ProductVariantSchema).min(1, "At least one variant is required"),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+});
+
+
+
+
+
+
+
 export const ServiceInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
     z.object({
         $id: z.string().optional(),
@@ -385,62 +502,6 @@ export const ServiceInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
         }, z.date().optional()),
     })
 );
-
-export const ProductInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
-    z.object({
-        $id: z.string().optional(),
-        item: InventoryVariantSchema,
-        amountUsed: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return parseFloat(val);
-            }
-            return val;
-        }, z.number().nonnegative()),
-        service: ProductSchema.nullable(),
-        $createdAt: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return new Date(val);
-            }
-            return val;
-        }, z.date().optional()),
-        $updatedAt: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return new Date(val);
-            }
-            return val;
-        }, z.date().optional()),
-    })
-);
-    
-export const ProductSchema = z.object({
-    $id: z.string().optional(),
-    name: z.string({
-        required_error: "Product name is required",
-        invalid_type_error: "Product name must be more than 2 characters long",
-    }).min(2),
-    slug: z.string(),
-    sku: z.string(),
-    category: CategorySchema,
-    discount: DiscountSchema.nullable().optional(),
-    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    allowDiscount: z.boolean(),
-    image: z.string().optional(),
-    status: z.boolean(),
-    inventoryItems: z.array(ProductInventoryUsageSchema).optional(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-});
-
 
 export const ServiceSchema = z.object({
     $id: z.string().optional(),

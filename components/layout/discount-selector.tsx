@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Select,
@@ -11,8 +10,8 @@ import { list } from "@/lib/actions/discount.actions"
 import { Discount } from "@/types";
 
 interface Props {
-  value?: Discount;
-  onChange: (value: Discount) => void;
+  value?: Discount | null; // Update the type to allow null
+  onChange: (value: Discount | null) => void; // Update the type to allow null
 }
 
 const DiscountSelector: React.FC<Props> = ({ value, onChange }) => {
@@ -31,20 +30,27 @@ const DiscountSelector: React.FC<Props> = ({ value, onChange }) => {
   }, []);
 
   const handleSelectChange = (value: string) => {
-    const selectedDiscount = discounts.find(disc => disc.$id === value);
-    if (selectedDiscount) {
-      onChange(selectedDiscount);
+    if (value === 'null') { // Check if the value is 'null'
+      onChange(null);
+    } else {
+      const selectedDiscount = discounts.find(disc => disc.$id === value);
+      if (selectedDiscount) {
+        onChange(selectedDiscount);
+      }
     }
   };
 
   return (
-    <Select value={value ? value.$id : 'Select Discount'} onValueChange={handleSelectChange}>
+    <Select value={value ? value.$id : 'null'} onValueChange={handleSelectChange}>
       <SelectTrigger>
         <SelectValue>
           {value ? value.name : 'Select Discount'}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
+        {/* Add the option for selecting no discount */}
+        <SelectItem key="null" value="null">No Discount</SelectItem>
+        {/* Render other discounts */}
         {discounts.map((discount) => (
           <SelectItem key={discount.$id} value={discount.$id}>
             {discount.name}

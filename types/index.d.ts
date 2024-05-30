@@ -215,7 +215,6 @@ declare type PaymentTypeDto = {
 declare type Product = {
   $id?: string;
   name: string;
-  slug: string;
   sku: string;
   quantity: number;
   quantityAlert?: number;

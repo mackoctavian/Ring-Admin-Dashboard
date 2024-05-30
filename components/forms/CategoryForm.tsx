@@ -97,7 +97,6 @@ import DiscountSelector from "../layout/discount-selector";
             // Redirect to the list page after submission
             router.push("/categories");
             router.refresh();
-            setIsLoading(false);
         } catch (error: any) {
             toast({
                 variant: "destructive",

@@ -17,8 +17,6 @@ import { useUser } from '@/context/UserContext';
 export function UserNav() {
   const { user, loading, logout } = useUser();
 
-  console.info(user);
-
   if (loading) {
     return <><ReloadIcon className="mr-2 h-4 w-4 animate-spin" /></>;
   }
@@ -29,10 +27,10 @@ export function UserNav() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              {/* <AvatarImage
-                src={user..user?.image ?? ""}
+              <AvatarImage
+                src={user.name?.image ?? ""}
                 alt={user.name ?? ""}
-              /> */}
+              />
               <AvatarFallback>{user.name}</AvatarFallback>
             </Avatar>
           </Button>
