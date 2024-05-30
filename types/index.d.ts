@@ -15,10 +15,17 @@ declare type Country = {
   phonecode: number;
 }
 
+declare type UserContextType = {
+  user: User | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (userData: SignUpParams) => Promise<void>;
+  logout: () => Promise<void>;
+}
+
 declare type SignUpParams = {
   email: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   name: string;
   phoneNumber?: number;
   city?: string;
@@ -29,7 +36,7 @@ declare type SignUpParams = {
   password: string;
 };
 
-declare type LoginUser = {
+declare type SignInParams = {
   email: string;
   password: string;
 };
@@ -38,8 +45,6 @@ declare type User = {
   $id: string;
   email: string;
   userId: string;
-  firstName: string;
-  lastName: string;
   name: string;
   phoneNumber: number;
   city?: string;
@@ -50,13 +55,7 @@ declare type User = {
   status: boolean;
 };
 
-declare type NewUserParams = {
-  userId: string;
-  email: string;
-  name: string;
-  business: Business;
-  password: string;
-};
+
 
 declare type BusinessCategory = {
   $id: string;

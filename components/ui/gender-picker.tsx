@@ -9,7 +9,7 @@ import {
     SelectGroup,
     SelectLabel,
 } from "@/components/ui/select";
-import { Gender } from '@/types';
+import { Gender } from '@/types/data-schemas';
 
 interface Props {
     value?: string;
@@ -22,7 +22,7 @@ const GenderSelect: React.FC<Props> = ({ value, onChange }) => {
     return (
         <Select value={value}>
             <SelectTrigger>
-                <SelectValue placeholder="Select country" />
+                <SelectValue placeholder="Select gender" />
             </SelectTrigger>
             <SelectContent>
                 <SelectGroup>

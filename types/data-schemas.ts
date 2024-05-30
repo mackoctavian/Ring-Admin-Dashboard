@@ -70,6 +70,28 @@ export const DepartmentSchema = z.object({
     }, z.date().optional()),
 });
     
+export const SignUpSchema = z.object({
+    name: z.string().min(3),
+    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
+    city: z.string().optional(),
+    country: z.string().optional(),
+    gender: z.nativeEnum(Gender),
+    dateOfBirth: z.preprocess((val) => {
+      if (val === null) return undefined;
+      if (typeof val === "string" && val.trim() !== "") {
+          return new Date(val);
+      }
+      return val;
+    }, z.date()),
+    email: z.string().email(),
+    password: z.string().min(8),
+})
+
+export const SignInSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+})
+
 export const StaffSchema = z.object({
     $id: z.union([z.string(), z.undefined()]),
     name: z.string(),

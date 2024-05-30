@@ -7,7 +7,6 @@ import { Inter, IBM_Plex_Serif, Open_Sans } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/layout/providers";
 import { Toaster } from "@/components/ui/toaster";
-import { cookies } from "next/headers";
 import { siteConfig } from "@/config/site"
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
@@ -35,8 +34,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = cookies().get("qroo-pos-session");
-
   return (
     <html lang="en">
       <body className={`${inter.variable} ${ibmPlexSerif.variable} ${openSans.variable}`}>
