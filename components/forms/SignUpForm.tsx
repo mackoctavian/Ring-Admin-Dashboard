@@ -73,6 +73,15 @@ const SignUpForm  = () => {
     try {
         const newUser = await signUp(data);
         setUser(newUser);
+        toast({
+            variant: "success",
+            title: "Success", 
+            description: "Your account was created succesfully, you will be redirected soon!"
+        });
+      
+        // Redirect to the list page after submission
+        router.push("/");
+        router.refresh();
     } catch (error) {
       toast({
         variant: "destructive",
