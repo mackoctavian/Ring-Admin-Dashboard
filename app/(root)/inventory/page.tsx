@@ -43,7 +43,7 @@ export default async function Page({ searchParams }: ParamsProps) {
         <Separator />
 
         <InventoryTable
-          searchKey="name"
+          searchKey="fullName"
           pageNo={page}
           columns={columns}
           total={total}

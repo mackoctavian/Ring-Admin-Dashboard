@@ -88,7 +88,6 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
           description: "Inventory item updated successfully!",
         });
       } else {
-        console.info("Submitted data" + JSON.stringify(data));
         await createItem(data);
         toast({
           variant: "success",
