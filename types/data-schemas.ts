@@ -262,7 +262,7 @@ export const ProductUnitSchema = z.object({
 export const InventoryVariantSchema = z.object({
     $id: z.string().optional(),
     name: z.string().trim().nonempty(),
-    unit: ProductUnitSchema.nullable().optional(),
+    fullName: z.string().trim().nonempty(),
     itemsPerUnit: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
@@ -308,6 +308,7 @@ export const InventoryVariantSchema = z.object({
 export const InventorySchema = z.object({
     $id: z.string().optional(),
     title: z.string().nonempty("Title is required"),
+    unit: ProductUnitSchema,
     variants: z.array(InventoryVariantSchema).min(1, "At least one item is required"),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {

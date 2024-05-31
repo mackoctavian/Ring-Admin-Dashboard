@@ -115,6 +115,11 @@ export const removeSpecialCharacters = (value: string) => {
   return value.replace(/[^\w\s]/gi, "");
 };
 
+export const capitalizeFirstLetter = (value: string): string => {
+  const lowerCaseString = value.toLowerCase();
+  return lowerCaseString.charAt(0).toUpperCase() + lowerCaseString.slice(1);
+}
+
 interface UrlQueryParams {
   params: string;
   key: string;

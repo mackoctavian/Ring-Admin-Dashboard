@@ -7,7 +7,7 @@ interface InventoryItemNameColumnProps {
 export const InventoryItemNameColumn = ({ data }: InventoryItemNameColumnProps): JSX.Element => {
  return (
         <>
-            { data.inventory?.title + " " + data.name }
+            { data.fullName }
         </>
     );
 };

@@ -423,6 +423,7 @@ declare type CustomerDto = {
 declare type Inventory = {
   $id?: string;
   title: string,
+  unit: ProductUnit,
   variants: InventoryVariant[],
   $createdAt?: Date;
   $updatedAt?: Date;
@@ -432,10 +433,10 @@ declare type Inventory = {
 declare type InventoryVariant = {
   $id?: string;
   name: string,
+  fullName: string,
   quantity: number,
   startingQuantity: number;
   itemsPerUnit?: number,
-  unit?: ProductUnit,
   lowQuantity: number,
   barcodeId?: string,
   image?: string,

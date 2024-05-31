@@ -9,11 +9,13 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Inventory, InventoryVariant, ProductUnit } from "@/types";
+import { ProductUnit } from "@/types";
 import { InventorySchema, InventoryStatus } from "@/types/data-schemas";
 import { createItem, updateItem } from "@/lib/actions/inventory.actions";
 import { useToast } from "@/components/ui/use-toast";
 import CancelButton from "../layout/cancel-button";
+import { capitalizeFirstLetter } from "@/lib/utils"
+import UnitSelector from "../layout/unit-selector";
 import {
   Form,
   FormControl,
@@ -22,9 +24,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import UnitSelector from "../layout/unit-selector";
 
-const InventoryForm = ({ item, units }: { item?: { title: string; variants: InventoryVariant[] } | null, units: ProductUnit[] | null }) => {
+const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit[] }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -35,8 +36,13 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
     defaultValues: item
       ? item
       : {
-          title: "",
-          variants: [{ name: "", quantity: 0, startingQuantity: 0, lowQuantity: 1, status: InventoryStatus.OUT_OF_STOCK, unit: undefined }],
+          variants: [{ 
+            quantity: 0, 
+            startingQuantity: 0, 
+            lowQuantity: 1, 
+            status: InventoryStatus.OUT_OF_STOCK, 
+            fullName: '', // Add fullName to the default values
+          }],
         },
   });
 
@@ -58,7 +64,7 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
     setIsLoading(true);
 
     try {
-      // Update the status of each variant based on the quantities
+      // Update the status, full name, and quantity of each variant based on the form values
       data.variants = data.variants.map(variant => {
         if (variant.startingQuantity === 0) {
           variant.status = InventoryStatus.OUT_OF_STOCK;
@@ -67,6 +73,10 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
         } else {
           variant.status = InventoryStatus.IN_STOCK;
         }
+
+        variant.fullName = capitalizeFirstLetter(`${data.title} ${data.unit?.name ?? ''} ${variant.name ?? ''}`.trim());
+        variant.quantity = variant.startingQuantity; // Set quantity to startingQuantity
+
         return variant;
       });
 
@@ -103,11 +113,14 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
     }
   };
 
-  // Update variant status whenever startingQuantity or lowQuantity changes
+  // Update variant status, full name, and quantity whenever startingQuantity, lowQuantity, or unit changes
   useEffect(() => {
     fields.forEach((field, index) => {
       const startingQuantity = form.watch(`variants.${index}.startingQuantity`);
       const lowQuantity = form.watch(`variants.${index}.lowQuantity`);
+      const variantName = form.watch(`variants.${index}.name`);
+      const itemName = form.watch(`title`);
+      const itemUnit = form.watch(`unit`);
 
       let status;
       if (startingQuantity === 0) {
@@ -118,8 +131,10 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
         status = InventoryStatus.IN_STOCK;
       }
 
-      if (status !== field.status) {
-        update(index, { ...field, status });
+      const fullName = `${itemName} ${itemUnit?.name ?? ''} ${variantName ?? ''}`.trim();
+
+      if (status !== field.status || fullName !== field.fullName || startingQuantity !== field.quantity) {
+        update(index, { ...field, status, fullName, quantity: startingQuantity });
       }
     });
   }, [fields, form]);
@@ -127,19 +142,36 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Inventory item name</FormLabel>
-              <FormControl>
-                <Input placeholder="Inventory item name" className="input-class" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Inventory item name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Inventory item name" className="input-class" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="unit"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Unit</FormLabel>
+                  <UnitSelector
+                    value={field.value}
+                    units={units}
+                    onChange={(unit) => field.onChange(unit)}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
         {fields.map((field, index) => (
           <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 border p-4 rounded-md">
@@ -173,20 +205,6 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
 
             <FormField
               control={form.control}
-              name={`variants.${index}.quantity`}
-              render={({ field }) => (
-                <FormItem className='h-idden'>
-                  <FormLabel>Quantity</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="0" placeholder="Quantity" value={form.watch(`variants.${index}.startingQuantity`)} readOnly />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name={`variants.${index}.lowQuantity`}
               render={({ field }) => (
                 <FormItem>
@@ -208,22 +226,6 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
                   <FormControl>
                     <Input type="number" min="1" placeholder="Items per unit" className="input-class" {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name={`variants.${index}.unit`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Unit</FormLabel>
-                  <UnitSelector
-                    value={field.value}
-                    units={units}
-                    onChange={(unit) => field.onChange(unit)}
-                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -267,7 +269,14 @@ const InventoryForm = ({ item, units }: { item?: { title: string; variants: Inve
           </div>
         ))}
 
-        <Button type="button" onClick={() => append({ name: "", quantity: 0, startingQuantity: 0, lowQuantity: 1, status: InventoryStatus.OUT_OF_STOCK, unit: undefined })}>
+        <Button type="button" onClick={() => append({ 
+          name: '',
+          quantity: 0, 
+          startingQuantity: 0, 
+          lowQuantity: 1, 
+          status: InventoryStatus.OUT_OF_STOCK, 
+          fullName: '', 
+        })}>
           Add Item
         </Button>
 

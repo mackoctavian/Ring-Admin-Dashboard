@@ -49,6 +49,7 @@ const {
       const items = await database.listDocuments(
         DATABASE_ID,
         PRODUCT_UNITS_ID,
+        [Query.orderAsc("name")]
       );
 
       return parseStringify(items.documents);
@@ -72,6 +73,7 @@ const {
       const { database } = await createAdminClient();
   
       const queries = [];
+      queries.push(Query.orderAsc("name"));
 
       if ( limit ) {
         queries.push(Query.limit(limit));

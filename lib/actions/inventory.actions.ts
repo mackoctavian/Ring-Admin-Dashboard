@@ -37,7 +37,7 @@ const {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
-      throw Error(errorMessage);
+      throw Error(error);
     }
   }
 
@@ -52,6 +52,7 @@ const {
       const items = await database.listDocuments(
         DATABASE_ID,
         INVENTORY_COLLECTION_ID,
+        [Query.orderAsc("name")]
       );
 
       return parseStringify(items.documents);
@@ -95,6 +96,7 @@ const {
       const { database } = await createAdminClient();
   
       const queries = [];
+      queries.push(Query.orderAsc("name"));
 
       if ( limit ) {
         queries.push(Query.limit(limit));
