@@ -28,7 +28,8 @@ export const columns: ColumnDef<Stock>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "item.name",
+    id: "item",
+    accessorKey: "item.fullName",
     header: "ITEM",
   },
   {

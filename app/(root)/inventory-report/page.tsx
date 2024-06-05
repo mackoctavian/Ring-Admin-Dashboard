@@ -1,6 +1,5 @@
 import AnimatedCounter from "@/components/AnimatedCounter";
 import { CalendarDateRangePicker } from "@/components/date-range-picker";
-import Greetings from "@/components/layout/greeting";
 import { Overview } from "@/components/overview";
 import { RecentSales } from "@/components/recent-sales";
 import { Button } from "@/components/ui/button";
@@ -15,13 +14,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function page() {
-  
-
   return (
     <ScrollArea className="h-full">
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight text-green-main"><Greetings /></h2>
+          <h2 className="text-3xl font-bold tracking-tight text-green-main">
+            Inventory Reports
+          </h2>
           <div className="hidden md:flex items-center space-x-2">
             <CalendarDateRangePicker />
             <Button>Download</Button>
@@ -31,7 +30,7 @@ export default function page() {
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="analytics" disabled>
-              Analytics
+              Analytics coming soon
             </TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
@@ -39,7 +38,7 @@ export default function page() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Total Revenue
+                    Total Inventory Value
                   </CardTitle>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -66,7 +65,7 @@ export default function page() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Subscriptions
+                    Suppliers
                   </CardTitle>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -86,13 +85,13 @@ export default function page() {
                 <CardContent>
                   <div className="text-2xl font-bold"><AnimatedCounter value={2350}/></div>
                   <p className="text-xs text-muted-foreground">
-                    +180.1% from last month
+                    Total suppliers on record
                   </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Sales</CardTitle>
+                  <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -110,14 +109,14 @@ export default function page() {
                 <CardContent>
                   <div className="text-2xl font-bold"><AnimatedCounter value={12234}/></div>
                   <p className="text-xs text-muted-foreground">
-                    +19% from last month
+                    Number of items on alert
                   </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Active Now
+                    Out Of Stock
                   </CardTitle>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -133,34 +132,14 @@ export default function page() {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">+573</div>
+                  <div className="text-2xl font-bold">20</div>
                   <p className="text-xs text-muted-foreground">
-                    +201 since last hour
+                    Number of items out of stock
                   </p>
                 </CardContent>
               </Card>
             </div>
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
-              <Card className="col-span-4">
-                <CardHeader>
-                  <CardTitle>Overview</CardTitle>
-                </CardHeader>
-                <CardContent className="pl-2">
-                  <Overview />
-                </CardContent>
-              </Card>
-              <Card className="col-span-4 md:col-span-3">
-                <CardHeader>
-                  <CardTitle>Recent Sales</CardTitle>
-                  <CardDescription>
-                    You made 265 sales this month.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <RecentSales />
-                </CardContent>
-              </Card>
-            </div>
+            
           </TabsContent>
         </Tabs>
       </div>

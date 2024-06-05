@@ -23,7 +23,7 @@ export const mainMenu = [
       label: "Sales Reports",
     },
     {
-      route: "/#",
+      route: "/inventory-report",
       icon: "/icons/icons/inventory-report.svg",
       label: "Inventory Reports",
     },
@@ -150,7 +150,7 @@ export const mainMenu = [
   
     {
       icon: "/icons/icons/business-settings.svg",
-      route: "/#",
+      route: "/business",
       label: "Business Settings",
     },
     

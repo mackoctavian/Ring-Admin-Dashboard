@@ -1,9 +1,11 @@
 'use server';
 
+const env = process.env.NODE_ENV
+import * as Sentry from "@sentry/nextjs";
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { DepartmentDto, Department } from "@/types";
+import { Department, Branch } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 
 const {
@@ -11,8 +13,44 @@ const {
     DEPARTMENTS_COLLECTION: DEPARTMENT_COLLECTION_ID
   } = process.env;
 
+  export const createDefaultDepartment = async (branch: Branch) => {
+    try {
+      if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
+        throw Error('Database ID or Collection ID is missing');
+      }
 
-  export const createItem = async (item: DepartmentDto) => {
+      const { database } = await createAdminClient();
+
+      const newItem = await database.createDocument(
+        DATABASE_ID!,
+        DEPARTMENT_COLLECTION_ID!,
+        ID.unique(),
+        {
+          branch: branch,
+          name: 'Main department',
+          shortName: 'Main',
+          businessId: branch.business.$id,
+          branchId: branch.$id,
+          status: true,
+        }
+      )
+
+      return parseStringify(newItem);
+    } catch (error: any) {
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+  
+      if(env == "development"){ console.error(error); }
+  
+      Sentry.captureException(error);
+      throw Error(errorMessage);
+    }
+  }
+
+
+  export const createItem = async (item: Department) => {
     try {
       if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
         throw Error('Database ID or Collection ID is missing');
@@ -158,7 +196,7 @@ const {
     }
   }
 
-  export const updateItem = async (id: string, data: DepartmentDto) => {  
+  export const updateItem = async (id: string, data: Department) => {  
     try {
       if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');

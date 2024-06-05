@@ -1,22 +1,36 @@
-// middleware.ts
-'use server';
+const env = process.env.NODE_ENV
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextRequest, NextResponse } from "next/server";
+let debug = false
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+if(env == "development"){ debug = true }
 
-export async function middleware(request: NextRequest) {
-  const session = request.cookies.get('qroo-pos-session');
+const isOnboardingRoute = createRouteMatcher(["/business-registration"])
+const isPublicRoute = createRouteMatcher(["/sign-in", "/sign-up", "/business-registration"])
 
-  if (!session) {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
-  }
+export default clerkMiddleware((auth, req: NextRequest) => {
+    const { userId, sessionClaims, redirectToSignIn } = auth();
 
-  return NextResponse.next();
-}
+    // For users visiting /onboarding, don't try to redirect
+    if (userId && isOnboardingRoute(req)) {
+      return NextResponse.next();
+    }
 
-// Specify the paths where the middleware should run
+    // If the user isn't signed in and the route is private, redirect to sign-in
+    if (!userId && !isPublicRoute(req))
+      return redirectToSignIn({ returnBackUrl: req.url });
+
+    // Catch users who do not have `onboardingComplete: true` in their publicMetadata
+    // Redirect them to the /onboading route to complete onboarding
+    if (userId && !sessionClaims?.metadata?.onboardingComplete) {
+      const onboardingUrl = new URL("/business-registration", req.url);
+      return NextResponse.redirect(onboardingUrl);
+    }
+
+    // If the user is logged in and the route is protected, let them view.
+    if (userId && !isPublicRoute(req)) return NextResponse.next();
+  }, { debug: debug });
+
 export const config = {
-  matcher: [
-    '/((?!sign-in|sign-up|api|_next/static|_next/image|favicon.ico|public|icons).*)',
-  ],
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
 };

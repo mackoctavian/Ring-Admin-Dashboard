@@ -10,15 +10,14 @@ import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { ReloadIcon } from "@radix-ui/react-icons"
 import { useRouter } from 'next/navigation';
-import { getLoggedInUser, signIn, signUp } from '@/lib/actions/user.actions';
-import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Calendar } from "@/components/ui/calendar"
+import { signUp } from '@/lib/actions/user.actions';
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast"
 import CountrySelector from "../layout/country-selector";
-import { SignUpSchema, Gender } from "@/types/data-schemas";
+import { SignUpSchema } from "@/types/data-schemas";
+import BusinessSizeSelector from "../layout/business-size-selector";
+import BusinessTypeSelector from "../layout/business-type-selector";
+import { BusinessType } from "@/types";
 import {
   Form,
   FormControl,
@@ -27,25 +26,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 const SignUpForm  = () => {
   const router = useRouter();
+  const { toast } = useToast()
+
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [country, setCountry] = useState<string>('TZ'); // Default country set
-  const { toast } = useToast()
+  const [country, setCountry] = useState<string>('Tanzania'); // Default country set
+  const [selectedType, setSelectedType] = useState<BusinessType>();
+
+  const handleTypeChange = (type: BusinessType) => {
+    setSelectedType(type);
+  };
 
   const handleCountryChange = (value: string) => {
     setCountry(value);
@@ -71,16 +64,16 @@ const SignUpForm  = () => {
     setIsLoading(true);
 
     try {
-        const newUser = await signUp(data);
-        setUser(newUser);
+        const userData = await signUp(data);
+        setUser(userData);
         toast({
             variant: "success",
             title: "Success", 
             description: "Your account was created succesfully, you will be redirected soon!"
         });
       
-        // Redirect to the list page after submission
-        router.push("/");
+        // Redirect to the business registration page after submission
+        router.push("/business-registration");
         router.refresh();
     } catch (error) {
       toast({
@@ -152,66 +145,33 @@ const SignUpForm  = () => {
                     </FormItem>
                     )}
                 />
-
-                <FormField
-                    control={form.control}
-                    name="dateOfBirth"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col mt-2">
-                            <FormLabel>Date of birth</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
-                                        {field.value ? ( format(field.value, "PPP") ) : (
-                                            <span>Select date of birth</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) => {
-                                      const today = new Date();
-                                      const minAgeDate = new Date();
-                                      minAgeDate.setFullYear(today.getFullYear() - 18);
-                                      
-                                      return date > today || date < minAgeDate;
-                                    }}
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
                 
                 <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
+                  control={form.control}
+                  name="businessType"
+                  render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Gender</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select gender" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value={Gender.UNDISCLOSED}>Do not disclose</SelectItem>
-                            <SelectItem value={Gender.MALE}>Male</SelectItem>
-                            <SelectItem value={Gender.FEMALE}>Female</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
+                      <FormLabel>Business type</FormLabel>
+                      <FormControl>
+                        <BusinessTypeSelector value={selectedType} onChange={handleTypeChange} />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="size"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Business size</FormLabel>
+                      <FormControl>
+                        <BusinessSizeSelector {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
 
                 <FormField
@@ -246,6 +206,7 @@ const SignUpForm  = () => {
                     )}
                 />
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
             <FormField
               control={form.control}
               name="email"
@@ -282,7 +243,7 @@ const SignUpForm  = () => {
                 </FormItem>
                 )}
               />
-
+          </div>
           <div className="flex flex-col gap-4">
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (

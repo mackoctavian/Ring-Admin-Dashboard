@@ -27,6 +27,7 @@ export const columns: ColumnDef<InventoryVariant>[] = [
   },
 
   {
+    id: "fullName",
     accessorKey: "inventory.title",
     header: "TITLE",
     cell: ({ row }) => <InventoryItemNameColumn data={row.original} />,

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { Icons } from "@/components/icons";
-import  * as enums from "./data-schemas";
+import * as enums from "./data-schemas";
 
 declare type SearchParamProps = {
   params: { [key: string]: string };
@@ -15,23 +15,24 @@ declare type Country = {
   phonecode: number;
 }
 
-declare type UserContextType = {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: SignUpParams) => Promise<void>;
-  logout: () => Promise<void>;
+declare type SubscriptionContextType = {
+    subscriptionStatus: SubscriptionStatus | null;
+}
+
+declare type BusinessType = {
+  $id?: string;
+  name: string;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
 
 declare type SignUpParams = {
-  email: string;
   name: string;
-  name: string;
-  phoneNumber?: number;
-  city?: string;
+  phoneNumber: string;
+  businessType: BusinessType;
+  size: string;
   country: string;
-  gender: string;
-  dateOfBirth?: Date;
+  city?: string;
   email: string;
   password: string;
 };
@@ -42,44 +43,52 @@ declare type SignInParams = {
 };
 
 declare type User = {
-  $id: string;
+  $id?: string;
   email: string;
-  userId: string;
   name: string;
-  phoneNumber: number;
+  phoneNumber?: string;
+  image?: string;
   city?: string;
-  country: string;
-  gender: string;
-  dateOfBirth: Date;
+  country?: string;
+  gender?: string;
+  dateOfBirth?: Date;
   points: number;
   status: boolean;
+  userId: string;
+  business?: Business;
+  isOwner: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 };
 
-
-
-declare type BusinessCategory = {
-  $id: string;
-  name: string;
-  $createdAt: Date;
-  $updatedAt: Date;
+declare type TempBusinessData = {
+  $id?: string;
+  businessType: BusinessType;
+  size: string;
+  city?: string;
+  country: string;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
 
 declare type Business = {
-  $id: string;
+  $id?: string;
   name: string;
+  businessType: BusinessType;
+  size: string;
+  registrationNumber?: string;
   logo?: string;
-  slug: string;
-  description?: string;
   email: string;
   phoneNumber: string;
   address?: string;
   city?: string;
   country?: string;
-  businessCategory: BusinessCategory[];
-  user: User;
+  owner: User;
+  description?: string;
+  slug: string;
   status: boolean;
-  $createdAt: Date;
-  $updatedAt: Date;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
 
 /* Product Unit Data types */
@@ -104,17 +113,14 @@ declare type ProductUnitDto = {
 
 /* Department Data types */
 declare type Department = {
-  $id: string;
+  $id?: string;
+  branch: Branch;
   name: string;
   shortName: string;
   status: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 };
-
-declare type DepartmentDto = {
-  name: string;
-  shortName: string;
-  status: boolean;
-}
 /* Department Data types */
 
 /* Category */
@@ -168,7 +174,8 @@ declare type DiscountDto = {
 
 /* Branches */
 declare type Branch = {
-  $id: string;
+  $id?: string;
+  business: Business;
   name: string;
   email: string;
   phoneNumber: string;
@@ -176,19 +183,8 @@ declare type Branch = {
   city?: string;
   openingTime?: string;
   closingTime?: string;
-  $createdAt: Date;
-  $updatedAt: Date;
-  status: boolean;
-}
-
-declare type BranchDto = {
-  name: string;
-  email: string;
-  phoneNumber: string;
-  address?: string;
-  city?: string;
-  openingTime?: string;
-  closingTime?: string;
+  $createdAt?: Date;
+  $updatedAt?: Date;
   status: boolean;
 }
 /* End Branches */
@@ -218,6 +214,7 @@ declare type Product = {
   image?: string;
   category: Category;
   variants: ProductVariant[];
+  description: string;
   $createdAt?: Date;
   $updatedAt?: Date;
 };
@@ -229,6 +226,7 @@ declare type ProductVariant = {
   minPrice?: number;
   discount?: Discount;
   image?: string;
+  barcode?: string;
   allowDiscount: boolean;
   status: boolean;
   inventoryItems: ProductInventoryItemUsage[];
@@ -453,6 +451,10 @@ declare type Stock = {
   staff?: Staff;
   department?: Department;
   supplier: Supplier;
+  orderNumber: string;
+  orderDate: Date;
+  deliveryDate: Date;
+  accurate: boolean;
   value?: number;
   $createdAt?: Date;
   $updatedAt?: Date;

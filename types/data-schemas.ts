@@ -1,3 +1,4 @@
+import { count } from "console";
 import * as z from "zod";
 
 const phoneNumberRegex = /^[0-9]{10,15}$/;
@@ -51,6 +52,122 @@ export enum SectionType{
     SEAT = "SEAT",
 }
 
+export enum SubscriptionStatus {
+    PAST = 'PAST_DUE',
+    DUE = 'DUE',
+    EXPIRED = 'EXPIRED',
+    OK = 'OK',
+    ALMOST = 'ALMOST_DUE',
+    TRIAL = 'TRIAL'
+}
+
+export const BusinessTypeSchema = z.object({
+    $id: z.string(),
+    name: z.string(),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date()),
+})
+
+export const SignUpSchema = z.object({
+    name: z.string().min(3),
+    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
+    businessType: BusinessTypeSchema.optional(),
+    size: z.string(),
+    city: z.string().optional(),
+    country: z.string(),
+    email: z.string().email(),
+    password: z.string().min(8),
+})
+
+
+export const BusinessRegistrationSchema = z.object({
+    name: z.string().min(3),
+    slug: z.string(),
+    logo: z.string().optional(),
+    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
+    businessType: BusinessTypeSchema.optional(),
+    size: z.string(),
+    city: z.string().optional(),
+    country: z.string(),
+    email: z.string().email(),
+    address: z.string().optional(),
+    description: z.string().optional(),
+    registrationNumber: z.string().optional(),
+})
+
+
+export const SignInSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+})
+
+export const UserSchema: z.ZodSchema = z.lazy(() =>
+    z.object({
+        $id: z.string().optional(),
+        name: z.string(),
+        email: z.string().email(),
+        phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
+        city: z.string().optional(),
+        country: z.string().optional(),
+        gender: z.nativeEnum(Gender).optional(),
+        dateOfBirth: z.preprocess((val) => {
+            if (typeof val === "string" && val.trim() !== "") {
+                return new Date(val);
+            }
+            return val;
+        }, z.date().optional()),
+        points: z.number().positive(),
+        status: z.boolean(),
+        userId: z.string(),
+        business: BusinessSchema.optional(),
+        isOwner: z.boolean(),
+    })
+)
+
+export const BusinessSchema = z.object({
+    $id: z.string().optional(),
+    name: z.string(),
+    businessType: BusinessTypeSchema,
+    size: z.string(),
+    registrationNumber: z.string().optional(),
+    logo: z.string().optional(),
+    email: z.string().email(),
+    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    country: z.string(),
+    owner: UserSchema,
+    description: z.string().optional(),
+    slug: z.string(),
+    status: z.boolean(),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+})
+
+
+
+
+
 export const DepartmentSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
@@ -70,27 +187,7 @@ export const DepartmentSchema = z.object({
     }, z.date().optional()),
 });
     
-export const SignUpSchema = z.object({
-    name: z.string().min(3),
-    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-    city: z.string().optional(),
-    country: z.string().optional(),
-    gender: z.nativeEnum(Gender),
-    dateOfBirth: z.preprocess((val) => {
-      if (val === null) return undefined;
-      if (typeof val === "string" && val.trim() !== "") {
-          return new Date(val);
-      }
-      return val;
-    }, z.date()),
-    email: z.string().email(),
-    password: z.string().min(8),
-})
 
-export const SignInSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(8),
-})
 
 export const StaffSchema = z.object({
     $id: z.union([z.string(), z.undefined()]),
@@ -344,6 +441,20 @@ export const StockSchema = z.object({
         }
         return val;
     }, z.number().nonnegative()),
+    accurate: z.boolean(),
+    orderNumber: z.string().trim().optional(),
+    orderDate: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date()),
+    deliveryDate: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date()),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
@@ -403,7 +514,7 @@ export const StockSchema = z.object({
 export const ProductInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
     z.object({
         $id: z.string().optional(),
-        item: InventoryVariantSchema,
+        inventoryItem: InventoryVariantSchema,
         amountUsed: z.preprocess((val) => {
             if (typeof val === "string" && val.trim() !== "") {
                 return parseFloat(val);
@@ -453,8 +564,9 @@ export const ProductSchema = z.object({
     name: z.string(),
     sku: z.string(),
     category: CategorySchema,
-    image: z.any().optional(),
+    image: z.string(),
     variants: z.array(ProductVariantSchema).min(1, "At least one variant is required"),
+    description: z.string(),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);

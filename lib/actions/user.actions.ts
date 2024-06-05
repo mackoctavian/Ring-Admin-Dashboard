@@ -1,16 +1,24 @@
 'use server';
 
-import { ID, Query, AppwriteException } from "node-appwrite";
-import { createAdminClient, createSessionClient } from "../appwrite";
-import { cookies } from "next/headers";
-import { parseStringify } from "../utils";
-//import { revalidatePath } from "next/cache";
-import { SignInParams , SignUpParams } from "@/types"
+const env = process.env.NODE_ENV
+
+import { ID, Query, AppwriteException } from "node-appwrite"
+import * as Sentry from "@sentry/nextjs"
+import { createAdminClient, createSessionClient } from "../appwrite"
+import { parseStringify } from "../utils"
+import { SignInParams , SignUpParams, User } from "@/types"
+import { auth } from "@clerk/nextjs/server"
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 
-const { APPWRITE_DATABASE: DATABASE_ID, USER_COLLECTION: USER_COLLECTION_ID } = process.env;
+const { 
+  APPWRITE_DATABASE: DATABASE_ID, 
+  USER_COLLECTION: USER_COLLECTION_ID,
+ } = process.env;
 
-export const getUserInfo = async ({ userId }) => {
+export const getUser = async () => {
+  const { userId } = auth();
+  if (!userId) { throw Error("User not authorized to perform this action") }
+  
   try {
     const { database } = await createAdminClient();
     const user = await database.listDocuments(
@@ -18,107 +26,52 @@ export const getUserInfo = async ({ userId }) => {
       USER_COLLECTION_ID!,
       [Query.equal('userId', [userId])]
     );
+
+    if( user.documents.length < 1 ){
+      return null;
+    }
+
     return parseStringify(user.documents[0]);
-  } catch (error) {
-    console.error(error);
-    throw new Error('Error fetching user information');
-  }
-};
-
-export const signIn = async ({ email, password }: SignInParams) => {
-
-  console.info(email);
-  console.info(password);
-
-  try {
-    const { account } = await createAdminClient();
-    const session = await account.createEmailPasswordSession(email.trim(), password.trim());
-
-    cookies().set("qroo-pos-session", session.secret, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "strict",
-      secure: true,
-    });
-
-    const user = await getUserInfo({ userId: session.userId }) 
-    return parseStringify(user);
-  } catch (error : any ) {
+  } catch (error: any) {
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
-    console.error(JSON.stringify(error));
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
     throw Error(errorMessage);
-    
   }
 }
 
-
-export const signUp = async ({ password, ...userData }) => {
-  const { email, name, phoneNumber } = userData;
+export const createUser = async (user: User) => {
+  const { userId } = auth();
+  if (!userId) { throw Error("User not authorized to perform this action") }
+  
   try {
-    const { account, database } = await createAdminClient();
-    const newUserAccount = await account.create(
-      ID.unique(), 
-      email, 
-      password, 
-      name
-    );
-
-    if (!newUserAccount) throw new Error('Error creating user');
-
+    const { database } = await createAdminClient();
+    
     const newUser = await database.createDocument(
       DATABASE_ID!,
       USER_COLLECTION_ID!,
       ID.unique(),
       {
-        ...userData,
-        points: 0,
-        status: true,
-        userId: newUserAccount.$id,
+        ...user
       }
     );
-
-    const session = await account.createEmailPasswordSession(email, password);
-
-    cookies().set("qroo-pos-session", session.secret, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "strict",
-      secure: true,
-    });
-
+  
     return parseStringify(newUser);
-  } catch (error) {
+
+  } catch (error: any) {
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
-    console.error(JSON.stringify(error));
-    throw new Error(errorMessage);
-  }
-};
 
-export const getLoggedInUser = async () => {
-  try {
-    const { account } = await createSessionClient();
-    const result = await account.get();
-    const user = await getUserInfo({ userId: result.$id });
-    return parseStringify(user);
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
+    if(env == "development"){ console.error(error); }
 
-export const logoutAccount = async () => {
-  try {
-    const { account } = await createSessionClient();
-    cookies().delete('qroo-pos-session');
-    await account.deleteSession('current');
-  } catch (error) {
-    console.error(error);
-    return null;
+    Sentry.captureException(error);
+    throw Error(errorMessage);
   }
-};
+}

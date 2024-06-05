@@ -11,12 +11,11 @@ import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input";
-import { Product, Discount, Category, ProductUnit, ProductInventoryItemUsage } from "@/types";
+import { Product, Discount, Category, ProductUnit, ProductInventoryItemUsage, ProductVariant } from "@/types";
 import { createItem, updateItem } from "@/lib/actions/product.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 import { generateSKU } from "@/lib/utils"
-import { Plus , Minus } from "lucide-react"
 import DiscountSelector from "../layout/discount-selector";
 import { CategoryType, ProductSchema } from "@/types/data-schemas"
 import CategorySelector from "@/components/layout/category-selector"
@@ -42,11 +41,15 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [selectedDiscount, setSelectedDiscount] = useState<Discount | undefined>(
+    item ? item.discount : undefined
+  );
 
   const form = useForm({
     resolver: zodResolver(ProductSchema),
     defaultValues: item || {
       variants: [{
+        $id: uuidv4(),
         allowDiscount: false,
         status: false,
         inventoryItems: []
@@ -54,38 +57,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
     },
   });
 
-  // const [usageItems, setUsageItems] = useState<ProductInventoryItemUsage[]>(form.getValues("inventoryItems") || []);
-  // useEffect(() => {
-  //   form.setValue('inventoryItems', usageItems);
-  // }, [usageItems, form]);
-
-  const { control, handleSubmit, setValue, getValues, watch, formState: { errors } } = form;
-  const { fields: variants, append: addVariant, remove: removeVariant } = useFieldArray({
-    control,
-    name: 'variants'
-  });
-
-  const handleAddVariant = () => {
-    addVariant({ name: '', price: 0, allowDiscount: false, status: false, inventoryItems: [] });
-  };
-
-  const handleRemoveVariant = (index: number) => {
-    removeVariant(index);
-  };
-
-  const handleAddInventory = (variantIndex: number) => {
-    const inventoryItems : ProductInventoryItemUsage[] = getValues(`variants.${variantIndex}.inventoryItems`);
-    const newInventoryItem = { item: null, amountUsed: 0 };
-    const updatedInventory = [...inventoryItems, newInventoryItem];
-    setValue(`variants.${variantIndex}.inventoryItems`, updatedInventory, { shouldValidate: true, shouldDirty: true });
-  };
-
-  const handleRemoveInventory = (variantIndex: number, inventoryId: string) => {
-    const inventoryItems : ProductInventoryItemUsage[] = getValues(`variants.${variantIndex}.inventoryItems`);
-    const updatedInventory = inventoryItems.filter((i) => i.$id !== inventoryId);
-    setValue(`variants.${variantIndex}.inventoryItems`, updatedInventory, { shouldValidate: true, shouldDirty: true });
-  };
-  
+  const { control, handleSubmit, setValue, getValues, formState: { errors } } = form;
 
   const onInvalid = (errors: any) => {
     toast({
@@ -97,30 +69,72 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
   };
 
   const onSubmit = async (data: z.infer<typeof ProductSchema>) => {
-    console.log(JSON.stringify(data))
     setIsLoading(true);
-    await createItem(data)
     try {
+      await createItem(data);
       toast({
         variant: 'default',
         title: 'Success',
         description: 'Product updated successfully!',
       });
-
       router.push('/products');
       router.refresh();
-      setIsLoading(false);
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
         description: JSON.stringify(error) || 'There was an issue submitting your form, please try later',
       });
-      setIsLoading(false);
     } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
+      setIsLoading(false);
+    }
+  };
+
+  const [variants, setVariants] = useState<ProductVariant[]>(
+    item ? item.variants : [{
+      $id: uuidv4(),
+      allowDiscount: false,
+      status: false,
+      inventoryItems: []
+    }]
+  );
+
+  const handleAddVariant = () => {
+    const newVariant = { $id: uuidv4(), allowDiscount: false, status: false, inventoryItems: [] };
+    setVariants([...variants, newVariant]);
+    setValue('variants', [...getValues('variants'), newVariant]);
+  };
+
+  const handleAddInventory = (variantIndex: number) => {
+    const newInventoryItem = { $id: uuidv4() };
+    const updatedVariants = [...variants];
+    updatedVariants[variantIndex].inventoryItems.push(newInventoryItem);
+    setVariants(updatedVariants);
+    setValue(`variants[${variantIndex}].inventoryItems`, updatedVariants[variantIndex].inventoryItems);
+  };
+
+  const handleRemoveInventory = (variantIndex: number, inventoryItemId: string) => {
+    const updatedVariants = [...variants];
+    const inventoryItems = updatedVariants[variantIndex].inventoryItems.filter(
+      (inv) => inv.$id !== inventoryItemId
+    );
+    updatedVariants[variantIndex].inventoryItems = inventoryItems;
+    setVariants(updatedVariants);
+    setValue(`variants[${variantIndex}].inventoryItems`, inventoryItems);
+  };
+
+  const handleRemoveVariant = (variantIndex: number) => {
+    if (variants.length > 1) {
+      const updatedVariants = [...variants];
+      updatedVariants.splice(variantIndex, 1);
+      setVariants(updatedVariants);
+      setValue('variants', updatedVariants);
+    } else {
+      toast({
+        variant: 'warning',
+        title: 'Cannot remove variant',
+        description: 'Product must have at least one variant.',
+      });
     }
   };
 
@@ -135,9 +149,13 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
               <FormItem>
                 <FormLabel>Product name *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Product name" {...field} />
+                  <Input
+                    placeholder="Product name"
+                    className="input-class"
+                    {...field}
+                  />
                 </FormControl>
-                <FormMessage>{errors.name?.message}</FormMessage>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -148,9 +166,13 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
               <FormItem>
                 <FormLabel>Product SKU *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Product sku (Auto-generated)" {...field} />
+                  <Input
+                    placeholder="Product sku ( Auto-generated )"
+                    className="input-class"
+                    {...field}
+                  />
                 </FormControl>
-                <FormMessage>{errors.sku?.message}</FormMessage>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -162,9 +184,9 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
               <FormItem>
                 <FormLabel>Product category *</FormLabel>
                 <FormControl>
-                  <CategorySelector {...field} />
+                  <CategorySelector type={CategoryType.PRODUCT} {...field} />
                 </FormControl>
-                <FormMessage>{errors.category?.message}</FormMessage>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -176,90 +198,144 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
               <FormItem>
                 <FormLabel>Product image *</FormLabel>
                 <FormControl>
-                  <Input type="file" placeholder="Product image" {...field} />
+                  <Input
+                    type="file"
+                    placeholder="Product image"
+                    className="input-class"
+                    {...field}
+                  />
                 </FormControl>
-                <FormMessage>{errors.image?.message}</FormMessage>
+                <FormMessage />
               </FormItem>
             )}
           />
         </div>
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+              <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                      <Textarea
+                          placeholder="Enter service description"
+                          className="resize-none"
+                          {...field}
+                      />
+                  </FormControl>
+                  <FormMessage />
+              </FormItem>
+          )}
+      />
 
         <div className="space-y-4">
           {variants.map((variant, variantIndex) => (
-            <div key={variant.id} className="space-y-2 border p-4 rounded-md">
+            <div key={variant.$id} className="space-y-2 border p-4 rounded-md">
               <div className="flex justify-between items-center">
-                <h2 className="text-base font-bold">Variant</h2>
+                <h2 className='text-base font-bold'>Variant</h2>
                 {variants.length > 1 && (
                   <Button type="button" onClick={() => handleRemoveVariant(variantIndex)} variant="link">
                     <Cross2Icon className="mr-2 h-4 w-4" /> Remove variant
                   </Button>
                 )}
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={control}
-                  name={`variants.${variantIndex}.name`}
+                  name={`variants[${variantIndex}].name`}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Variant name *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Variant name" {...field} />
+                        <Input
+                          placeholder="Variant name"
+                          {...field}
+                        />
                       </FormControl>
-                      <FormMessage>{errors.variants?.[variantIndex]?.name?.message}</FormMessage>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <FormField
                   control={control}
-                  name={`variants.${variantIndex}.price`}
+                  name={`variants[${variantIndex}].price`}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Variant price *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Variant price" {...field} />
+                        <Input
+                          type='number'
+                          step='0.01'
+                          placeholder="Variant price"
+                          {...field}
+                        />
                       </FormControl>
-                      <FormMessage>{errors.variants?.[variantIndex]?.price?.message}</FormMessage>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <FormField
                   control={control}
-                  name={`variants.${variantIndex}.minPrice`}
+                  name={`variants[${variantIndex}].barcode`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Variant barcode *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Variant barcode"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={control}
+                  name={`variants[${variantIndex}].minPrice`}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Variant minimum price</FormLabel>
                       <FormControl>
-                        <Input placeholder="Variant minimum price" {...field} />
+                        <Input
+                          type='number'
+                          step='0.01'
+                          placeholder="Variant minimum price"
+                          {...field}
+                        />
                       </FormControl>
-                      <FormMessage>{errors.variants?.[variantIndex]?.minPrice?.message}</FormMessage>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <FormField
                   control={control}
-                  name={`variants.${variantIndex}.discount`}
+                  name={`variants[${variantIndex}].discount`}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Variant discount</FormLabel>
                       <FormControl>
-                        <DiscountSelector value={field.value} onChange={field.onChange} />
+                        <DiscountSelector
+                          value={selectedDiscount}
+                          onChange={(disc) => { setSelectedDiscount(disc); field.onChange(disc); }}
+                        />
                       </FormControl>
-                      <FormMessage>{errors.variants?.[variantIndex]?.discount?.message}</FormMessage>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <FormField
                   control={control}
-                  name={`variants.${variantIndex}.allowDiscount`}
+                  name={`variants[${variantIndex}].allowDiscount`}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Allow discount at counter *</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(value === 'true')} value={field.value.toString()}>
+                      <Select onValueChange={(value) => field.onChange(value === "true")} defaultValue={String(field.value)}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Enable discounts at counter" />
@@ -270,30 +346,28 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                           <SelectItem value="false">Discounts NOT allowed at counter</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage>{errors.variants?.[variantIndex]?.allowDiscount?.message}</FormMessage>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <FormField
                   control={control}
-                  name={`variants.${variantIndex}.status`}
+                  name={`variants[${variantIndex}].status`}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
                       <FormControl>
                         <Switch
+                          id={`variant-status-${variant.$id}`}
                           checked={field.value}
                           onCheckedChange={field.onChange}
-                          className="data-[state=unchecked]:bg-red-500"
                         />
                       </FormControl>
-                      <FormMessage>{errors.variants?.[variantIndex]?.status?.message}</FormMessage>
                     </FormItem>
                   )}
                 />
               </div>
-
               <div className="space-y-2">
                 {variant.inventoryItems.map((inv, inventoryIndex) => (
                   <div key={inv.$id} className="space-y-2 p-2 rounded-md">
@@ -305,21 +379,20 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <FormField
                         control={control}
-                        name={`variants.${variantIndex}.inventoryItems.${inventoryIndex}.item`}
+                        name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].item`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Item</FormLabel>
+                            <FormLabel>Inventory Item</FormLabel>
                             <FormControl>
-                              <InventorySelector value={field.value} onChange={field.onChange} />
+                              <InventorySelector {...field} />
                             </FormControl>
-                            <FormMessage>{errors.variants?.[variantIndex]?.inventoryItems?.[inventoryIndex]?.item?.message}</FormMessage>
                           </FormItem>
                         )}
                       />
 
                       <FormField
                         control={control}
-                        name={`variants.${variantIndex}.inventoryItems.${inventoryIndex}.amountUsed`}
+                        name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].amountUsed`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Amount used</FormLabel>
@@ -331,12 +404,10 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                                 {...field}
                               />
                             </FormControl>
-                            <FormMessage>{errors.variants?.[variantIndex]?.inventoryItems?.[inventoryIndex]?.amountUsed?.message}</FormMessage>
                           </FormItem>
                         )}
                       />
-
-                      <Button type="button" className="mt-7" onClick={() => handleRemoveInventory(variantIndex, inv.$id)} variant="destructive">
+                      <Button type="button" className='mt-7' onClick={() => handleRemoveInventory(variantIndex, inv.$id)} variant='destructive'>
                         Remove item
                       </Button>
                     </div>
@@ -352,7 +423,6 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
             <PlusIcon className="mr-2 h-4 w-4" /> Add variant
           </Button>
         </div>
-
         <div className="flex h-5 items-center space-x-4">
           <CancelButton />
           <Separator orientation="vertical" />
@@ -362,7 +432,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
               </>
             ) : (
-              item ? 'Update product' : 'Save product'
+              item ? "Update product" : "Save product"
             )}
           </Button>
         </div>
@@ -372,3 +442,10 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
 };
 
 export default ProductForm;
+
+function uuidv4() {
+  const crypto = require('crypto');
+  return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+    (c ^ crypto.randomFillSync(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
+}

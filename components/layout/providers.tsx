@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
 import ThemeProvider from "./ThemeToggle/theme-provider";
+import { ClerkProvider } from '@clerk/nextjs'
 
-// import { SessionProvider, SessionProviderProps } from "next-auth/react";
 export default function Providers({
   children,
 }: {
@@ -10,10 +10,11 @@ export default function Providers({
 }) {
   return (
     <>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        {/*  <SessionProvider session={session}>{children}</SessionProvider>  */}
-        {children}
-      </ThemeProvider>
+      <ClerkProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
+      </ClerkProvider>
     </>
   );
 }

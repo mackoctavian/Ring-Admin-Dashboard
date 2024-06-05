@@ -26,7 +26,7 @@ const StockPage = async ({ params }: { params: { id: string } }) => {
                 <BreadCrumb items={breadcrumbItems} />
 
                 <div className="flex items-start justify-between">
-                    <Heading title={!newItem ? `Edit stock item` : `Create stock item`} description={!newItem ? "Edit your stock items" : "Add new stock item to your business"} />
+                    <Heading title={!newItem ? `Edit stock item` : `Record stock intake`} description={!newItem ? "Edit your stock items" : "Add new stock items to your business"} />
                 </div>
                 <Separator />
 

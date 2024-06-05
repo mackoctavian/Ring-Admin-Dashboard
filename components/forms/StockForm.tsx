@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InventoryVariant, Staff, Supplier, Department } from "@/types";
-import { StockSchema } from "@/types/data-schemas";
+import { StockSchema, SupplierSchema } from "@/types/data-schemas";
 import { createItem } from "@/lib/actions/stock.actions";
 import { useToast } from "@/components/ui/use-toast";
 import CancelButton from "../layout/cancel-button";
@@ -18,7 +18,10 @@ import DepartmentSelector from "@/components/layout/department-selector";
 import SupplierSelector from "@/components/layout/supplier-selector";
 import StaffSelector from "@/components/layout/staff-selector";
 import InventorySelector from "@/components/layout/inventory-selector";
-
+import { Calendar } from "@/components/ui/calendar"
+import { CalendarIcon } from "@radix-ui/react-icons"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 import {
   Form,
   FormControl,
@@ -27,13 +30,24 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export const StockIntakeSchema = z.object({
   items: z
     .array(StockSchema)
     .min(1, "There must be at least one record before submitting"),
 });
-
 
 const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVariant[] | undefined, staff: Staff[], suppliers: Supplier[], departments: Department[] }) => {
   const router = useRouter();
@@ -50,6 +64,7 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
           staff: undefined, 
           department: undefined, 
           supplier: undefined, 
+          accurate: true,
         }
       ],
     },
@@ -100,8 +115,8 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
         {fields.map((field, index) => (
-          <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 border p-4 rounded-md">
-            
+          <div key={field.id} className="border p-4 rounded-md">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <FormField
               control={form.control}
               name={`items.${index}.item`}
@@ -183,6 +198,7 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name={`items.${index}.supplier`}
@@ -200,15 +216,116 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
                 </FormItem>
               )}
             />
-            
 
-            <Button
-              variant="destructive"
-              type="button"
-              onClick={() => fields.length > 1 && remove(index)}
-              disabled={fields.length === 1}>
-              Remove Item
-            </Button>
+            <FormField
+              control={form.control}
+              name={`items.${index}.orderNumber`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Order Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Order number" className="input-class" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+                control={form.control}
+                name={`items.${index}.orderDate`}
+                render={({ field }) => (
+                    <FormItem className="flex flex-col mt-2">
+                        <FormLabel>Order date *</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
+                                    {field.value ? ( format(field.value, "PPP") ) : (
+                                        <span>Select order date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={ (date) => date > new Date() || date < new Date("1970-01-01") }
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name={`items.${index}.deliveryDate`}
+                render={({ field }) => (
+                    <FormItem className="flex flex-col mt-2">
+                        <FormLabel>Delivery date *</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
+                                    {field.value ? ( format(field.value, "PPP") ) : (
+                                        <span>Select delivery date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={ (date) => date > new Date() || date < new Date("1970-01-01") }
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+              <FormField
+                control={form.control}
+                name={`items.${index}.accurate`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Order items were accurate ? *</FormLabel>
+                    <Select onValueChange={(value) => field.onChange(value === 'true')} value={field.value.toString()}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Were the order items correct?" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="true">Yes: Order was accurate</SelectItem>
+                        <SelectItem value="false">No: Order was in-accurate</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage></FormMessage>
+                  </FormItem>
+                )}
+              />
+              </div>
+              <Button
+                  variant="destructive"
+                  className="mt-5"
+                  type="button"
+                  onClick={() => fields.length > 1 && remove(index)}
+                  disabled={fields.length === 1}>
+                  Remove Item
+              </Button>
+              
           </div>
         ))}
 
@@ -216,12 +333,8 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
           type="button"
           onClick={() =>
             append({
-              item: undefined,
-              quantity: 1,
-              staff: undefined,
-              department: undefined,
-              supplier: undefined,
-              value: undefined,
+              item: null,
+              accurate: true
             })
           }>
           Add Item

@@ -1,9 +1,11 @@
 'use server';
 
+const env = process.env.NODE_ENV
+import * as Sentry from "@sentry/nextjs";
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Branch, BranchDto } from "@/types";
+import { Branch, Business } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 
 const {
@@ -11,7 +13,47 @@ const {
     BRANCHES_COLLECTION: BRANCH_COLLECTION_ID
   } = process.env;
 
-  export const createItem = async (item: BranchDto) => {
+  export const createDefaultBranch = async (business: Business) => {
+    try {
+      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
+        throw Error('Database ID or Collection ID is missing');
+      }
+
+      const { database } = await createAdminClient();
+  
+      const newItem = await database.createDocument(
+        DATABASE_ID!,
+        BRANCH_COLLECTION_ID!,
+        ID.unique(),
+        {
+          name: 'Main branch',
+          email: business.email,
+          phoneNumber: business.phoneNumber,
+          address: business.address,
+          city: business.city,
+          openingTime: "09:00",
+          closingTime: "17:00",
+          business: business,
+          businessId: business.$id,
+          status: true,
+        }
+      )
+
+      return parseStringify(newItem);
+    } catch (error: any) {
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+  
+      if(env == "development"){ console.error(error); }
+  
+      Sentry.captureException(error);
+      throw Error(errorMessage);
+    }
+  }
+
+  export const createItem = async (item: Branch) => {
     try {
       if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
         throw Error('Database ID or Collection ID is missing');
@@ -158,7 +200,7 @@ const {
     }
   }
 
-  export const updateItem = async (id: string, data: BranchDto) => {  
+  export const updateItem = async (id: string, data: Branch) => {  
     try {
       if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
