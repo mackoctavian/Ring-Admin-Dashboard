@@ -23,8 +23,8 @@ import { createItem, updateItem } from "@/lib/actions/department.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 import { DepartmentSchema } from "@/types/data-schemas";
+import BranchSelector from "../layout/branch-selector";
 
-  
 const DepartmentForm = ({ item }: { item?: Department | null }) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
@@ -40,9 +40,9 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
     const onInvalid = (errors : any ) => {
         console.error("Creating department failed: ", JSON.stringify(errors));
         toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.", 
-            description: "There was an issue submitting your form please try later"
+            variant: "warning",
+            title: "Data validation failed!", 
+            description: "Please make sure all the fields marked with * are filled correctly."
         });
     }
 
@@ -53,14 +53,14 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
             if (item) {
                 await updateItem(item.$id, data);
                 toast({
-                    variant: "default",
+                    variant: "success",
                     title: "Success", 
                     description: "Department details updated succesfully!"
                 });
             } else {
                 await createItem(data);
                 toast({
-                    variant: "default",
+                    variant: "success",
                     title: "Success", 
                     description: "Department created succesfully!"
                 });
@@ -69,7 +69,6 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
             // Redirect to the list page after submission
             router.push("/departments");
             router.refresh();
-            setIsLoading(false);
         } catch (error: any) {
             toast({
                 variant: "destructive",
@@ -87,33 +86,16 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
 return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-            <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Department name</FormLabel>
-                    <FormControl>
-                        <Input
-                        placeholder="Department full name (eg. Human Resources)"
-                        className="input-class"
-                        {...field}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-            )}
-            />
-        
-            <FormField
+            <div className="grid grid-cols-3 gap-4">
+                <FormField
                 control={form.control}
-                name="shortName"
+                name="name"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Short name </FormLabel>
+                        <FormLabel>Department name *</FormLabel>
                         <FormControl>
                             <Input
-                            placeholder="Department short name (eg. HR)"
+                            placeholder="Department full name (eg. Pizza department)"
                             className="input-class"
                             {...field}
                             />
@@ -121,7 +103,43 @@ return (
                         <FormMessage />
                     </FormItem>
                 )}
-            />
+                />
+            
+                <FormField
+                    control={form.control}
+                    name="shortName"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Short name *</FormLabel>
+                            <FormControl>
+                                <Input
+                                placeholder="Department short name (eg. HR)"
+                                className="input-class"
+                                {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="branch"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Branch *</FormLabel>
+                            <FormControl>
+                                <BranchSelector
+                                    onChange={(value) => field.onChange(value)}
+                                    value={field.value}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
 
             <FormField
                 control={form.control}
@@ -146,7 +164,7 @@ return (
             
                 <Separator orientation="vertical" />
 
-                <Button type="submit">
+                <Button type="submit" disabled={isLoading}>
                     {isLoading ? (
                         <>
                             <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...

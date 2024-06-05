@@ -61,6 +61,12 @@ export enum SubscriptionStatus {
     TRIAL = 'TRIAL'
 }
 
+export const MultiSelectSchema = z.object({
+    label: z.string(),
+    value: z.string(),
+    disable: z.boolean().optional(),
+});
+
 export const BusinessTypeSchema = z.object({
     $id: z.string(),
     name: z.string(),
@@ -164,6 +170,36 @@ export const BusinessSchema = z.object({
     }, z.date().optional()),
 })
 
+export const BranchSchema = z.object({
+    $id: z.string().optional(),
+    name: z.string(),
+    email: z.string().email("Invalid email address"),
+    phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    daysOpen: z.array(MultiSelectSchema).min(1, { message: "Select at least one day" }),
+    openingTime: z.string().optional(),
+    closingTime: z.string().optional(),
+    staffCount: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseInt(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
+    status: z.boolean(),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+})
 
 
 

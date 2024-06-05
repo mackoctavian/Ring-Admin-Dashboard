@@ -22,93 +22,146 @@ import { Branch } from "@/types";
 import { createItem, updateItem } from "@/lib/actions/branch.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
+import TimeSelector from "../layout/time-selector";
+import DaysSelector from "../layout/days-selector";
+import { BranchSchema } from "@/types/data-schemas";
 
-    const phoneNumberRegex = /^[0-9]{10,15}$/;
+// import { useSession } from '@/context/SessionContext';
+// import LoadingWidget from "../layout/loading";
 
-    const formSchema = z.object({
-        name: z.string(),
-        email: z.string().email("Invalid email address"),
-        phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-        address: z.string().optional(),
-        city: z.string().optional(),
-        openingTime: z.string().optional(),
-        closingTime: z.string().optional(),
-        status: z.boolean(),
+const BranchForm = ({ item }: { item?: Branch | null }) => {
+    // const { sessionData, sessionLoading } = useSession();
+    // if (sessionLoading) { return <><LoadingWidget /></> }
+    // const branchData = sessionData.branch;
+
+    const router = useRouter()
+    const [isLoading, setIsLoading] = useState(false)
+    const { toast } = useToast()
+
+
+    const form = useForm<z.infer<typeof BranchSchema>>({
+        resolver: zodResolver(BranchSchema),
+        defaultValues: item ? item : {
+            status: false,
+        },
     });
-  
-    const BranchForm = ({ item }: { item?: Branch | null }) => {
-        const router = useRouter();
-        const [isLoading, setIsLoading] = useState(false);
-        const { toast } = useToast()
 
-        const form = useForm<z.infer<typeof formSchema>>({
-            resolver: zodResolver(formSchema),
-            defaultValues: item ? item : {
-                status: false,
-            },
+    const onInvalid = (errors : any ) => {
+        console.error("Creating branch failed: ", JSON.stringify(errors));
+        toast({
+            variant: "warning",
+            title: "Data validation failed!", 
+            description: "Please make sure all the fields marked with * are filled correctly."
         });
+    }
 
-        const onInvalid = (errors : any ) => {
-            console.error("Creating branch failed: ", JSON.stringify(errors));
+    const onSubmit = async (data: z.infer<typeof BranchSchema>) => {
+        setIsLoading(true);
+        try {
+            if (item) {
+                await updateItem(item.$id!, data);
+                toast({
+                    variant: "success",
+                    title: "Success", 
+                    description: "Branch details have been updated succesfully!"
+                });
+            } else {
+                await createItem(data);
+                toast({
+                    variant: "success",
+                    title: "Success", 
+                    description: "Branch has been created succesfully!"
+                });
+            }
+            
+            // Redirect to the list page after submission
+            router.push("/branches");
+            router.refresh();
+            setIsLoading(false);
+        } catch (error: any) {
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.", 
-                description: "There was an issue submitting your form please try later"
+                description: error.message || "There was an issue submitting your form, please try later"
             });
-        }
-
-        const onSubmit = async (data: z.infer<typeof formSchema>) => {
-            setIsLoading(true);
-        
-            try {
-                if (item) {
-                    await updateItem(item.$id, data);
-                    toast({
-                        variant: "default",
-                        title: "Success", 
-                        description: "Branch updated succesfully!"
-                    });
-                } else {
-                    await createItem(data);
-                    toast({
-                        variant: "default",
-                        title: "Success", 
-                        description: "Branch created succesfully!"
-                    });
-                }
-                
-                // Redirect to the list page after submission
-                router.push("/branches");
-                router.refresh();
+            } finally {
+            //delay loading
+            setTimeout(() => {
                 setIsLoading(false);
-            } catch (error: any) {
-                toast({
-                    variant: "destructive",
-                    title: "Uh oh! Something went wrong.", 
-                    description: error.message || "There was an issue submitting your form, please try later"
-                });
-                } finally {
-                //delay loading
-                setTimeout(() => {
-                    setIsLoading(false);
-                    }, 1000); 
-                }
-        };
+                }, 1000); 
+            }
+    };
 
-    return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
+return (
+    <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
 
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
+            <div className="grid grid-cols-3 gap-4">
+                <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Branch name</FormLabel>
+                        <FormControl>
+                            <Input
+                            placeholder="Branch full name (eg. Nairobi Branch)"
+                            className="input-class"
+                            {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+
+                <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Branch email address</FormLabel>
+                        <FormControl>
+                            <Input
+                            type="email"
+                            placeholder="Enter branch email address"
+                            className="input-class"
+                            {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+
+                <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Branch phone number</FormLabel>
+                        <FormControl>
+                            <Input
+                            type="tel"
+                            placeholder="Enter branch phone number"
+                            className="input-class"
+                            {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+
+                <FormField
                     control={form.control}
-                    name="name"
+                    name="address"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Branch name</FormLabel>
+                            <FormLabel>Branch address</FormLabel>
                             <FormControl>
                                 <Input
-                                placeholder="Branch full name (eg. Nairobi Branch)"
+                                placeholder="Enter branch location"
                                 className="input-class"
                                 {...field}
                                 />
@@ -117,66 +170,6 @@ import CancelButton from "../layout/cancel-button";
                         </FormItem>
                         )}
                     />
-
-                    <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Branch email address</FormLabel>
-                                <FormControl>
-                                    <Input
-                                    type="email"
-                                    placeholder="Enter branch email address"
-                                    className="input-class"
-                                    {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                        control={form.control}
-                        name="phoneNumber"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Branch phone number</FormLabel>
-                                <FormControl>
-                                    <Input
-                                    type="tel"
-                                    placeholder="Enter branch phone number"
-                                    className="input-class"
-                                    {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="address"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Branch address</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                        placeholder="Enter branch location"
-                                        className="input-class"
-                                        {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                        />
-                    </div>
-
 
                     <FormField
                         control={form.control}
@@ -193,87 +186,115 @@ import CancelButton from "../layout/cancel-button";
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="staffCount"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Number of staff</FormLabel>
+                                <FormControl>
+                                    <Input
+                                    type="number"
+                                    min="1"
+                                    placeholder="Enter number of staff"
+                                    className="input-class"
+                                    {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    
+                    <FormField
+                        control={form.control}
+                        name="daysOpen"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Branch open days</FormLabel>
+                                <FormControl>
+                                    <DaysSelector 
+                                        placeholder="Select days branch is open"
+                                        field={field}
+                                        />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
                             )}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                            control={form.control}
-                            name="openingTime"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Branch opening time</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                        placeholder="Select branch opening time"
-                                        className="input-class"
-                                        {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                        />
+                    
+                    <FormField
+                        control={form.control}
+                        name="openingTime"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Branch opening time</FormLabel>
+                                <FormControl>
+                                    <TimeSelector {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                    />
 
-
-                        <FormField
-                            control={form.control}
-                            name="closingTime"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Branch closing time</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                        placeholder="Enter branch closing time"
-                                        className="input-class"
-                                        {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                        />
-                    </div>
-
-            
-            
-
-                <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <FormControl>
-                            <Switch
-                                id="status"
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                        </FormControl>
-                    </FormItem>
-                    )}
-                />
+                    <FormField
+                        control={form.control}
+                        name="closingTime"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Branch closing time</FormLabel>
+                                <FormControl>
+                                    <TimeSelector {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                    />
+                </div>
 
         
-                <div className="flex h-5 items-center space-x-4">
-                    <CancelButton />
-                
-                    <Separator orientation="vertical" />
+        
 
-                    <Button type="submit">
-                        {isLoading ? (
-                            <>
-                                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-                            </>
-                            ) : (
-                            item ? "Update branch" : "Save branch"
-                        )}
-                    </Button> 
-                </div>
-            </form>
-        </Form>
-        );
-    };
+            <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <FormControl>
+                        <Switch
+                            id="status"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                        />
+                    </FormControl>
+                </FormItem>
+                )}
+            />
+
+    
+            <div className="flex h-5 items-center space-x-4">
+                <CancelButton />
+            
+                <Separator orientation="vertical" />
+
+                <Button type="submit" disabled={isLoading}>
+                    {isLoading ? (
+                        <>
+                            <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
+                        </>
+                        ) : (
+                        item ? "Update branch details" : "Create branch"
+                    )}
+                </Button> 
+            </div>
+        </form>
+    </Form>
+    );
+};
   
 export default BranchForm;

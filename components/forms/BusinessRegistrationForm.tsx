@@ -63,9 +63,9 @@ const BusinessRegistrationForm  = () => {
   const onInvalid = (errors : any ) => {
     console.error("Business registration error: ", JSON.stringify(errors));
     toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong.", 
-        description: "There was an issue submitting your form please try again"
+        variant: "warning",
+        title: "Data validation failed!", 
+        description: "Please make sure all the fields marked with * are filled correctly."
     });
   }
 
@@ -291,7 +291,7 @@ const BusinessRegistrationForm  = () => {
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> Loading...
+                  <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> Processing...
                 </>
               ): 'Complete registration'
               }

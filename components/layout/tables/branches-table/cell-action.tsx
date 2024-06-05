@@ -20,46 +20,46 @@ interface CellActionProps {
 }
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { toast } = useToast()
+  const { toast } = useToast();
 
   const onConfirm = async () => {
-      setIsLoading(true);
-  
-      try {
-          if (data) {
-              await deleteItem(data);
-              toast({
-                  variant: "default",
-                  title: "Success", 
-                  description: "Branch deleted succesfully!"
-              });
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Uh oh! Something went wrong.", 
-              description: "There was an issue with your request, please try again later"
-            });
-          }
-          
-          // Redirect to the list page after submission
-          router.push("/branches");
-          router.refresh();
-      } catch (error: any) {
+    setIsLoading(true);
+
+    try {
+      if (data) {
+        await deleteItem(data);
         toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.", 
-            description: error.message || "There was an issue with your request, please try again later"
+          variant: 'default',
+          title: 'Success',
+          description: 'Branch deleted successfully!',
         });
-      } finally {
-      //delay loading
-      setTimeout(() => {
-          setIsLoading(false);
-          setOpen(false);
-          }, 1000); 
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Uh oh! Something went wrong.',
+          description: 'There was an issue with your request, please try again later',
+        });
       }
+
+      // Redirect to the list page after submission
+      router.push('/branches');
+      router.refresh();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Uh oh! Something went wrong.',
+        description: error.message || 'There was an issue with your request, please try again later',
+      });
+    } finally {
+      // Delay loading
+      setTimeout(() => {
+        setIsLoading(false);
+        setOpen(false);
+      }, 1000);
+    }
   };
 
   return (
@@ -79,13 +79,14 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-
           <DropdownMenuItem onClick={() => router.push(`/branches/${data.$id}`)}>
             <Edit className="mr-2 h-4 w-4" /> Update
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpen(true)}>
-            <Trash className="mr-2 h-4 w-4" /> Delete
-          </DropdownMenuItem>
+          {data.canDelete && (
+            <DropdownMenuItem onClick={() => setOpen(true)}>
+              <Trash className="mr-2 h-4 w-4" /> Delete
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </>

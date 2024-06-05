@@ -41,7 +41,6 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
     setCountry(value);
   };
 
-  console.error("Business settings form item: ", JSON.stringify(item));
   const form = useForm<z.infer<typeof BusinessSchema>>({
     resolver: zodResolver(BusinessSchema),
     defaultValues: item ? item : {
@@ -50,7 +49,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
   });
 
 const onInvalid = (errors : any ) => {
-  console.error("Error saving business settings: ", JSON.stringify(errors));
+  console.error("Error saving business settings: ", JSON.stringify(errors, null, 2));
   toast({
       variant: "destructive",
       title: "Uh oh! Something went wrong.", 

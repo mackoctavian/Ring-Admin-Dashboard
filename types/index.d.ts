@@ -1,11 +1,32 @@
 /* eslint-disable no-unused-vars */
 import { Icons } from "@/components/icons";
 import * as enums from "./data-schemas";
+import { Option } from "@/components/ui/multiple-selector";
 
 declare type SearchParamProps = {
   params: { [key: string]: string };
   searchParams: { [key: string]: string | string[] | undefined };
 };
+
+declare type MultiSelect = {
+  $id?: string;
+  label: string;
+  value: string;
+  disable?: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
+declare type SubscriptionDetails = {
+  business: string;
+  email: string;
+  name : string;
+  monthlyFee: number;
+  nextDue: Date;
+  status: enums.SubscriptionStatus;
+  phoneNumber: string;
+  owner: string;
+}
 
 declare type Country = {
   name: string;
@@ -13,10 +34,6 @@ declare type Country = {
   currency: string; 
   currencyShortName: string;
   phonecode: number;
-}
-
-declare type SubscriptionContextType = {
-    subscriptionStatus: SubscriptionStatus | null;
 }
 
 declare type BusinessType = {
@@ -115,9 +132,12 @@ declare type ProductUnitDto = {
 declare type Department = {
   $id?: string;
   branch: Branch;
+  businessId: string;
+  branchId: string;
   name: string;
   shortName: string;
   status: boolean;
+  canDelete: boolean;
   $createdAt?: Date;
   $updatedAt?: Date;
 };
@@ -171,21 +191,24 @@ declare type DiscountDto = {
 /* Discount */
 
 
-
 /* Branches */
 declare type Branch = {
   $id?: string;
   business: Business;
+  businessId: string;
   name: string;
   email: string;
   phoneNumber: string;
   address?: string;
   city?: string;
+  staffCount: number;
+  daysOpen: Option[];
   openingTime?: string;
   closingTime?: string;
   $createdAt?: Date;
   $updatedAt?: Date;
   status: boolean;
+  canDelete: boolean;
 }
 /* End Branches */
 

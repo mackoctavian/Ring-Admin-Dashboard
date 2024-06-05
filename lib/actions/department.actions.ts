@@ -32,6 +32,7 @@ const {
           businessId: branch.business.$id,
           branchId: branch.$id,
           status: true,
+          canDelete: false,
         }
       )
 

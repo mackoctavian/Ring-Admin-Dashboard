@@ -59,8 +59,8 @@ import DiscountSelector from "../layout/discount-selector";
     const onInvalid = (errors : any ) => {
         toast({
             variant: "warning",
-            title: "Uh oh! Something went wrong.", 
-            description: "There was an issue submitting your form please try later"
+            title: "Data validation failed!", 
+            description: "Please make sure all the fields marked with * are filled correctly."
         });
         console.error(JSON.stringify(errors));
     }

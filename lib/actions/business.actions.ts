@@ -6,7 +6,7 @@ import { ID, Query, AppwriteException } from "node-appwrite";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 import { createStorageClient, createAdminClient, createSaaSAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Business, User } from "@/types";
+import { Business, User, SubscriptionDetails } from "@/types";
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { Gender, SubscriptionStatus } from "@/types/data-schemas";
 import { addDays } from 'date-fns';
@@ -44,30 +44,40 @@ export const getBusiness = async () => {
   }
 }
 
- export const getSubscriptionStatus = async (id: string) => {
+ export const getSubscriptionStatus = async () => {
   try {
+    //default to expired status
+    let status = SubscriptionStatus.EXPIRED;
+    const { userId, sessionClaims } = auth()
+    if (!userId && !sessionClaims?.businessId) { throw new Error("User details not found") }
+
     if (!DATABASE_ID || !SUBSCRIBERS_COLLECTION_ID) {
       throw new Error('Database ID or Collection ID is missing');
     }
 
-    if (!id) {
-      throw new Error('Document ID is missing');
-    }
-
     const { database } = await createSaaSAdminClient();
+
+    console.error("Business ID: ", sessionClaims?.metadata.businessId);
 
     const item = await database.listDocuments(
       SAAS_DATABASE_ID!,
       SUBSCRIBERS_COLLECTION_ID!,
-      [Query.equal('business', id)]
+      [Query.equal('business', sessionClaims?.metadata.businessId as string)]
     )
 
-    return parseStringify(item.documents[0]);
+    const subscription = parseStringify(item.documents[0]) as SubscriptionDetails;
+    status = subscription.status
+
+    return status;
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
+   let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
     throw Error(errorMessage);
   }
 }
@@ -220,3 +230,26 @@ export const initTrial = async (data) => {
     throw Error(errorMessage);
   }
 }
+
+export const getCurrentBusiness = async () => {
+  try {
+    const { userId } = auth();
+    if (!userId) { throw Error("User not found") }
+
+    const { database } = await createAdminClient();
+    const business = await database.listDocuments(
+      DATABASE_ID!,
+      BUSINESS_COLLECTION_ID!,
+      [Query.equal('owner', [userId])]
+    );
+
+    return parseStringify(business.documents[0]);
+  } catch (error) {
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+    if (error instanceof AppwriteException) {
+      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+    }
+    Sentry.captureException(error);
+    throw new Error(errorMessage);
+  }
+};
