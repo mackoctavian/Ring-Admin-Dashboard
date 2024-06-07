@@ -12,7 +12,7 @@ export default function Providers({
   return (
     <>
       <ClerkProvider>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <SessionProvider>
             {children}
           </SessionProvider>
