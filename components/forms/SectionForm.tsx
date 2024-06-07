@@ -4,13 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
 import { ReloadIcon } from "@radix-ui/react-icons"
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Section } from "@/types";
+import { Section, Branch } from "@/types";
 import { Textarea } from "@/components/ui/textarea"
 import { createItem, updateItem } from "@/lib/actions/section.actions"
 import { useToast } from "@/components/ui/use-toast"
@@ -31,11 +31,25 @@ import {
     FormLabel,
     FormMessage,
   } from "@/components/ui/form";
+import BranchSelector from "../layout/branch-selector";
   
 const SectionForm = ({ item }: { item?: Section | null }) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast()
+
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(item?.branch ?? null);
+    useEffect(() => {
+        if (item && item.branch) {
+        setSelectedBranch(item.branch);
+        } else {
+        setSelectedBranch(null);
+        }
+    }, [item]);
+
+    const handleBranchChange = (branch: Branch | null) => {
+        setSelectedBranch(branch);
+    };
 
     const form = useForm<z.infer<typeof SectionSchema>>({
         resolver: zodResolver(SectionSchema),
@@ -47,9 +61,9 @@ const SectionForm = ({ item }: { item?: Section | null }) => {
     const onInvalid = (errors : any ) => {
         console.error("Creating section failed: ", JSON.stringify(errors));
         toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.", 
-            description: "There was an issue submitting your form please try later"
+            variant: "warning",
+            title: "Data validation failed!", 
+            description: "Please make sure all the fields marked with * are filled correctly."
         });
     }
 
@@ -58,7 +72,7 @@ const SectionForm = ({ item }: { item?: Section | null }) => {
     
         try {
             if (item) {
-                await updateItem(item.$id, data);
+                await updateItem(item!.$id, data);
                 toast({
                     variant: "success",
                     title: "Success", 
@@ -94,13 +108,13 @@ return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
                 <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Section / space name</FormLabel>
+                        <FormLabel>Section / space name *</FormLabel>
                         <FormControl>
                             <Input
                             placeholder="Section name ( eg. Room 01 / Table 01 )"
@@ -117,7 +131,7 @@ return (
                 name="type"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Section / space type</FormLabel>
+                    <FormLabel>Section / space type *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                             <SelectTrigger>
@@ -134,6 +148,22 @@ return (
                     </FormItem>
                 )}
                 />
+
+                <FormField
+                control={form.control}
+                name="branch"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Branch *</FormLabel>
+                        <BranchSelector 
+                            value={selectedBranch}
+                            onChange={(branch) => { setSelectedBranch(branch); field.onChange(branch); }}
+                            />
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+
 
             </div>
 

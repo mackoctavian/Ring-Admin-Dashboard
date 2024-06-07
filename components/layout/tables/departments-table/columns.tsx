@@ -34,6 +34,10 @@ export const columns: ColumnDef<ProductUnit>[] = [
     header: "SHORT NAME",
   },
   {
+    accessorKey: "branch.name",
+    header: "BRANCH",
+  },
+  {
     header: "STATUS",
     id: "status",
     cell: ({ row }) => <StateColumn state={row.original.status} />,

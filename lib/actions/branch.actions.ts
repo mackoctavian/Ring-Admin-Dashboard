@@ -139,15 +139,27 @@ export const createItem = async (item: Branch) => {
 
       const { database } = await createAdminClient();
 
+      const currentBranch = await getCurrentBranch();
+      if( !currentBranch ) throw new Error('Could not fetch branch information.')
+      
       const items = await database.listDocuments(
         DATABASE_ID,
         BRANCH_COLLECTION_ID,
+        [ Query.equal('businessId', currentBranch.business.$id) ]
       );
 
       return parseStringify(items.documents);
 
     }catch (error: any){
-      console.error(error);
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+  
+      if(env == "development"){ console.error(error); }
+  
+      Sentry.captureException(error);
+      throw Error(errorMessage);
     }
   };
 
@@ -163,8 +175,16 @@ export const createItem = async (item: Branch) => {
   
     try {
       const { database } = await createAdminClient();
-  
+
+      const currentBranch = await getCurrentBranch();
+
+      if( !currentBranch ) throw new Error('Could not fetch branch information.')
+
       const queries = [];
+      //TODO: change this to branch
+      queries.push(Query.equal('businessId', currentBranch.business.$id));
+
+  
       queries.push(Query.orderDesc("$createdAt"));
 
       if ( limit ) {

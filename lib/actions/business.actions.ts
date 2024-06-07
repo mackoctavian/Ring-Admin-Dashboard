@@ -253,3 +253,30 @@ export const getCurrentBusiness = async () => {
     throw new Error(errorMessage);
   }
 };
+
+export const updateItem = async (id: string, data: Business ) => {  
+  try {
+    if (!DATABASE_ID || !BUSINESS_COLLECTION_ID) {
+      throw new Error('Database ID or Collection ID is missing');
+    }
+
+    console.log("DATA ON CONtroLLER: ", JSON.stringify(data, null, 2) )
+
+    const { database } = await createAdminClient();
+
+    const item = await database.updateDocument(
+      DATABASE_ID!,
+      BUSINESS_COLLECTION_ID!,
+      id,
+      data);
+
+    return parseStringify(item);
+  } catch (error) {
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+    if (error instanceof AppwriteException) {
+      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+    }
+    Sentry.captureException(error);
+    throw new Error(errorMessage);
+  }
+}

@@ -100,10 +100,9 @@ declare type Business = {
   address?: string;
   city?: string;
   country?: string;
-  owner: User;
+  owner: string;
   description?: string;
   slug: string;
-  status: boolean;
   $createdAt?: Date;
   $updatedAt?: Date;
 }
@@ -207,6 +206,7 @@ declare type Branch = {
   closingTime?: string;
   $createdAt?: Date;
   $updatedAt?: Date;
+  canDelete: boolean;
   status: boolean;
   canDelete: boolean;
 }
@@ -525,6 +525,9 @@ declare type Section = {
   $id?: string;
   name: string;
   type: SectionType;
+  branch: Branch;
+  branchId: string;
+  businessId: string;
   description: string;
   status: boolean;
   $createdAt?: Date;

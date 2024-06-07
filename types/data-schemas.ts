@@ -143,19 +143,18 @@ export const UserSchema: z.ZodSchema = z.lazy(() =>
 export const BusinessSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
-    businessType: BusinessTypeSchema,
+    businessType: BusinessTypeSchema.nullable(),
     size: z.string(),
     registrationNumber: z.string().optional(),
-    logo: z.string().optional(),
+    logo: z.string().optional().nullable(),
     email: z.string().email(),
     phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-    address: z.string().optional(),
-    city: z.string().optional(),
+    address: z.string().optional().nullable(),
+    city: z.string().optional().nullable(),
     country: z.string(),
-    owner: UserSchema,
+    owner: z.string(),
     description: z.string().optional(),
     slug: z.string(),
-    status: z.boolean(),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
@@ -174,9 +173,11 @@ export const BranchSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     email: z.string().email("Invalid email address"),
+    businessId: z.string().optional(),
+    business: BusinessSchema.optional(),
     phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-    address: z.string().optional(),
-    city: z.string().optional(),
+    address: z.string().optional().nullable(),
+    city: z.string().optional().nullable(),
     daysOpen: z.array(MultiSelectSchema).min(1, { message: "Select at least one day" }),
     openingTime: z.string().optional(),
     closingTime: z.string().optional(),
@@ -208,6 +209,7 @@ export const DepartmentSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     shortName: z.string(),
+    branch: BranchSchema,
     status: z.boolean(),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -784,6 +786,7 @@ export const SectionSchema = z.object({
         required_error: "Section type is required",
         invalid_type_error: "Select a valid section type",
     }),
+    branch: BranchSchema,
     description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     status: z.boolean(),
     $createdAt: z.preprocess((val) => {

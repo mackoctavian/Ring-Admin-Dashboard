@@ -8,7 +8,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { BusinessRegistrationSchema } from "@/types/data-schemas"
@@ -33,7 +33,7 @@ const BusinessRegistrationForm  = () => {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false);
   const [country, setCountry] = useState<string>('Tanzania');
-  const [selectedType, setSelectedType] = useState<BusinessType>();
+  const [selectedBusinessType, setSelectedBusinessType] = useState<BusinessType | undefined>(undefined);
 
   const form = useForm<z.infer<typeof BusinessRegistrationSchema>>({
     resolver: zodResolver(BusinessRegistrationSchema),
@@ -42,8 +42,10 @@ const BusinessRegistrationForm  = () => {
     },
   });
 
-  const handleTypeChange = (type: BusinessType) => {
-    setSelectedType(type);
+  const { control, setValue } = form;
+  const handleBusinessTypeChange = (businessType: BusinessType) => {
+    setSelectedBusinessType(businessType);
+    setValue('businessType', businessType);
   };
 
   const handleCountryChange = (value: string) => {
@@ -80,9 +82,9 @@ const BusinessRegistrationForm  = () => {
             description: "You have succesfully created your account, you will be redirected soon!"
         });
       
-        // Redirect to the dashboard
-        router.push("/");
-        router.refresh();
+        // Redirect to dashboard
+        router.push("/")
+        router.refresh()
     } catch (error) {
       toast({
         variant: "destructive",
@@ -229,14 +231,15 @@ const BusinessRegistrationForm  = () => {
                     </FormItem>
                     )}
                 />
+                
                 <FormField
-                  control={form.control}
+                  control={control}
                   name="businessType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Business type</FormLabel>
+                      <FormLabel>Business type *</FormLabel>
                       <FormControl>
-                        <BusinessTypeSelector value={selectedType} onChange={handleTypeChange} />
+                        <BusinessTypeSelector value={selectedBusinessType} onChange={handleBusinessTypeChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

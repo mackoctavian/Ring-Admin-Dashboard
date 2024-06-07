@@ -5,6 +5,7 @@ import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
 import { Section } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
+import { getCurrentBranch } from "./branch.actions"
 
 const {
   APPWRITE_DATABASE: DATABASE_ID,
@@ -26,6 +27,8 @@ export const createItem = async (item: Section) => {
       ID.unique(),
       {
         ...item,
+        businessId: item.branch.business.$id,
+        branchId: item.branch.$id,
       }
     )
 
@@ -46,10 +49,18 @@ export const list = async ( ) => {
     }
 
     const { database } = await createAdminClient();
+    
+    const currentBranch = await getCurrentBranch();
+    if( !currentBranch ) throw new Error('Could not fetch branch information.')
+
+    const queries = [];
+    //TODO: change this to branch
+    queries.push(Query.equal('businessId', currentBranch.business.$id));
 
     const items = await database.listDocuments(
       DATABASE_ID,
       SECTIONS_COLLECTION_ID,
+      [Query.equal('businessId', currentBranch.business.$id)]
     );
 
     return parseStringify(items.documents);
@@ -72,7 +83,12 @@ export const getItems = async (
   try {
     const { database } = await createAdminClient();
 
+    const currentBranch = await getCurrentBranch();
+    if( !currentBranch ) throw new Error('Could not fetch branch information.')
+
     const queries = [];
+    //TODO: change this to branch
+    queries.push(Query.equal('businessId', currentBranch.business.$id));
 
     if ( limit ) {
       queries.push(Query.limit(limit));

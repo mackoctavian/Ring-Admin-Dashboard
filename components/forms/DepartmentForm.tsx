@@ -1,35 +1,49 @@
 'use client'
 
+import * as z from "zod";
+import React, { useState, useEffect } from 'react'
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
 import { ReloadIcon } from "@radix-ui/react-icons"
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Department } from "@/types";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Department, Branch } from "@/types"
 import { createItem, updateItem } from "@/lib/actions/department.actions"
 import { useToast } from "@/components/ui/use-toast"
-import CancelButton from "../layout/cancel-button";
-import { DepartmentSchema } from "@/types/data-schemas";
-import BranchSelector from "../layout/branch-selector";
+import CancelButton from "../layout/cancel-button"
+import { DepartmentSchema } from "@/types/data-schemas"
+import BranchSelector from "../layout/branch-selector"
+
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+  } from "@/components/ui/form";
 
 const DepartmentForm = ({ item }: { item?: Department | null }) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast()
 
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(item?.branch ?? null);
+    useEffect(() => {
+        if (item && item.branch) {
+        setSelectedBranch(item.branch);
+        } else {
+        setSelectedBranch(null);
+        }
+    }, [item]);
+
+    const handleBranchChange = (branch: Branch | null) => {
+        setSelectedBranch(branch);
+    };
+    
     const form = useForm<z.infer<typeof DepartmentSchema>>({
         resolver: zodResolver(DepartmentSchema),
         defaultValues: item ? item : {
@@ -51,7 +65,7 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
     
         try {
             if (item) {
-                await updateItem(item.$id, data);
+                await updateItem(item!.$id, data);
                 toast({
                     variant: "success",
                     title: "Success", 
@@ -131,8 +145,8 @@ return (
                             <FormLabel>Branch *</FormLabel>
                             <FormControl>
                                 <BranchSelector
-                                    onChange={(value) => field.onChange(value)}
-                                    value={field.value}
+                                    value={selectedBranch}
+                                    onChange={(branch) => { setSelectedBranch(branch); field.onChange(branch); }}
                                 />
                             </FormControl>
                             <FormMessage />

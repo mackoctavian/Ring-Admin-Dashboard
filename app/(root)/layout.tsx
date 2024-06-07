@@ -13,7 +13,7 @@ export default function RootLayout({ children, }: Readonly<{ children: React.Rea
                 <Sidebar />
                 <main className="w-full pt-16">{children}</main>
                 <Toaster />
-                <CookieConsent demo={true} />
+                <CookieConsent demo={false} />
             </div>
         </>
     );

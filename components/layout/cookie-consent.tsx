@@ -12,7 +12,7 @@ export default function CookieConsent({ demo = false, onAcceptCallback = () => {
 
     const accept = () => {
         setIsOpen(false);
-        document.cookie = "cookieConsent=true; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+        document.cookie = "cookieConsent=true; expires=Fri, 31 Dec 9999 23:59:59 GMT; SameSite=None; Secure";
         setTimeout(() => {
             setHide(true);
         }, 700);

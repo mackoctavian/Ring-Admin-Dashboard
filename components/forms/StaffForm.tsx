@@ -115,7 +115,7 @@ const onSubmit = async (data: z.infer<typeof StaffSchema>) => {
 
 useEffect(() => {
     if (item) {
-    setSelectedDepartment(item.department);
+        setSelectedDepartment(item.department);
     }
 }, [item]);
 
@@ -357,16 +357,24 @@ return (
                 )}
             />
 
+            
+            
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 space-y-1">
+            <h2 className="text-lg font-bold">Emergency contact</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField
                 control={form.control}
-                name="emergencyNumber"
+                name="emergencyName"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Emergency contact</FormLabel>
+                    <FormLabel>Full name</FormLabel>
                     <FormControl>
                         <Input
-                        type="tel"
-                        placeholder="Enter emergency phone number"
+                        placeholder="Enter contact name"
                         className="input-class"
                         {...field}
                         />
@@ -375,8 +383,45 @@ return (
                 </FormItem>
                 )}
             />
-            
+
+            <FormField
+                control={form.control}
+                name="emergencyNumber"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Phone number</FormLabel>
+                    <FormControl>
+                        <Input
+                        type="tel"
+                        placeholder="Enter phone number"
+                        className="input-class"
+                        {...field}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="emergencyRelationship"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Relationship</FormLabel>
+                    <FormControl>
+                        <Input
+                        placeholder="Enter relationship"
+                        className="input-class"
+                        {...field}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
         </div>
+
             <FormField
                 control={form.control}
                 name="notes"

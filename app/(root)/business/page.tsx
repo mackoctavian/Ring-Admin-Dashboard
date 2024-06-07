@@ -1,17 +1,20 @@
-"use client";
-
-import { useEffect, useState } from 'react';
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import BreadCrumb from "@/components/layout/breadcrumb";
-import { ReloadIcon } from "@radix-ui/react-icons"
-import { getTempBusinessInfo } from '@/lib/actions/business.actions';
 import { Business } from "@/types";
 import BusinessForm from "@/components/forms/BusinessForm";
+import { getCurrentBusiness } from '@/lib/actions/business.actions';
 
-const breadcrumbItems = [{ title: "Business", link: "/business-settings" }, { title: "New", link: "" }];
+const breadcrumbItems = [{ title: "Business", link: "/business-settings" }, { title: "Edit business details", link: "" }];
 
-const BusinessSettingsPage = () => {
+const BusinessSettingsPage = async () => {
+  let item: Business;
+
+  try {
+      item = await getCurrentBusiness();
+  } catch (error) {
+      throw new Error("Error loading business data" + error);
+  }
     
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -20,7 +23,7 @@ const BusinessSettingsPage = () => {
         <Heading title="Business Settings" description="Configure some settings about your business" />
       </div>
       <Separator />
-      <BusinessForm  />
+      <BusinessForm item={item} />
     </div>
   );
 };

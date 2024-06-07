@@ -10,8 +10,8 @@ import { list } from "@/lib/actions/branch.actions"
 import { Branch } from "@/types";
 
 interface Props {
-  value?: Branch; // Update the type to allow null
-  onChange: (value: Branch) => void; // Update the type to allow null
+  value?: Branch | null;
+  onChange: (value: Branch | null) => void;
 }
 
 const BranchSelector: React.FC<Props> = ({ value, onChange }) => {
@@ -30,22 +30,14 @@ const BranchSelector: React.FC<Props> = ({ value, onChange }) => {
   }, []);
 
   const handleSelectChange = (value: string) => {
-    if (value === 'null') { // Check if the value is 'null'
-      onChange(null);
-    } else {
-      const selectedBranch = branches.find(br => br.$id === value);
-      if (selectedBranch) {
-        onChange(selectedBranch);
-      }
-    }
+    const selectedBranch = branches.find(br => br.$id === value);
+    onChange(selectedBranch || null);
   };
 
   return (
     <Select value={value ? value.$id : 'null'} onValueChange={handleSelectChange}>
       <SelectTrigger>
-        <SelectValue>
-          {value ? value.name : 'Select Branch'}
-        </SelectValue>
+        <SelectValue>{value ? value.name : 'Select Branch'}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {branches.map((branch) => (

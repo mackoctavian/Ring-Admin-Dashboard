@@ -38,7 +38,6 @@ const BranchForm = ({ item }: { item?: Branch | null }) => {
     const [isLoading, setIsLoading] = useState(false)
     const { toast } = useToast()
 
-
     const form = useForm<z.infer<typeof BranchSchema>>({
         resolver: zodResolver(BranchSchema),
         defaultValues: item ? item : {
