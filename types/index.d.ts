@@ -72,27 +72,18 @@ declare type User = {
   points: number;
   status: boolean;
   userId: string;
-  business?: Business;
+  businesses: Business[];
   isOwner: boolean;
   $createdAt?: Date;
   $updatedAt?: Date;
 };
-
-declare type TempBusinessData = {
-  $id?: string;
-  businessType: BusinessType;
-  size: string;
-  city?: string;
-  country: string;
-  $createdAt?: Date;
-  $updatedAt?: Date;
-}
 
 declare type Business = {
   $id?: string;
   name: string;
   businessType: BusinessType;
   size: string;
+  branches: Branch[];
   registrationNumber?: string;
   logo?: string;
   email: string;
@@ -131,8 +122,8 @@ declare type ProductUnitDto = {
 declare type Department = {
   $id?: string;
   branch: Branch;
-  businessId: string;
   branchId: string;
+  businessId: string;
   name: string;
   shortName: string;
   status: boolean;
@@ -202,6 +193,7 @@ declare type Branch = {
   city?: string;
   staffCount: number;
   daysOpen: Option[];
+  departments: Department[];
   openingTime?: string;
   closingTime?: string;
   $createdAt?: Date;

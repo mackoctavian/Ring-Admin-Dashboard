@@ -16,7 +16,6 @@ import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button"
 import { DepartmentSchema } from "@/types/data-schemas"
 import BranchSelector from "../layout/branch-selector"
-
 import {
     Form,
     FormControl,
@@ -39,10 +38,6 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
         setSelectedBranch(null);
         }
     }, [item]);
-
-    const handleBranchChange = (branch: Branch | null) => {
-        setSelectedBranch(branch);
-    };
     
     const form = useForm<z.infer<typeof DepartmentSchema>>({
         resolver: zodResolver(DepartmentSchema),
@@ -59,7 +54,7 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
             description: "Please make sure all the fields marked with * are filled correctly."
         });
     }
-
+    
     const onSubmit = async (data: z.infer<typeof DepartmentSchema>) => {
         setIsLoading(true);
     

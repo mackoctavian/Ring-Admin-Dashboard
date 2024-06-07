@@ -15,7 +15,8 @@ const {
   USER_COLLECTION: USER_COLLECTION_ID,
  } = process.env;
 
-export const getUser = async () => {
+
+export const getLoggedInUser = async () => {
   const { userId } = auth();
   if (!userId) { throw Error("User not authorized to perform this action") }
   
@@ -44,6 +45,7 @@ export const getUser = async () => {
     throw Error(errorMessage);
   }
 }
+
 
 export const createUser = async (user: User) => {
   const { userId } = auth();

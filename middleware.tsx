@@ -13,6 +13,12 @@ const isPublicRoute = createRouteMatcher(["/sign-in", "/sign-up", "/sign-up/veri
 export default clerkMiddleware((auth, req) => {
   const { userId, sessionClaims, redirectToSignIn } = auth();
 
+  //if onboarding is complete take them home
+  if (userId && sessionClaims?.metadata?.onboardingComplete && isOnboardingRoute(req) ) {
+    const takeMeHome = new URL("/", req.url);
+    return NextResponse.redirect(takeMeHome);
+  }
+
   // For users visiting /onboarding, don't try to redirect
   if (userId && isOnboardingRoute(req)) {
     return NextResponse.next();

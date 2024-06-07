@@ -1,13 +1,11 @@
 const env = process.env.NODE_ENV
 import * as Sentry from "@sentry/nextjs";
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import {getCurrentBusiness} from '@/lib/actions/business.actions'
-import {getCurrentBranch} from '@/lib/actions/branch.actions'
-import { Branch } from '@/types'
+import { User } from '@/types'
+import { getLoggedInUser } from "@/lib/actions/user.actions";
 
 interface SessionData {
-    business: string | null;
-    branch: Branch | null;
+    user: User | null;
 }
 
 interface SessionContextValue {
@@ -19,23 +17,21 @@ interface SessionProviderProps {
     children: ReactNode;
 }
   
-const SessionContext = createContext<SessionContextValue>({ sessionData: { business: null, branch: null }, sessionLoading: true });
+const SessionContext = createContext<SessionContextValue>({ sessionData: { user: null }, sessionLoading: true });
 
 export const SessionProvider = ({ children, ...props }: SessionProviderProps) => {
-    const [sessionData, setSessionData] = useState<SessionData>({ business: null, branch: null });
+    const [sessionData, setSessionData] = useState<SessionData>({ user: null });
     const [sessionLoading, setSessionLoading] = useState<boolean>(true);
 
     useEffect(() => {
         const fetchData = async () => {
         try {
-            //const businessRes = await getCurrentBusiness();
-            const branchRes = await getCurrentBranch();
-
-            if (branchRes) {
-                setSessionData({ business: '', branch: branchRes });
+            const loggedInUser: User = await getLoggedInUser();            
+            if (loggedInUser) {
+                setSessionData({ user: loggedInUser });
             } else {
             // Handle error cases here
-            console.error('Failed to fetch business or branch data');
+            console.error('Failed to fetch logged in user data');
             }
 
 

@@ -18,7 +18,7 @@ import BusinessSizeSelector from "../layout/business-size-selector"
 import BusinessTypeSelector from "../layout/business-type-selector"
 import CountrySelector from "../layout/country-selector"
 import { BusinessType } from "@/types";
-import { registerBusiness } from "@/lib/actions/business.actions"
+import { registerBusiness, initTrial } from "@/lib/actions/business.actions"
 import {
   Form,
   FormControl,
@@ -83,8 +83,8 @@ const BusinessRegistrationForm  = () => {
         });
       
         // Redirect to dashboard
-        router.push("/")
-        router.refresh()
+        router.replace("/")
+        //router.refresh()
     } catch (error) {
       toast({
         variant: "destructive",

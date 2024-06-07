@@ -4,13 +4,12 @@ const env = process.env.NODE_ENV
 import * as Sentry from "@sentry/nextjs";
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
-import { createStorageClient, createAdminClient, createSaaSAdminClient } from "../appwrite";
+import { createAdminClient, createSaaSAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Business, User, SubscriptionDetails } from "@/types";
+import { Business, User, SubscriptionDetails, Branch } from "@/types";
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { Gender, SubscriptionStatus } from "@/types/data-schemas";
 import { addDays } from 'date-fns';
-import { createUser } from "@/lib/actions/user.actions"
 import { createDefaultBranch } from "@/lib/actions/branch.actions"
 import { createDefaultDepartment } from "@/lib/actions/department.actions" 
 
@@ -19,12 +18,39 @@ const {
   BUSINESS_COLLECTION: BUSINESS_COLLECTION_ID,
   BUSINESS_CATEGORY_COLLECTION: BUSINESS_CATEGORY_COLLECTION_ID,
 
+  //USER COLLECTION
+  USER_COLLECTION: USER_COLLECTION_ID,
+
   //SAAS Settings
   APPWRITE_SAAS_DATABASE: SAAS_DATABASE_ID,
   SUBSRIBERS_COLLECTION: SUBSCRIBERS_COLLECTION_ID,
   TRIAL_DAYS: TRIAL_DAYS,
   SUBSCRIPTION_COST: SUBSCRIPTION_COST
  } = process.env;
+
+ export const getCurrentBusiness = async () => {
+  try {
+    const { userId } = auth();
+    if (!userId) { throw Error("User not found") }
+
+    const { database } = await createAdminClient();
+    const business = await database.listDocuments(
+      DATABASE_ID!,
+      BUSINESS_COLLECTION_ID!,
+      [Query.equal('authId', [userId])]
+    );
+
+    //TODO: allow multiple businesses
+    return parseStringify(business.documents[0]);
+  } catch (error) {
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+    if (error instanceof AppwriteException) {
+      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+    }
+    Sentry.captureException(error);
+    throw new Error(errorMessage);
+  }
+};
 
 export const getBusiness = async () => {
   try {
@@ -57,12 +83,10 @@ export const getBusiness = async () => {
 
     const { database } = await createSaaSAdminClient();
 
-    console.error("Business ID: ", sessionClaims?.metadata.businessId);
-
     const item = await database.listDocuments(
       SAAS_DATABASE_ID!,
       SUBSCRIBERS_COLLECTION_ID!,
-      [Query.equal('business', sessionClaims?.metadata.businessId as string)]
+      [Query.equal('businessId', sessionClaims?.metadata.businessId as string)]
     )
 
     const subscription = parseStringify(item.documents[0]) as SubscriptionDetails;
@@ -122,65 +146,53 @@ export const getBusinessTypes = async () => {
 
 export const registerBusiness = async (item: Business) => {
   try{
-    let newBusiness = null;
-
     const { database } = await createAdminClient();
-    const { email, name, phoneNumber } = item;
-
-    const { userId } = auth();
-    if (!userId) { throw Error("User not found") }
 
     const user = await currentUser();
-    
-    if( user ){
-        
-      newBusiness = await database.createDocument(
+    const { sessionClaims } = auth();
+    if (!user) { throw Error("Current user could not be loaded") }
+
+    const newBusinessOwner = await database.createDocument(
+      DATABASE_ID!,
+      USER_COLLECTION_ID!,
+      ID.unique(),
+      {
+        email: user.primaryEmailAddress?.emailAddress,
+        name: user.fullName,
+        phoneNumber: user.phoneNumbers.length > 0 ? user.phoneNumbers[0].phoneNumber : item.phoneNumber,
+        image: user.imageUrl,
+        gender: Gender.UNDISCLOSED,
+        points: 0,
+        status: true,
+        userId: user.id,
+        isOwner: true,
+      });
+
+      const newBusiness = await database.createDocument(
         DATABASE_ID!,
         BUSINESS_COLLECTION_ID!,
         ID.unique(),
         {
           ...item,
-          owner: userId,
-        }
-      );
+          branches: [],
+          authId: user.id,
+          user: newBusinessOwner,
+        });
 
-      // Create the main branch
-      const newBranch = await createDefaultBranch( parseStringify(newBusiness) )
+      const newBranch = await createDefaultBranch(parseStringify(newBusiness));
+     
+      createDefaultDepartment(newBranch);
 
-      // Create the main department
-      const newDepartment = await createDefaultDepartment( parseStringify(newBranch) )
+      initTrial(newBusiness.$id, parseStringify(newBusinessOwner));
 
-      const newUser: User = {
-        email: user.primaryEmailAddress?.emailAddress,
-        name: user.fullName,
-        phoneNumber: user.primaryPhoneNumber,
-        image: user.imageUrl,
-        gender: Gender.UNDISCLOSED,
-        points: 0,
-        status: true,
-        userId: userId,
-        business: newBusiness,
-        isOwner: true
-      }
-
-      //Store kyc data
-      await createUser(newUser)
-
-      //Init trial period
-      const trialData = {business: newBusiness.$id, email: email, name: name, phoneNumber: phoneNumber }
-      initTrial(trialData)
-
-      // Complete user registration
-      const res = await clerkClient.users.updateUser(userId, {
+      await clerkClient.users.updateUser(user.id, {
         publicMetadata: {
           onboardingComplete: true,
           businessId: newBusiness.$id,
         },
       })
-      return { message: res.publicMetadata }
-    }
 
-    return parseStringify(newBusiness);
+    return parseStringify(newBusinessOwner);
   } catch (error: any) {
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
@@ -194,30 +206,28 @@ export const registerBusiness = async (item: Business) => {
   }
 }
 
-export const initTrial = async (data) => {
+export const initTrial = async (businessId: string, data : User) => {
   try{
-    const { userId } = auth();
-    if (!userId) { throw Error("User not found") }
-
     const { database } = await createSaaSAdminClient();  
 
     const trialEndDate = addDays(new Date(), parseInt(TRIAL_DAYS!, 10));
     const subscriptionCost = parseFloat(SUBSCRIPTION_COST!);
 
-    const startTrial = await database.createDocument(
+   await database.createDocument(
       SAAS_DATABASE_ID!,
       SUBSCRIBERS_COLLECTION_ID!,
       ID.unique(),
       {
-        ...data,
+        businessId: businessId,
+        email: data.email,
+        name: data.name,
+        phoneNumber: data.phoneNumber,
         nextDue: trialEndDate,
         monthlyFee: subscriptionCost,
         status: SubscriptionStatus.TRIAL,
-        owner: userId,
+        owner: data.userId,
       }
     );
-  
-    return parseStringify(startTrial);
   } catch (error: any) {
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
@@ -231,36 +241,13 @@ export const initTrial = async (data) => {
   }
 }
 
-export const getCurrentBusiness = async () => {
-  try {
-    const { userId } = auth();
-    if (!userId) { throw Error("User not found") }
 
-    const { database } = await createAdminClient();
-    const business = await database.listDocuments(
-      DATABASE_ID!,
-      BUSINESS_COLLECTION_ID!,
-      [Query.equal('owner', [userId])]
-    );
-
-    return parseStringify(business.documents[0]);
-  } catch (error) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-    Sentry.captureException(error);
-    throw new Error(errorMessage);
-  }
-};
 
 export const updateItem = async (id: string, data: Business ) => {  
   try {
     if (!DATABASE_ID || !BUSINESS_COLLECTION_ID) {
       throw new Error('Database ID or Collection ID is missing');
     }
-
-    console.log("DATA ON CONtroLLER: ", JSON.stringify(data, null, 2) )
 
     const { database } = await createAdminClient();
 

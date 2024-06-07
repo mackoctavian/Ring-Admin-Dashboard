@@ -87,7 +87,7 @@ export const BusinessTypeSchema = z.object({
 export const SignUpSchema = z.object({
     name: z.string().min(3),
     phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-    businessType: BusinessTypeSchema.optional(),
+    businessType: BusinessTypeSchema,
     size: z.string(),
     city: z.string().optional(),
     country: z.string(),
@@ -101,7 +101,7 @@ export const BusinessRegistrationSchema = z.object({
     slug: z.string(),
     logo: z.string().optional(),
     phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-    businessType: BusinessTypeSchema.optional(),
+    businessType: BusinessTypeSchema,
     size: z.string(),
     city: z.string().optional(),
     country: z.string(),
@@ -143,7 +143,7 @@ export const UserSchema: z.ZodSchema = z.lazy(() =>
 export const BusinessSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
-    businessType: BusinessTypeSchema.nullable(),
+    businessType: BusinessTypeSchema,
     size: z.string(),
     registrationNumber: z.string().optional(),
     logo: z.string().optional().nullable(),
@@ -152,7 +152,7 @@ export const BusinessSchema = z.object({
     address: z.string().optional().nullable(),
     city: z.string().optional().nullable(),
     country: z.string(),
-    owner: z.string(),
+    authId: z.string(),
     description: z.string().optional(),
     slug: z.string(),
     $createdAt: z.preprocess((val) => {

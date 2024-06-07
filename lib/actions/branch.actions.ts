@@ -1,18 +1,20 @@
 'use server';
+import { auth } from '@clerk/nextjs/server';
 
 const env = process.env.NODE_ENV
 import * as Sentry from "@sentry/nextjs";
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Branch, Business } from "@/types";
+import { Branch, Business, User } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 import { getCurrentBusiness } from "./business.actions";
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
-    BRANCHES_COLLECTION: BRANCH_COLLECTION_ID
+    BRANCHES_COLLECTION: BRANCH_COLLECTION_ID,
   } = process.env;
+
 
 export const createDefaultBranch = async (business: Business) => {
   try {
@@ -133,19 +135,19 @@ export const createItem = async (item: Branch) => {
 
   export const list = async ( ) => {
     try {
-      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
+      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) throw new Error('Database ID or Collection ID is missing');
 
       const { database } = await createAdminClient();
+      if( !database ) throw new Error('Database could not be initiated');
 
-      const currentBranch = await getCurrentBranch();
-      if( !currentBranch ) throw new Error('Could not fetch branch information.')
-      
+      const businessData = await getCurrentBusiness();
+      const businessId = businessData.$id;
+      if (!businessId) throw new Error('Could not find the current business');
+
       const items = await database.listDocuments(
         DATABASE_ID,
         BRANCH_COLLECTION_ID,
-        [ Query.equal('businessId', currentBranch.business.$id) ]
+        [Query.equal('businessId', businessId!)]
       );
 
       return parseStringify(items.documents);
@@ -175,16 +177,13 @@ export const createItem = async (item: Branch) => {
   
     try {
       const { database } = await createAdminClient();
-
-      const currentBranch = await getCurrentBranch();
-
-      if( !currentBranch ) throw new Error('Could not fetch branch information.')
-
       const queries = [];
-      //TODO: change this to branch
-      queries.push(Query.equal('businessId', currentBranch.business.$id));
 
-  
+      const businessData = await getCurrentBusiness();
+      const businessId = businessData.$id;
+      if (!businessId) throw new Error('Could not find the current business');
+
+      queries.push(Query.equal('businessId', businessId));
       queries.push(Query.orderDesc("$createdAt"));
 
       if ( limit ) {
@@ -216,6 +215,10 @@ export const createItem = async (item: Branch) => {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
   }

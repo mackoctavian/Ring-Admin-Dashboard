@@ -1,17 +1,17 @@
 'use server';
 
+import { auth } from '@clerk/nextjs/server';
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Section } from "@/types";
+import { Section, Business } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
-import { getCurrentBranch } from "./branch.actions"
+import { getCurrentBusiness } from "./business.actions";
 
 const {
   APPWRITE_DATABASE: DATABASE_ID,
   SECTIONS_COLLECTION: SECTIONS_COLLECTION_ID
 } = process.env;
-
 
 export const createItem = async (item: Section) => {
   try {
@@ -44,23 +44,17 @@ export const createItem = async (item: Section) => {
 
 export const list = async ( ) => {
   try {
-    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
+    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) throw new Error('Database ID or Collection ID is missing')
     const { database } = await createAdminClient();
-    
-    const currentBranch = await getCurrentBranch();
-    if( !currentBranch ) throw new Error('Could not fetch branch information.')
 
-    const queries = [];
-    //TODO: change this to branch
-    queries.push(Query.equal('businessId', currentBranch.business.$id));
+    const businessData = await getCurrentBusiness();
+    const businessId = businessData.$id;
+    if (!businessId) throw new Error('Could not find the current business');
 
     const items = await database.listDocuments(
       DATABASE_ID,
       SECTIONS_COLLECTION_ID,
-      [Query.equal('businessId', currentBranch.business.$id)]
+      [Query.equal('businessId', businessId)]
     );
 
     return parseStringify(items.documents);
@@ -83,12 +77,14 @@ export const getItems = async (
   try {
     const { database } = await createAdminClient();
 
-    const currentBranch = await getCurrentBranch();
-    if( !currentBranch ) throw new Error('Could not fetch branch information.')
-
     const queries = [];
-    //TODO: change this to branch
-    queries.push(Query.equal('businessId', currentBranch.business.$id));
+
+    const businessData = await getCurrentBusiness();
+    const businessId = businessData.$id;
+    if (!businessId) throw new Error('Could not find the current business');
+
+    queries.push(Query.equal('businessId', businessId));
+    queries.push(Query.orderDesc("$createdAt"));
 
     if ( limit ) {
       queries.push(Query.limit(limit));

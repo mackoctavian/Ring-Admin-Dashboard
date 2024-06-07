@@ -34,6 +34,10 @@ export const columns: ColumnDef<Section>[] = [
     header: "TYPE",
   },
   {
+    accessorKey: "branch.name",
+    header: "BRANCH",
+  },
+  {
     accessorKey: "description",
     header: "DESCRIPTION",
   },
