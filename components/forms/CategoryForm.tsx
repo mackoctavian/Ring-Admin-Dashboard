@@ -42,16 +42,12 @@ import DiscountSelector from "../layout/discount-selector";
     const [selectedParent, setSelectedParent] = useState<Category | undefined>(
         item ? item.parent : undefined
     );
-    const [selectedDiscount, setSelectedDiscount] = useState<Discount | undefined>(
-        item ? item.discount : undefined
-    );
     
     const form = useForm<z.infer<typeof CategorySchema>>({
         resolver: zodResolver(CategorySchema),
-        defaultValues: item ? { ...item, parent: item.parent, discount: item.discount } : {
+        defaultValues: item ? { ...item, parent: item.parent } : {
             type: CategoryType.PRODUCT,
             description: '',
-            childrenCount: 0,
             status: false,
         },
     });
@@ -83,14 +79,14 @@ import DiscountSelector from "../layout/discount-selector";
                 toast({
                     variant: "success",
                     title: "Success", 
-                    description: "Product category updated succesfully!"
+                    description: "Category details updated succesfully!"
                 });
             } else {
                 await createItem(data);
                 toast({
                     variant: "success",
                     title: "Success", 
-                    description: "Product category created succesfully!"
+                    description: "Category created succesfully!"
                 });
             }
             
@@ -101,7 +97,7 @@ import DiscountSelector from "../layout/discount-selector";
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.", 
-                description: error.message || "There was an issue submitting your form, please try later"
+                description: "There was an issue submitting your form, please try later"
             });
         } finally {
         //delay loading
@@ -117,16 +113,10 @@ import DiscountSelector from "../layout/discount-selector";
         }
       }, [item]);
 
-    useEffect(() => {
-        if (item) {
-          setSelectedDiscount(item.discount);
-        }
-    }, [item]);
-
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                         control={form.control}
                         name="name"
@@ -177,21 +167,6 @@ import DiscountSelector from "../layout/discount-selector";
                                 type={ form.watch("type") }
                                 value={selectedParent}
                                 onChange={(cat) => { setSelectedParent(cat); field.onChange(cat); }}
-                                />
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="discount"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Discount</FormLabel>
-                                <DiscountSelector
-                                value={selectedDiscount}
-                                onChange={(disc) => { setSelectedDiscount(disc); field.onChange(disc); }}
                                 />
                                 <FormMessage />
                             </FormItem>

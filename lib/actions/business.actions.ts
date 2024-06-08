@@ -52,6 +52,18 @@ const {
   }
 };
 
+export const getBusinessId = async () => {
+    try{
+      const businessData = await getCurrentBusiness();
+      const businessId = businessData.$id;
+      if (!businessId) throw new Error('Could not find the current business');
+
+      return businessId;
+    }catch{
+      return null;
+    }
+}
+
 export const getBusiness = async () => {
   try {
     const { userId } = auth();

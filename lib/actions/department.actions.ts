@@ -1,6 +1,5 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
 const env = process.env.NODE_ENV
 import * as Sentry from "@sentry/nextjs";
 import { ID, Query, AppwriteException } from "node-appwrite";
@@ -8,7 +7,7 @@ import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
 import { Department, Branch, Business } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
-import { getCurrentBusiness } from "./business.actions";
+import { getBusinessId } from "./business.actions";
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
@@ -93,9 +92,8 @@ export const list = async ( ) => {
     const { database } = await createAdminClient();
     if( !database ) throw new Error('Database could not be initiated');
 
-    const businessData = await getCurrentBusiness();
-    const businessId = businessData.$id;
-    if (!businessId) throw new Error('Could not find the current business');
+    const businessId = await getBusinessId();
+    if( !businessId ) throw new Error('Business ID could not be initiated');
 
     const items = await database.listDocuments(
       DATABASE_ID,
@@ -133,11 +131,9 @@ export const getItems = async (
     const { database } = await createAdminClient();
 
     const queries = [];
-    
-    const businessData = await getCurrentBusiness();
-    const businessId = businessData.$id;
-    if (!businessId) throw new Error('Could not find the current business');
-
+    const businessId = await getBusinessId();
+    if( !businessId ) throw new Error('Business ID could not be initiated');
+  
     queries.push(Query.equal('businessId', businessId));
     queries.push(Query.orderDesc("$createdAt"));
 

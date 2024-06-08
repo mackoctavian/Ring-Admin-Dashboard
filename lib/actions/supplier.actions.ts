@@ -3,28 +3,32 @@
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Supplier, SupplierDto } from "@/types";
+import { Supplier } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
+import { getBusinessId } from "./business.actions";
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     VENDORS_COLLECTION: VENDOR_COLLECTION_ID
   } = process.env;
 
-  export const createItem = async (item: SupplierDto) => {
+  export const createItem = async (item: Supplier) => {
     try {
       if (!DATABASE_ID || !VENDOR_COLLECTION_ID) {
         throw Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
-  
+      const businessId = await getBusinessId();
+      if( !businessId ) throw new Error('Business ID could not be initiated');
+
       const newItem = await database.createDocument(
         DATABASE_ID!,
         VENDOR_COLLECTION_ID!,
         ID.unique(),
         {
           ...item,
+          businessId: businessId
         }
       )
   
@@ -43,12 +47,17 @@ const {
       if (!DATABASE_ID || !VENDOR_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');
       }
-
+      
       const { database } = await createAdminClient();
+      if( !database ) throw new Error('Database could not be initiated');
+
+      const businessId = await getBusinessId();
+      if( !businessId ) throw new Error('Business ID could not be initiated');
 
       const items = await database.listDocuments(
         DATABASE_ID,
         VENDOR_COLLECTION_ID,
+        [Query.equal('businessId', businessId!)]
       );
 
       return parseStringify(items.documents);
@@ -70,8 +79,13 @@ const {
   
     try {
       const { database } = await createAdminClient();
-  
+      const businessId = await getBusinessId();
+      if( !businessId ) throw new Error('Business ID could not be initiated');
+      
       const queries = [];
+      
+      queries.push(Query.equal('businessId', businessId));
+      queries.push(Query.orderDesc("$createdAt"));
       queries.push(Query.orderAsc("name"));
 
       if ( limit ) {
@@ -158,7 +172,7 @@ const {
     }
   }
 
-  export const updateItem = async (id: string, data: SupplierDto) => {  
+  export const updateItem = async (id: string, data: Supplier) => {  
     try {
       if (!DATABASE_ID || !VENDOR_COLLECTION_ID) {
         throw new Error('Database ID or Collection ID is missing');

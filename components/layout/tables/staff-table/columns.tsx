@@ -38,8 +38,8 @@ export const columns: ColumnDef<Staff>[] = [
     header: "EMAIL",
   },
   {
-    accessorKey: "department.name",
-    header: "DEPARTMENT",
+    accessorKey: "code",
+    header: "EMPLOYEE ID",
   },
   {
     accessorKey: "jobTitle",

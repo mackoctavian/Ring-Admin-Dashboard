@@ -15,12 +15,14 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input";
-import { Department, Staff } from "@/types";
+import { Staff } from "@/types";
 import { createItem, updateItem } from "@/lib/actions/staff.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
-import DepartmentSelector from "@/components/layout/department-selector"
-import CountrySelector from "../layout/country-selector";
+import { Gender, StaffSchema } from '@/types/data-schemas';
+import DepartmentSelector from "@/components/layout/department-multiselector"
+import BranchSelector from "@/components/layout/branch-multiselector";
+import CountrySelector from "@/components/layout/country-selector";
 import {
     Form,
     FormControl,
@@ -42,17 +44,12 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { Gender, StaffSchema } from '@/types/data-schemas';
 
 
 const StaffForm = ({ item }: { item?: Staff | null }) => {
 const router = useRouter();
 const [isLoading, setIsLoading] = useState(false);
 const { toast } = useToast();
-
-const [selectedDepartment, setSelectedDepartment] = useState<Department | undefined>(
-    item ? item.department : undefined
-);
 
 const form = useForm<z.infer<typeof StaffSchema>>({
     resolver: zodResolver(StaffSchema),
@@ -71,39 +68,34 @@ const onInvalid = (errors: any) => {
 };
 
 const onSubmit = async (data: z.infer<typeof StaffSchema>) => {
-    setIsLoading(true);      
-    toast({
-    variant: "success",
-    title: "Success",
-    description: JSON.stringify(data)
-    });
+    setIsLoading(true);
 
     try {
-    if (item) {
-        await updateItem(item.$id, data);
-        toast({
-        variant: "success",
-        title: "Success",
-        description: "Employee details updated successfully!"
-        });
-    } else {
-        await createItem(data);
-        toast({
-        variant: "success",
-        title: "Success",
-        description: "Employee added successfully!"
-        });
-    }
+        if (item) {
+            await updateItem(item.$id!, data);
+            toast({
+            variant: "success",
+            title: "Success",
+            description: "Employee details updated successfully!"
+            });
+        } else {
+            await createItem(data);
+            toast({
+            variant: "success",
+            title: "Success",
+            description: "Employee added successfully!"
+            });
+        }
 
-    // Redirect to the list page after submission
-    router.push("/staff");
-    router.refresh();
-    setIsLoading(false);
+        // Redirect to the list page after submission
+        router.push("/staff");
+        router.refresh();
+        setIsLoading(false);
     } catch (error: any) {
     toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
-        description: error.message || "There was an issue submitting your form, please try later"
+        description: "There was an issue submitting your form, please try later"
     });
     } finally {
     // Delay loading
@@ -112,12 +104,6 @@ const onSubmit = async (data: z.infer<typeof StaffSchema>) => {
     }, 1000);
     }
 };
-
-useEffect(() => {
-    if (item) {
-        setSelectedDepartment(item.department);
-    }
-}, [item]);
 
 return (
 <Form {...form}>
@@ -218,6 +204,34 @@ return (
 
             <FormField
                 control={form.control}
+                name="branch"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Branch *</FormLabel>
+                        <FormControl>
+                            <BranchSelector {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+            />
+
+            <FormField
+                control={form.control}
+                name="department"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Department</FormLabel>
+                        <FormControl>
+                            <DepartmentSelector {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+            />
+
+            <FormField
+                control={form.control}
                 name="address"
                 render={({ field }) => (
                 <FormItem>
@@ -304,22 +318,6 @@ return (
 
             <FormField
                 control={form.control}
-                name="department"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Department</FormLabel>
-                    <DepartmentSelector 
-                    value={selectedDepartment}
-                    onChange={(dept) => { setSelectedDepartment(dept); field.onChange(dept); }}
-                    />
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-
-
-            <FormField
-                control={form.control}
                 name="joiningDate"
                 render={({ field }) => (
                     <FormItem className="flex flex-col mt-2">
@@ -357,12 +355,10 @@ return (
                 )}
             />
 
-            
-            
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 space-y-1">
-            <h2 className="text-lg font-bold">Emergency contact</h2>
+            <h3 className="text-lg font-bold">Emergency contact details</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -466,7 +462,7 @@ return (
         
             <Separator orientation="vertical" />
 
-            <Button type="submit">
+            <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                     <>
                         <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...

@@ -1,7 +1,7 @@
 "use client";
-import { ReloadIcon } from "@radix-ui/react-icons"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +17,7 @@ import { useUser, useClerk } from "@clerk/nextjs";
 export function UserNav() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
+  const router = useRouter();
 
   if (isSignedIn) {
     return (
@@ -45,22 +46,20 @@ export function UserNav() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/profile") }>
               Profile
               <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              Billing
+            <DropdownMenuItem onClick={() => router.push("/business") }>
+              Business settings
               <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              Settings
+              System Settings
               <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuItem>New Team</DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          {/* <DropdownMenuItem onClick={logout}> */}
           <DropdownMenuItem onClick={() => signOut({ redirectUrl: '/sign-in' })}>
             Log out
             <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>

@@ -3,8 +3,9 @@
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Staff, StaffDto } from "@/types";
+import { Staff } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
+import { getBusinessId } from "./business.actions";
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
@@ -18,21 +19,25 @@ const transformRelationships = (data: any) => {
   };
 };
 
-  export const createItem = async (item: StaffDto) => {
+  export const createItem = async (item: Staff) => {
     try {
       if (!DATABASE_ID || !STAFF_COLLECTION_ID) {
         throw Error('Database ID or Collection ID is missing');
       }
 
       const { database } = await createAdminClient();
-      const transformedData = transformRelationships(item);
+      //const transformedData = transformRelationships(item);
+
+      const businessId = await getBusinessId();
+      if( !businessId ) throw new Error('Business ID could not be initiated');
   
       const newItem = await database.createDocument(
         DATABASE_ID!,
         STAFF_COLLECTION_ID!,
         ID.unique(),
         {
-          ...transformedData,
+          ...item,
+          businessId: businessId,
         }
       )
   
@@ -55,10 +60,13 @@ const transformRelationships = (data: any) => {
       }
 
       const { database } = await createAdminClient();
+      const businessId = await getBusinessId();
+      if( !businessId ) throw new Error('Business ID could not be initiated');
 
       const items = await database.listDocuments(
         DATABASE_ID,
         STAFF_COLLECTION_ID,
+        [Query.equal('businessId', businessId!)]
       );
 
       return parseStringify(items.documents);
@@ -82,6 +90,11 @@ const transformRelationships = (data: any) => {
       const { database } = await createAdminClient();
   
       const queries = [];
+      const businessId = await getBusinessId();
+      if( !businessId ) throw new Error('Business ID could not be initiated');
+
+      queries.push(Query.equal('businessId', businessId));
+      queries.push(Query.orderDesc("$createdAt"));
       queries.push(Query.orderAsc("name"));
 
       if ( limit ) {
@@ -168,7 +181,7 @@ const transformRelationships = (data: any) => {
     }
   }
 
-  export const updateItem = async (id: string, data: StaffDto) => {  
+  export const updateItem = async (id: string, data: Staff) => {  
     console.error(data);
     try {
       if (!DATABASE_ID || !STAFF_COLLECTION_ID) {

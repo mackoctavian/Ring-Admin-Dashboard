@@ -88,7 +88,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
-        description: error.message || 'There was an issue submitting your form, please try later',
+        description:'There was an issue submitting your form, please try later',
       });
     } finally {
       setTimeout(() => {

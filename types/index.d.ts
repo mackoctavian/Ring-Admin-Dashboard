@@ -141,9 +141,9 @@ declare type Category = {
   slug: string;
   categoryType: CategoryType;
   parent?: string;
-  discount?: Discount;
   description?: string;
   childrenCount: number;
+  businessId: string;
   $createdAt: Date;
   $updatedAt: Date;
   status: boolean;
@@ -321,22 +321,13 @@ declare type Supplier = {
   email?: string;
   address?: string;
   description?: string;
-  contactPerson?: string;
+  contactPersonName: string;
+  branch: Branch[];
+  businessId: string; 
   status: boolean;
   $createdAt?: Date;
   $updatedAt?: Date;
 }
-
-declare type SupplierDto = {
-  name: string;
-  phoneNumber: string;
-  email?: string;
-  address?: string;
-  description?: string;
-  contactPerson?: string;
-  status: boolean;
-}
-
 /* End Supplier */
 
 
@@ -344,7 +335,7 @@ declare type SupplierDto = {
 /* Staff */
 
 declare type Staff = {
-  $id?: string | undefined;
+  $id?: string;
   name: string;
   email: string;
   phoneNumber: string;
@@ -355,10 +346,14 @@ declare type Staff = {
   joiningDate: Date;
   jobTitle: string;
   emergencyNumber?: string;
+  emergencyName?: string;
+  emergencyRelationship?: string;
   address?: string;
   notes?: string;
-  department?: Department;
+  department?: Department[];
+  branch?: Branch[];
   image?: string;
+  businessId: string;
   status: boolean;
   $createdAt?: Date;
   $updatedAt?: Date;

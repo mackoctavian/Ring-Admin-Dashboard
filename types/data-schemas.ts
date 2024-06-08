@@ -250,11 +250,14 @@ export const StaffSchema = z.object({
     }, z.date()),
     jobTitle: z.string(),
     emergencyNumber: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+    emergencyName: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+    emergencyRelationship: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     address: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     image: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     status: z.boolean(),
-    department: DepartmentSchema,
+    department: z.array(DepartmentSchema.omit({branch: true})).min(1, { message: "Select at least one department" }),
+    branch: z.array(BranchSchema.omit({business: true})).min(1, { message: "Select at least one branch" }),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
@@ -272,11 +275,12 @@ export const StaffSchema = z.object({
 export const SupplierSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
-    email: z.string().email("Invalid email address"),
+    email: z.string().email("Invalid email address").optional(),
+    contactPersonName: z.string(),
+    branch: z.array(BranchSchema).min(1, { message: "Select at least one branch" }),
     phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-    address: z.string().optional(),
-    description: z.string().optional(),
-    contactPersonName: z.string().optional(),
+    address: z.string().optional().nullable(),
+    description: z.string().optional().nullable(),
     status: z.boolean(),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -351,15 +355,8 @@ export const CategorySchema: z.ZodSchema = z.lazy(() =>
             invalid_type_error: "Product category name must be more than 2 characters long",
         }).min(2),
         parent: z.string().nullable().optional(), 
-        discount: DiscountSchema.nullable().optional(),
         description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
         status: z.boolean(),
-        childrenCount: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return parseInt(val);
-            }
-            return val;
-        }, z.number().nullable().optional()),
         $createdAt: z.preprocess((val) => {
             if (typeof val === "string" && val.trim() !== "") {
                 return new Date(val);

@@ -24,6 +24,7 @@ import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 import { Textarea } from "@/components/ui/textarea"
 import { SupplierSchema } from "@/types/data-schemas";
+import BranchSelector from "../layout/branch-multiselector";
 
 const SupplierForm = ({ item }: { item?: Supplier | null }) => {
     const router = useRouter();
@@ -34,15 +35,15 @@ const SupplierForm = ({ item }: { item?: Supplier | null }) => {
         resolver: zodResolver(SupplierSchema),
         defaultValues: item ? item : {
             status: false,
+            description: '', //Required to avoid undefined error
         },
     });
 
     const onInvalid = (errors : any ) => {
-        console.error("Creating vendor failed: ", JSON.stringify(errors));
         toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.", 
-            description: "There was an issue submitting your form please try later"
+            variant: "warning",
+            title: "Data validation failed!", 
+            description: "Please make sure all the fields marked with * are filled correctly."
         });
     }
 
@@ -51,18 +52,18 @@ const SupplierForm = ({ item }: { item?: Supplier | null }) => {
     
         try {
             if (item) {
-                await updateItem(item.$id, data);
+                await updateItem(item.$id!, data);
                 toast({
-                    variant: "default",
+                    variant: "success",
                     title: "Success", 
-                    description: "Supplier details updated succesfully!"
+                    description: "You have succesfully updated the supplier details!"
                 });
             } else {
                 await createItem(data);
                 toast({
-                    variant: "default",
+                    variant: "success",
                     title: "Success", 
-                    description: "Supplier details created succesfully!"
+                    description: "Supplier created succesfully"
                 });
             }
             
@@ -88,13 +89,13 @@ return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Business name</FormLabel>
+                        <FormLabel>Business name *</FormLabel>
                         <FormControl>
                             <Input
                             placeholder="Enter business name"
@@ -112,7 +113,7 @@ return (
                 name="contactPersonName"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Contact person</FormLabel>
+                        <FormLabel>Contact person *</FormLabel>
                         <FormControl>
                             <Input
                             placeholder="Enter contact person's full name"
@@ -124,15 +125,31 @@ return (
                     </FormItem>
                     )}
                 />
-            </div>
+                <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Phone number *</FormLabel>
+                        <FormControl>
+                            <Input
+                            type="tel"
+                            placeholder="Enter supplier's phone number"
+                            className="input-class"
+                            {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Supplier email address</FormLabel>
+                        <FormLabel>Email address</FormLabel>
                         <FormControl>
                             <Input
                             type="email"
@@ -147,31 +164,25 @@ return (
                 />
 
                 <FormField
-                control={form.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Supplier phone number</FormLabel>
-                        <FormControl>
-                            <Input
-                            type="tel"
-                            placeholder="Enter supplier's phone number"
-                            className="input-class"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
+                    control={form.control}
+                    name="branch"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Branch *</FormLabel>
+                            <FormControl>
+                                <BranchSelector {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
                 />
-            </div>
 
                 <FormField
                     control={form.control}
                     name="address"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Supplier address</FormLabel>
+                            <FormLabel>Address</FormLabel>
                             <FormControl>
                                 <Input
                                 placeholder="Enter supplier's address"
@@ -183,6 +194,26 @@ return (
                         </FormItem>
                         )}
                 />
+                
+                <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <FormControl>
+                        <Switch
+                            id="status"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                        />
+                    </FormControl>
+                </FormItem>
+                )}
+            />
+            </div>
+
+                
             
             <FormField
                 control={form.control}
@@ -203,22 +234,7 @@ return (
             />
         
 
-            <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <FormControl>
-                        <Switch
-                            id="status"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                        />
-                    </FormControl>
-                </FormItem>
-                )}
-            />
+            
 
     
             <div className="flex h-5 items-center space-x-4">
