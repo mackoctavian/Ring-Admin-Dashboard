@@ -196,16 +196,18 @@ import DiscountSelector from "../layout/discount-selector";
                         control={form.control}
                         name="status"
                         render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="inline-flex items-center mb-5 cursor-pointer">Status</FormLabel>
-                            <FormControl>
-                                <Switch
-                                    id="status"
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                            </FormControl>
-                        </FormItem>
+                            <FormItem>
+                                <FormLabel>Status *</FormLabel>
+                                <FormControl>
+                                    <div className="mt-2">
+                                        <Switch
+                                            id="status"
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </div>
+                                </FormControl>
+                            </FormItem>
                         )}
                     />
                 </div>

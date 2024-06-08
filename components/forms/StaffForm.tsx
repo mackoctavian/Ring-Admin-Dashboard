@@ -165,6 +165,25 @@ return (
                 </FormItem>
                 )}
             />
+
+            <FormField
+                control={form.control}
+                name="image"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Profile picture</FormLabel>
+                    <FormControl>
+                        <Input
+                        type='file'
+                        placeholder="Select employee's profile picture"
+                        className="input-class"
+                        {...field}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
                 
             <FormField
                 control={form.control}
@@ -355,6 +374,25 @@ return (
                 )}
             />
 
+            <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Status *</FormLabel>
+                        <FormControl>
+                            <div className="mt-2">
+                                <Switch
+                                    id="status"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </div>
+                        </FormControl>
+                    </FormItem>
+                )}
+            />
+
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 space-y-1">
@@ -418,41 +456,21 @@ return (
             />
         </div>
 
-            <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Admin notes</FormLabel>
-                    <FormControl>
-                        <Textarea
-                            placeholder="Any other important details about the employee"
-                            className="resize-none"
-                            {...field}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        
-    
-    
-
         <FormField
             control={form.control}
-            name="status"
+            name="notes"
             render={({ field }) => (
-            <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormItem>
+                <FormLabel>Admin notes</FormLabel>
                 <FormControl>
-                    <Switch
-                        id="status"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+                    <Textarea
+                        placeholder="Any other important details about the employee"
+                        className="resize-none"
+                        {...field}
                     />
                 </FormControl>
-            </FormItem>
+                <FormMessage />
+                </FormItem>
             )}
         />
 

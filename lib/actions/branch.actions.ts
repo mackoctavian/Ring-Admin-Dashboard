@@ -8,7 +8,7 @@ import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
 import { Branch, Business, User } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
-import { getCurrentBusiness } from "./business.actions";
+import { getBusinessId, getCurrentBusiness } from "./business.actions";
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
@@ -140,9 +140,8 @@ export const createItem = async (item: Branch) => {
       const { database } = await createAdminClient();
       if( !database ) throw new Error('Database could not be initiated');
 
-      const businessData = await getCurrentBusiness();
-      const businessId = businessData.$id;
-      if (!businessId) throw new Error('Could not find the current business');
+      const businessId = await getBusinessId();
+      if( !businessId ) throw new Error('Business ID could not be initiated');
 
       const items = await database.listDocuments(
         DATABASE_ID,
@@ -179,9 +178,8 @@ export const createItem = async (item: Branch) => {
       const { database } = await createAdminClient();
       const queries = [];
 
-      const businessData = await getCurrentBusiness();
-      const businessId = businessData.$id;
-      if (!businessId) throw new Error('Could not find the current business');
+      const businessId = await getBusinessId();
+      if( !businessId ) throw new Error('Business ID could not be initiated');
 
       queries.push(Query.equal('businessId', businessId));
       queries.push(Query.orderDesc("$createdAt"));

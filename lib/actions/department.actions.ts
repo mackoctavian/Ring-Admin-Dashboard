@@ -5,7 +5,7 @@ import * as Sentry from "@sentry/nextjs";
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Department, Branch, Business } from "@/types";
+import { Department, Branch } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 import { getBusinessId } from "./business.actions";
 

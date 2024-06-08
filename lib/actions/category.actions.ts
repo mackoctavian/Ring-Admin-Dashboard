@@ -1,5 +1,7 @@
 'use server';
 
+const env = process.env.NODE_ENV
+import * as Sentry from "@sentry/nextjs";
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
@@ -49,11 +51,14 @@ const {
   
       return parseStringify(newItem);
     } catch (error: any) {
-      console.error(JSON.stringify(error));
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
   }
@@ -141,12 +146,14 @@ export const list = async ( ) => {
 
     return parseStringify(items.documents);
   } catch (error: any) {
-    console.error( JSON.stringify(error) );
-
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
     throw Error(errorMessage);
   }
 }
@@ -175,6 +182,10 @@ export const getItem = async (id: string) => {
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
     throw Error(errorMessage);
   }
 }
@@ -198,6 +209,10 @@ export const deleteItem = async ({ $id }: Category) => {
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
     throw Error(errorMessage);
   }
 }
@@ -218,11 +233,14 @@ export const updateItem = async (id: string, data: Category ) => {
 
     return parseStringify(item);
   } catch (error: any) {
-    console.error(error);
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
     throw Error(errorMessage);
   }
 }

@@ -148,24 +148,26 @@ return (
                         </FormItem>
                     )}
                 />
-            </div>
 
-            <FormField
+                <FormField
                 control={form.control}
                 name="status"
                 render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <FormControl>
-                        <Switch
-                            id="status"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                        />
-                    </FormControl>
-                </FormItem>
+                    <FormItem>
+                        <FormLabel>Status *</FormLabel>
+                        <FormControl>
+                            <div className="mt-2">
+                                <Switch
+                                    id="status"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </div>
+                        </FormControl>
+                    </FormItem>
                 )}
-            />
+                />
+            </div>
 
     
             <div className="flex h-5 items-center space-x-4">

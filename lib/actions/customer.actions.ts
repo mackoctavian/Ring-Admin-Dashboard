@@ -1,10 +1,13 @@
 'use server';
 
+const env = process.env.NODE_ENV
+import * as Sentry from "@sentry/nextjs";
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
 import { Customer, CustomerDto } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
+import { getBusinessId } from "./business.actions";
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
@@ -18,23 +21,33 @@ const {
       }
 
       const { database } = await createAdminClient();
-  
+      const businessId = await getBusinessId();
+      if( !businessId ) throw new Error('Business ID could not be initiated');
+
       const newItem = await database.createDocument(
         DATABASE_ID!,
         CUSTOMER_COLLECTION_ID!,
         ID.unique(),
         {
           ...item,
+          lastVisitDate: new Date(),
+          businessId: businessId,
+          points: 0,
+          totalSpend: 0,
+          totalVisits: 1,
         }
       )
   
       return parseStringify(newItem);
     } catch (error: any) {
-      console.error(error);
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
   }
@@ -46,21 +59,27 @@ const {
       }
 
       const { database } = await createAdminClient();
+      const businessId = await getBusinessId();
+      if( !businessId ) throw new Error('Business ID could not be initiated');
 
       const items = await database.listDocuments(
         DATABASE_ID,
         CUSTOMER_COLLECTION_ID,
+        [Query.equal('businessId', businessId!)]
       );
 
       return parseStringify(items.documents);
 
     }catch (error: any){
-      console.error(error);
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
-      
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
+      throw Error(errorMessage);
     }
   };
 
@@ -70,15 +89,16 @@ const {
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    if (!DATABASE_ID || !CUSTOMER_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
+    if (!DATABASE_ID || !CUSTOMER_COLLECTION_ID) throw new Error('Database ID or Collection ID is missing')
   
     try {
       const { database } = await createAdminClient();
+      const businessId = await getBusinessId();
+      if( !businessId ) throw new Error('Business ID could not be initiated');
   
-      const queries = [];
-      queries.push(Query.orderAsc("name"));
+      const queries = []
+      queries.push(Query.equal('businessId', businessId))
+      queries.push(Query.orderAsc("name"))
 
       if ( limit ) {
         queries.push(Query.limit(limit));
@@ -105,11 +125,14 @@ const {
   
       return parseStringify(items.documents);
     } catch (error: any) {
-      console.error(error);
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
   }
@@ -138,6 +161,10 @@ const {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
   }
@@ -161,6 +188,10 @@ const {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
   }
@@ -181,11 +212,14 @@ const {
   
       return parseStringify(item);
     } catch (error: any) {
-      console.error(error);
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
   }
