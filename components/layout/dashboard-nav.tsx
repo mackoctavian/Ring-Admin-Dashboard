@@ -1,17 +1,18 @@
+'use client'
+
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { mainMenu } from "@/types/nav";
 import { Separator } from "@/components/ui/separator"
-// import Footer from "@/components/layout/Footer"
+import Footer from "@/components/layout/footer"
 
 interface Props {
-  user?: string;
   setOpen: (value: string) => void;
 }
 
-export default function DashboardNav({ user, setOpen }: Props) {
+export default function DashboardNav({ setOpen }: Props) {
   const pathname = usePathname();
 
   return (
@@ -46,7 +47,7 @@ export default function DashboardNav({ user, setOpen }: Props) {
         // Optionally, handle the case where item.route is undefined
         return null;
       })}
-      {/* <Footer user={user} /> */}
+      <Footer />
     </>
   );
 }

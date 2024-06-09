@@ -15,12 +15,9 @@ import { usePathname } from "next/navigation"
 import { mainMenu } from "@/types/nav";
 import React from "react";
 import { siteConfig } from "@/config/site";
+import Footer from "./footer";
 
-interface Props {
-  user?: string;
-}
-
-export default function MobileSidebar({ user }: Props) {
+export default function MobileSidebar() {
   const pathname = usePathname();
 
   return (
@@ -73,12 +70,14 @@ export default function MobileSidebar({ user }: Props) {
                   // Optionally, handle the case where item.route is undefined
                   return null;
                 })}
-                USER
               </nav>
             </SheetClose>
-            {/* <Footer user={user} type="mobile" /> */}
+            
           </div>
+
+        <Footer type="mobile" />
         </SheetContent>
+
       </Sheet>
     </section>
   );

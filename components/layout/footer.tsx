@@ -1,18 +1,25 @@
 import { useUser, useClerk } from "@clerk/nextjs";
 import Image from 'next/image'
 import React from 'react'
+import { FooterProps } from "@/types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 
 const Footer = ({ type = 'desktop' }: FooterProps) => {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { isSignedIn, user } = useUser();
   const { signOut } = useClerk();
 
   if (isSignedIn) {
     return (
       <footer className="footer">
         <div className={type === 'mobile' ? 'footer_name-mobile' : 'footer_name'}>
-          <p className="text-xl font-bold text-gray-700">
-            {user.fullName!}
-          </p>
+          <Avatar className="h-8 w-8">
+              <AvatarImage
+                src={user.imageUrl}
+                alt={user.firstName!}
+              />
+              <AvatarFallback>{user.fullName}</AvatarFallback>
+          </Avatar>
         </div>
 
         <div className={type === 'mobile' ? 'footer_email-mobile' : 'footer_email'}>

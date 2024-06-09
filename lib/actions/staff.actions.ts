@@ -6,6 +6,8 @@ import { parseStringify } from "../utils";
 import { Staff } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 import { getBusinessId } from "./business.actions";
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation'
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
@@ -26,12 +28,11 @@ const transformRelationships = (data: any) => {
       }
 
       const { database } = await createAdminClient();
-      //const transformedData = transformRelationships(item);
 
       const businessId = await getBusinessId();
       if( !businessId ) throw new Error('Business ID could not be initiated');
   
-      const newItem = await database.createDocument(
+      await database.createDocument(
         DATABASE_ID!,
         STAFF_COLLECTION_ID!,
         ID.unique(),
@@ -40,8 +41,6 @@ const transformRelationships = (data: any) => {
           businessId: businessId,
         }
       )
-  
-      return parseStringify(newItem);
     } catch (error: any) {
       console.error(parseStringify(error));
       
@@ -51,6 +50,8 @@ const transformRelationships = (data: any) => {
       }
       throw Error(errorMessage);
     }
+
+    revalidatePath('/staff')
   }
 
   export const list = async ( ) => {
@@ -192,14 +193,14 @@ const transformRelationships = (data: any) => {
 
       const { database } = await createAdminClient();
 
-      const item = await database.updateDocument(
+      await database.updateDocument(
         DATABASE_ID!,
         STAFF_COLLECTION_ID!,
         id,
         transformedData,
       );
   
-      return parseStringify(item);
+      revalidatePath('/staff');
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {

@@ -1,5 +1,4 @@
 'use server';
-import { auth } from '@clerk/nextjs/server';
 
 const env = process.env.NODE_ENV
 import * as Sentry from "@sentry/nextjs";

@@ -3,7 +3,6 @@
 import * as z from "zod";
 import React, { useEffect, useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Switch } from "@/components/ui/switch"
 import { ReloadIcon } from "@radix-ui/react-icons"
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -24,6 +23,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon } from "@radix-ui/react-icons"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import "react-day-picker/style.css";
+
 import {
   Form,
   FormControl,
@@ -38,6 +39,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import SupplierSelector from "../layout/supplier-selector";
+import BranchSelector from "../layout/branch-selector";
 
  const ExpenseForm = ({ item }: { item?: Expense | null }) => {
     const router = useRouter();
@@ -59,12 +61,9 @@ import SupplierSelector from "../layout/supplier-selector";
     
     const form = useForm<z.infer<typeof ExpenseSchema>>({
         resolver: zodResolver(ExpenseSchema),
-        defaultValues: item ? { ...item, staff: item.staff, department: item.department, vendor: item.vendor } : {
+        defaultValues: item ? item : {
             tax: 0,
-            status: ExpenseStatus.UNPAID
-            // type: CategoryType.PRODUCT,
-            // description: '',
-            // status: false,
+            status: ExpenseStatus.UNPAID,
         },
     });
 
@@ -142,7 +141,7 @@ import SupplierSelector from "../layout/supplier-selector";
                         name="name"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Expense title</FormLabel>
+                            <FormLabel>Expense title *</FormLabel>
                             <FormControl>
                                 <Input
                                 placeholder="Enter expense title"
@@ -160,11 +159,110 @@ import SupplierSelector from "../layout/supplier-selector";
                         name="category"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Expense Category</FormLabel>
+                                <FormLabel>Expense category *</FormLabel>
                                     <ExpenseCategorySelector onChange={field.onChange} value={field.value} />
                                 <FormMessage />
                             </FormItem>
                         )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="amount"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Amount *</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        placeholder="Amount"
+                                        className="input-class"
+                                    {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    
+                    <FormField
+                        control={form.control}
+                        name="currency"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Currency *</FormLabel>
+                                <FormControl>
+                                    <CurrencySelector
+                                        value={selectedCurrency}
+                                        onChange={(curr) => { setSelectedCurrency(curr); field.onChange(curr); }}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="dueDate"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col mt-2">
+                                <FormLabel>Due date *</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
+                                            {field.value ? ( format(field.value, "PPP") ) : (
+                                                <span>Select expense due date</span>
+                                            )}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        hideNavigation={true}
+                                        captionLayout="dropdown"
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        disabled={ (date) => date < new Date("1970-01-01") }
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="branch"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Branch</FormLabel>
+                                <BranchSelector
+                                    value={field.value}
+                                    {...field}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="department"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Department</FormLabel>
+                                <DepartmentSelector
+                                    value={selectedDepartment}
+                                    onChange={(dpt) => { setSelectedDepartment(dpt); field.onChange(dpt); }}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                            )}
                     />
 
                     <FormField
@@ -197,39 +295,9 @@ import SupplierSelector from "../layout/supplier-selector";
                             )}
                     />
 
-                    <FormField
-                        control={form.control}
-                        name="department"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Department</FormLabel>
-                                <DepartmentSelector
-                                    value={selectedDepartment}
-                                    onChange={(dpt) => { setSelectedDepartment(dpt); field.onChange(dpt); }}
-                                />
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                    />
+                    
 
-                    <FormField
-                        control={form.control}
-                        name="amount"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Amount</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        placeholder="Amount"
-                                        className="input-class"
-                                    {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    
 
                     <FormField
                         control={form.control}
@@ -250,87 +318,7 @@ import SupplierSelector from "../layout/supplier-selector";
                         )}
                     />
 
-                    <FormField
-                        control={form.control}
-                        name="currency"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Currency</FormLabel>
-                                <FormControl>
-                                    <CurrencySelector
-                                        value={selectedCurrency}
-                                        onChange={(curr) => { setSelectedCurrency(curr); field.onChange(curr); }}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="expenseDate"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col mt-2">
-                                <FormLabel>Expense date</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
-                                            {field.value ? ( format(field.value, "PPP") ) : (
-                                                <span>Select expense date</span>
-                                            )}
-                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        mode="single"
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        disabled={ (date) => date > new Date() || date < new Date("1970-01-01") }
-                                        initialFocus
-                                    />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="dueDate"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col mt-2">
-                                <FormLabel>Due date</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
-                                            {field.value ? ( format(field.value, "PPP") ) : (
-                                                <span>Select expense due date</span>
-                                            )}
-                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        mode="single"
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        disabled={ (date) => date > new Date() || date < new Date("1970-01-01") }
-                                        initialFocus
-                                    />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
+                    
                     <FormField
                         control={form.control}
                         name="document"

@@ -307,8 +307,6 @@ declare type ServiceInventoryItemUsage = {
   $createdAt?: Date;
   $updatedAt?: Date;
 }
-
-
 /* End Inventory Usage */
 
 
@@ -424,7 +422,21 @@ declare type CustomerDto = {
 
 /* End Customer */
 
+/* Campaign */
 
+declare type Campaign = {
+  $id: string;
+  title: string;
+  audience: CampaignAudience;
+  message: string;
+  businessId: string;
+  scheduleDate: Date;
+  status: boolean;
+  $createdAt: Date;
+  $updatedAt: Date;
+}
+
+/* End campaign */
 
 /* Stock */
 
@@ -657,16 +669,5 @@ declare interface TotalBalanceBoxProps {
 }
 
 declare interface FooterProps {
-  user: User;
   type?: 'mobile' | 'desktop'
-}
-
-declare interface RightSidebarProps {
-  user: User;
-  transactions: Transaction[];
-  banks: Bank[] & Account[];
-}
-
-declare interface SiderbarProps {
-  user: User;
 }

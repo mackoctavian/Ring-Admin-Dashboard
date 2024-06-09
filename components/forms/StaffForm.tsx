@@ -23,6 +23,8 @@ import { Gender, StaffSchema } from '@/types/data-schemas';
 import DepartmentSelector from "@/components/layout/department-multiselector"
 import BranchSelector from "@/components/layout/branch-multiselector";
 import CountrySelector from "@/components/layout/country-selector";
+
+import "react-day-picker/style.css";
 import {
     Form,
     FormControl,
@@ -53,18 +55,17 @@ const { toast } = useToast();
 
 const form = useForm<z.infer<typeof StaffSchema>>({
     resolver: zodResolver(StaffSchema),
-    defaultValues: item ? { ...item, department: item.department } : {
+    defaultValues: item ? item : {
     status: false,
     },
 });
 
 const onInvalid = (errors: any) => {
     toast({
-    variant: "warning",
-    title: "Uh oh! Something went wrong.",
-    description: "There was an issue submitting your form please try later"
+        variant: "warning",
+        title: "Data validation failed!", 
+        description: "Please make sure all the fields marked with * are filled correctly."
     });
-    console.error(errors);
 };
 
 const onSubmit = async (data: z.infer<typeof StaffSchema>) => {
@@ -89,8 +90,6 @@ const onSubmit = async (data: z.infer<typeof StaffSchema>) => {
 
         // Redirect to the list page after submission
         router.push("/staff");
-        router.refresh();
-        setIsLoading(false);
     } catch (error: any) {
     toast({
         variant: "destructive",
@@ -301,7 +300,6 @@ return (
                     </FormItem>
                 )}
             />
-            
 
             <FormField
                 control={form.control}
@@ -322,11 +320,12 @@ return (
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
+                                hideNavigation={true}
+                                captionLayout="dropdown"
                                 mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
                                 disabled={ (date) => date > new Date() || date < new Date("1970-01-01") }
-                                initialFocus
                             />
                             </PopoverContent>
                         </Popover>
@@ -359,13 +358,14 @@ return (
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
+                            hideNavigation={true}
+                            captionLayout="dropdown"
                             mode="single"
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
                             date > new Date() || date < new Date("1970-01-01")
                             }
-                            initialFocus
                         />
                         </PopoverContent>
                     </Popover>

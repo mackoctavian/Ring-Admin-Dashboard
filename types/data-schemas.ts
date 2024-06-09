@@ -52,6 +52,11 @@ export enum SectionType{
     SEAT = "SEAT",
 }
 
+export enum CampaignAudience{
+    ALL = "ALL",
+    STAFF = "STAFF",
+    CUSTOMERS = "CUSTOMERS",
+}
 export enum SubscriptionStatus {
     PAST = 'PAST_DUE',
     DUE = 'DUE',
@@ -220,15 +225,37 @@ export const BranchSchema = z.object({
     }, z.date().optional()),
 })
 
-
-
-
 export const DepartmentSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     shortName: z.string(),
     branch: BranchSchema.omit({business: true}),
     status: z.boolean(),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+});
+
+export const CampaignSchema = z.object({
+    $id: z.string().optional(),
+    title: z.string().min(1, {message: "Enter campaign title"}),
+    message: z.string().min(10).max(160),
+    audience: z.nativeEnum(CampaignAudience, {message: "Select your campaign target audience"}),
+    scheduleDate: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date({message: "Select a date to broadcast your message"})),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
@@ -281,7 +308,7 @@ export const StaffSchema = z.object({
     .refine(
         (file) => !file || file.type === "" || ACCEPTED_IMAGE_TYPES.includes(file.type),
         "Only .jpg .jpeg and .png formats are supported"
-    ),
+    ).nullable(),
     status: z.boolean(),
     department: z.array(DepartmentSchema.omit({branch: true})).min(1, { message: "Select at least one department" }),
     branch: z.array(BranchSchema.omit({business: true})).min(1, { message: "Select at least one branch" }),
@@ -776,9 +803,14 @@ export const ExpenseSchema = z.object({
     staff: StaffSchema.nullable().optional(),
     department: DepartmentSchema.nullable().optional(),
     vendor: SupplierSchema.nullable().optional(),
-    expenseDate: z.date().optional(),
-    dueDate: z.date().optional(),
+    dueDate: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date()),
     document: z.string().optional(),
+    branch: BranchSchema.omit({business: true}).nullable().optional(),
     description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     status: z.enum([ExpenseStatus.PAID, ExpenseStatus.PARTIAL, ExpenseStatus.UNPAID], {
         required_error: "Expense status is required",

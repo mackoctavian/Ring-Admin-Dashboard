@@ -116,7 +116,7 @@ export const mainMenu = [
     },
     {
       icon: "/icons/icons/campaigns.svg",
-      route: "/#",
+      route: "/campaigns",
       label: "Campaigns",
     },
     
