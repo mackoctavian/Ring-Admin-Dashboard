@@ -167,6 +167,19 @@ declare type Discount = {
   status: boolean;
 };
 
+declare type NewDiscount = {
+  $id?: string;
+  type: DiscountType;
+  discountCode?: string;
+  value: number;
+  maximumValue?: number;
+  branches: Branch[];
+  applyAfterTax: boolean;
+  status: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+};
+
 declare type DiscountDto = {
   name: string;
   code?: string;
@@ -220,6 +233,31 @@ declare type PaymentTypeDto = {
 }
 /* End Payment Types */
 
+/* Modifiers */
+declare type Modifier = {
+  $id?: string;
+  name: string;
+  type: ModifierType;
+  allowMultiple: boolean;
+  businessId: string;
+  modifierItems: ModifierItem[];
+  branches: Branch[];
+  status: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+};
+
+declare type ModifierItem = {
+  $id?: string;
+  title: string;
+  image: string;
+  price: number;
+  status: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+};
+
+/* End modifiers */
 
 /* Product */
 declare type Product = {

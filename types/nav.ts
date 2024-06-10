@@ -156,7 +156,7 @@ export const mainMenu = [
     
     {
       icon: "/icons/icons/settings.svg",
-      route: "/#",
+      route: "/settings/profile",
       label: "System Settings",
     },
     

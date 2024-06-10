@@ -46,16 +46,16 @@ export function UserNav() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => router.push("/profile") }>
+            <DropdownMenuItem onClick={() => router.push("/settings/profile") }>
               Profile
               <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/business") }>
+            <DropdownMenuItem onClick={() => router.push("/settings/business") }>
               Business settings
               <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              System Settings
+            <DropdownMenuItem onClick={() => signOut({ redirectUrl: '/settings/account' })}>
+              Account Settings
               <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuGroup>

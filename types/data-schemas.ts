@@ -13,6 +13,11 @@ export enum CategoryType{
     PRODUCT = "PRODUCT",
 }
 
+export enum ModifierType{
+    LIST = "LIST",
+    TEXT = "TEXT",
+}
+
 export enum DiscountType{
     PERCENTAGE = "PERCENTAGE",
     AMOUNT = "AMOUNT",
