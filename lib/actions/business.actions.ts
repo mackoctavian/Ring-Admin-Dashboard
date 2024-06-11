@@ -12,6 +12,7 @@ import { Gender, SubscriptionStatus } from "@/types/data-schemas";
 import { addDays } from 'date-fns';
 import { createDefaultBranch } from "@/lib/actions/branch.actions"
 import { createDefaultDepartment } from "@/lib/actions/department.actions" 
+import { metadata } from "@/app/layout";
 
 const { 
   APPWRITE_DATABASE: DATABASE_ID, 
@@ -161,7 +162,6 @@ export const registerBusiness = async (item: Business) => {
     const { database } = await createAdminClient();
 
     const user = await currentUser();
-    const { sessionClaims } = auth();
     if (!user) { throw Error("Current user could not be loaded") }
 
     const newBusinessOwner = await database.createDocument(
@@ -197,6 +197,7 @@ export const registerBusiness = async (item: Business) => {
 
       initTrial(newBusiness.$id, parseStringify(newBusinessOwner));
 
+      //Create organization on Clerk
       await clerkClient.users.updateUser(user.id, {
         publicMetadata: {
           onboardingComplete: true,
@@ -204,6 +205,20 @@ export const registerBusiness = async (item: Business) => {
         },
       })
 
+      const organization = await clerkClient.organizations.createOrganization({ 
+        name: item.name, 
+        createdBy: user.id,
+        privateMetadata: {
+          businessId: newBusiness.$id,
+        },
+        publicMetadata: {
+          businessId: newBusiness.$id,
+        },
+       })
+
+      const organizationLogo = { file: formData.get('file') as File, uploaderUserId: user.id, };
+      clerkClient.organizations.updateOrganizationLogo( organization.id, organizationLogo );
+    
     return parseStringify(newBusinessOwner);
   } catch (error: any) {
     let errorMessage = 'Something went wrong with your request, please try again later.';

@@ -4,6 +4,7 @@ import BreadCrumb from "@/components/layout/breadcrumb";
 import { Business } from "@/types";
 import BusinessForm from "@/components/forms/BusinessForm";
 import { getCurrentBusiness } from '@/lib/actions/business.actions';
+import { notFound } from "next/navigation";
 
 const breadcrumbItems = [{ title: "Business", link: "/business-settings" }, { title: "Edit business details", link: "" }];
 
@@ -13,7 +14,8 @@ const BusinessSettingsPage = async () => {
   try {
       item = await getCurrentBusiness();
   } catch (error) {
-      throw new Error("Error loading business data" + error);
+      console.error("Error loading business data", error)
+      notFound()
   }
     
   return (

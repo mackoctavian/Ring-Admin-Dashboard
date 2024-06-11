@@ -4,7 +4,7 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 
 type SubmitButtonProps = {
     label: string;
-    loading: React.ReactNode;
+    loading: boolean;
 };
   
 export const SubmitButton = ({ label, loading }: SubmitButtonProps) => {

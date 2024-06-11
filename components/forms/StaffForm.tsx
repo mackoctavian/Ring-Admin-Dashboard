@@ -118,7 +118,6 @@ return (
                     <FormControl>
                         <Input
                         placeholder="Enter employee's name"
-                        className="input-class"
                         {...field}
                         />
                     </FormControl>
@@ -137,7 +136,6 @@ return (
                         <Input
                         type="email"
                         placeholder="Enter employee's email address"
-                        className="input-class"
                         {...field}
                         />
                     </FormControl>
@@ -156,7 +154,6 @@ return (
                         <Input
                         type="tel"
                         placeholder="Enter employee's phone number"
-                        className="input-class"
                         {...field}
                         />
                     </FormControl>
@@ -175,7 +172,6 @@ return (
                         <Input
                         type='file'
                         placeholder="Select employee's profile picture"
-                        className="input-class"
                         {...field}
                         />
                     </FormControl>
@@ -193,7 +189,6 @@ return (
                     <FormControl>
                         <Input
                         placeholder="Enter employee's staff id"
-                        className="input-class"
                         {...field}
                         />
                     </FormControl>
@@ -211,7 +206,6 @@ return (
                     <FormControl>
                         <Input
                         placeholder="Enter employee's job title"
-                        className="input-class"
                         {...field}
                         />
                     </FormControl>
@@ -257,7 +251,6 @@ return (
                     <FormControl>
                         <Input
                         placeholder="Enter employee home address"
-                        className="input-class"
                         {...field}
                         />
                     </FormControl>
@@ -409,7 +402,6 @@ return (
                     <FormControl>
                         <Input
                         placeholder="Enter contact name"
-                        className="input-class"
                         {...field}
                         />
                     </FormControl>
@@ -428,7 +420,6 @@ return (
                         <Input
                         type="tel"
                         placeholder="Enter phone number"
-                        className="input-class"
                         {...field}
                         />
                     </FormControl>
@@ -446,7 +437,6 @@ return (
                     <FormControl>
                         <Input
                         placeholder="Enter relationship"
-                        className="input-class"
                         {...field}
                         />
                     </FormControl>

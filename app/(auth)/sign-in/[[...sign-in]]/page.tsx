@@ -2,6 +2,8 @@ import { SignIn } from "@clerk/nextjs";
 import Image from 'next/image'
 import Link from 'next/link'
 import { siteConfig } from "@/config/site"
+import LoadingPage from "@/app/loading";
+import { Suspense } from "react";
 
 const SignInPage = () => {
   return (
@@ -18,7 +20,9 @@ const SignInPage = () => {
             <h1 className="text-26 font-ibm-plex-serif font-bold text-black-1">{siteConfig.name}</h1>
           </Link>
         </header>
-      <SignIn />
+        <Suspense fallback={<LoadingPage />}>
+          <SignIn />
+        </Suspense>
       </section>
     </section>
   )

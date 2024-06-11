@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { ClerkLoaded, ClerkLoading } from '@clerk/nextjs'
+import LoadingWidget from "@/components/layout/loading";
 
 export default function RootLayout({
   children,
@@ -19,7 +21,12 @@ export default function RootLayout({
             />
           </div>
         </div>
-        {children}
+        <ClerkLoading>
+          <LoadingWidget />
+        </ClerkLoading>
+        <ClerkLoaded>
+          {children}
+        </ClerkLoaded>
       </main>
   );
 }

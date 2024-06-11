@@ -18,7 +18,7 @@ const {
 
 export const getLoggedInUser = async () => {
   const { userId } = auth();
-  if (!userId) { throw Error("User not authorized to perform this action") }
+  if (!userId) throw new Error('Unauthorized access: User does not have privileges.')
   
   try {
     const { database } = await createAdminClient();

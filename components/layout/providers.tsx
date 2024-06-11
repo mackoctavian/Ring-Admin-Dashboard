@@ -1,8 +1,10 @@
-"use client";
+
 import React from "react";
 import ThemeProvider from "./ThemeToggle/theme-provider";
-import { ClerkProvider } from '@clerk/nextjs'
-import { SessionProvider } from '@/context/SessionContext';
+import { ClerkProvider} from "@clerk/nextjs";
+
+//TODO: Use the session context later
+//import { SessionProvider } from '@/context/SessionContext';
 
 export default function Providers({
   children,
@@ -10,14 +12,13 @@ export default function Providers({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <ClerkProvider>
+    <ClerkProvider>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <SessionProvider>
+          {/* <SessionProvider> */}
             {children}
-          </SessionProvider>
+          {/* </SessionProvider> */}
         </ThemeProvider>
       </ClerkProvider>
-    </>
+
   );
 }

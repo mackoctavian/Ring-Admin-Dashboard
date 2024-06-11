@@ -85,7 +85,7 @@ declare type Business = {
   size: string;
   branches: Branch[];
   registrationNumber?: string;
-  logo?: string;
+  logo?: File;
   email: string;
   phoneNumber: string;
   address?: string;
@@ -173,6 +173,9 @@ declare type NewDiscount = {
   discountCode?: string;
   value: number;
   maximumValue?: number;
+  minimumSpend?: number;
+  startDate?: Date;
+  endDate?: Date;
   branches: Branch[];
   applyAfterTax: boolean;
   status: boolean;

@@ -31,6 +31,7 @@ const DiscountPage = async ({ params }: { params: { id: string } }) => {
                 <Separator />
 
                 <DiscountForm item={item} />
+                
             </div>
         </>
     );

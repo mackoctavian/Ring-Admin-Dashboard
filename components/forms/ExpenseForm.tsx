@@ -145,7 +145,6 @@ import BranchSelector from "../layout/branch-selector";
                             <FormControl>
                                 <Input
                                 placeholder="Enter expense title"
-                                className="input-class"
                                 {...field}
                                 />
                             </FormControl>
@@ -176,7 +175,6 @@ import BranchSelector from "../layout/branch-selector";
                                     <Input
                                         type="number"
                                         placeholder="Amount"
-                                        className="input-class"
                                     {...field}
                                     />
                                 </FormControl>
@@ -248,7 +246,7 @@ import BranchSelector from "../layout/branch-selector";
                                 <FormMessage />
                             </FormItem>
                             )}
-                    />
+                        />
 
                     <FormField
                         control={form.control}
@@ -309,7 +307,6 @@ import BranchSelector from "../layout/branch-selector";
                                     <Input
                                         type="number"
                                         placeholder="Enter total tax amount"
-                                        className="input-class"
                                         {...field}
                                     />
                                 </FormControl>
@@ -329,7 +326,6 @@ import BranchSelector from "../layout/branch-selector";
                                     <Input
                                         type="file"
                                         placeholder="Upload document related to this expense"
-                                        className="input-class"
                                         {...field}
                                     />
                                 </FormControl>
