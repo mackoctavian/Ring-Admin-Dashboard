@@ -2,6 +2,8 @@ import { SignUp } from "@clerk/nextjs";
 import Image from 'next/image'
 import Link from 'next/link'
 import { siteConfig } from "@/config/site"
+import { Suspense } from "react";
+import LoadingWidget from "@/components/layout/loading";
 
 const SignUpPage = async () => {
   return (
@@ -18,7 +20,9 @@ const SignUpPage = async () => {
             <h1 className="text-26 font-ibm-plex-serif font-bold text-black-1">{siteConfig.name}</h1>
           </Link>
         </header>
+        <Suspense fallback={<LoadingWidget />}>
           <SignUp />
+        </Suspense>
       </section>
     </section>
   )

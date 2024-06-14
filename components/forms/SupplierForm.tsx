@@ -45,6 +45,7 @@ const SupplierForm = ({ item }: { item?: Supplier | null }) => {
             title: "Data validation failed!", 
             description: "Please make sure all the fields marked with * are filled correctly."
         });
+        console.log(errors)
     }
 
     const onSubmit = async (data: z.infer<typeof SupplierSchema>) => {
@@ -66,11 +67,6 @@ const SupplierForm = ({ item }: { item?: Supplier | null }) => {
                     description: "Supplier created succesfully"
                 });
             }
-            
-            // Redirect to the list page after submission
-            router.push("/suppliers");
-            router.refresh();
-            setIsLoading(false);
         } catch (error: any) {
             toast({
                 variant: "destructive",
@@ -99,7 +95,6 @@ return (
                         <FormControl>
                             <Input
                             placeholder="Enter business name"
-                            className="input-class"
                             {...field}
                             />
                         </FormControl>
@@ -117,7 +112,6 @@ return (
                         <FormControl>
                             <Input
                             placeholder="Enter contact person's full name"
-                            className="input-class"
                             {...field}
                             />
                         </FormControl>
@@ -135,7 +129,6 @@ return (
                             <Input
                             type="tel"
                             placeholder="Enter supplier's phone number"
-                            className="input-class"
                             {...field}
                             />
                         </FormControl>
@@ -154,7 +147,6 @@ return (
                             <Input
                             type="email"
                             placeholder="Enter supplier's email address"
-                            className="input-class"
                             {...field}
                             />
                         </FormControl>
@@ -186,7 +178,6 @@ return (
                             <FormControl>
                                 <Input
                                 placeholder="Enter supplier's address"
-                                className="input-class"
                                 {...field}
                                 />
                             </FormControl>

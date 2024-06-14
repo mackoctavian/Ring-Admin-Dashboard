@@ -1,17 +1,17 @@
 import BreadCrumb from "@/components/layout/breadcrumb";
-import { columns } from "@/components/layout/tables/units-table/columns";
-import { UnitsTable } from "@/components/layout/tables/units-table/units-table";
+import { columns } from "@/components/layout/tables/modifiers-table/columns";
+import { ModifiersTable } from "@/components/layout/tables/modifiers-table/modifiers-table";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { ProductUnit } from "@/types";
+import { Modifier } from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
-import { getItems } from "@/lib/actions/product-unit.actions";
+import { getItems } from "@/lib/actions/modifier.actions";
 
-const breadcrumbItems = [{ title: "Units", link: "/units" }];
+const breadcrumbItems = [{ title: "Modifiers", link: "/modifiers" }];
 
 type ParamsProps = {
   searchParams: {
@@ -26,7 +26,7 @@ export default async function Page({ searchParams }: ParamsProps) {
   const offset = (page - 1) * pageLimit;
 
 
-  const data : ProductUnit[] = await getItems(q, null, pageLimit, offset);
+  const data : Modifier[] = await getItems(q, null, pageLimit, offset);
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
 
@@ -37,15 +37,15 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Product units`} total={total.toString()} description="Manage product units" />
+            <Heading title={`Modifiers`} total={total.toString()} description="Manage modifiers" />
 
-            <Link href={"/units/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add Unit
+            <Link href={"/modifiers/new"} className={cn(buttonVariants({ variant: "default" }))} >
+                <Plus className="mr-2 h-4 w-4" /> Add Modifier
             </Link>
         </div>
         <Separator />
 
-        <UnitsTable
+        <ModifiersTable
           searchKey="name"
           pageNo={page}
           columns={columns}

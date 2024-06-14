@@ -105,7 +105,6 @@ return (
                         <FormControl>
                             <Input
                             placeholder="Department full name (eg. Pizza department)"
-                            className="input-class"
                             {...field}
                             />
                         </FormControl>
@@ -123,7 +122,6 @@ return (
                             <FormControl>
                                 <Input
                                 placeholder="Department short name (eg. HR)"
-                                className="input-class"
                                 {...field}
                                 />
                             </FormControl>

@@ -1,11 +1,12 @@
 "use client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Inventory, InventoryVariant } from "@/types";
+import { Modifier } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
-import { InventoryItemNameColumn } from "./inventory-fullname-cell";
+import { StateColumn } from "../state-column";
+import { MoneyColumn } from "../money-colum";
 
-export const columns: ColumnDef<InventoryVariant>[] = [
+export const columns: ColumnDef<Modifier>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -22,36 +23,21 @@ export const columns: ColumnDef<InventoryVariant>[] = [
         aria-label="Select row"
       />
     ),
-    enableSorting: true,
+    enableSorting: false,
     enableHiding: false,
-  },
-
-  {
-    id: "fullName",
-    accessorKey: "inventory.title",
-    header: "TITLE",
-    cell: ({ row }) => <InventoryItemNameColumn data={row.original} />,
-  },
-  {
-    id: "packaging",
-    accessorKey: "inventory.packaging",
-    header: "PACKAGING",
   },
   {
     accessorKey: "name",
-    header: "VARIANT",
+    header: "NAME",
   },
   {
-    accessorKey: "quantity",
-    header: "QUANTITY",
+    accessorKey: "type",
+    header: "TYPE",
   },
   {
-    accessorKey: "volume",
-    header: "VOLUME",
-  },
-  {
-    accessorKey: "status",
     header: "STATUS",
+    id: "status",
+    cell: ({ row }) => <StateColumn state={row.original.status} />,
   },
   {
     id: "actions",

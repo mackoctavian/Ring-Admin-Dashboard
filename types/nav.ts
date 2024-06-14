@@ -56,11 +56,11 @@ export const mainMenu = [
       route: "/suppliers",
       label: "Suppliers",
     },
-    {
-      icon: "/icons/icons/units.svg",
-      route: "/units",
-      label: "Units",
-    },
+    // {
+    //   icon: "/icons/icons/units.svg",
+    //   route: "/units",
+    //   label: "Units",
+    // },
     // {
     //   icon: "/icons/icons/stock-transfer.svg",
     //   route: "/stock-transfer",
@@ -77,6 +77,11 @@ export const mainMenu = [
       icon: "/icons/icons/categories.svg",
       route: "/categories",
       label: "Categories",
+    },
+    {
+      icon: "/icons/icons/units.svg",
+      route: "/modifiers",
+      label: "Modifiers",
     },
     {
       icon: "/icons/icons/products.svg",

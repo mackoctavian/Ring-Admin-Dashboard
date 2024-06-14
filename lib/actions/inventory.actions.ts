@@ -1,84 +1,120 @@
 'use server';
 
+const env = process.env.NODE_ENV
+import * as Sentry from "@sentry/nextjs"
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
 import { Inventory } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 import { InventoryStatus } from "@/types/data-schemas";
+import { auth } from "@clerk/nextjs/server";
+import { getBusinessId } from "./business.actions";
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation'
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     INVENTORY_COLLECTION: INVENTORY_COLLECTION_ID,
     INVENTORY_VARIANTS_COLLECTION: INVENTORY_VARIANTS_COLLECTION_ID
-  } = process.env;
+} = process.env;
 
+const checkRequirements = async (collectionId: string | undefined) => {
+  if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
 
-  export const createItem = async (items: Inventory) => {
-    try {
-      if (!DATABASE_ID || !INVENTORY_COLLECTION_ID) {
-        throw Error('Database ID or Collection ID is missing');
-      }
+  const { database } = await createAdminClient();
+  if (!database) throw new Error('Database client could not be initiated');
 
-      const { database } = await createAdminClient();
-  
-      const newItem = await database.createDocument(
-        DATABASE_ID!,
-        INVENTORY_COLLECTION_ID!,
-        ID.unique(),
-        {
-          ...items,
-        }
-      )
-  
-      return parseStringify(newItem);
-    } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-      throw Error(error);
-    }
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error('You must be signed in to use this feature');
   }
+  
+  const businessId = await getBusinessId();
+  if( !businessId ) throw new Error('Business ID could not be initiated');
+
+
+  console.log("Business ID", businessId)
+
+  return { database, userId, businessId };
+};
+
+
+export const createItem = async (data: Inventory) => {
+  const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
+
+  try {
+    await database.createDocument(
+      DATABASE_ID!,
+      INVENTORY_COLLECTION_ID!,
+      ID.unique(),
+      {
+        ...data,
+        businessId: businessId
+      }
+    )
+  } catch (error: any) {
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+    if (error instanceof AppwriteException) {
+      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+    }
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
+    throw Error(errorMessage);
+  }
+
+  revalidatePath('/inventory')
+  redirect('/inventory')
+};
 
   export const list = async ( ) => {
     try {
-      if (!DATABASE_ID || !INVENTORY_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      const { database } = await createAdminClient();
+        const { database } = await checkRequirements(INVENTORY_COLLECTION_ID);
 
       const items = await database.listDocuments(
-        DATABASE_ID,
-        INVENTORY_COLLECTION_ID,
+        DATABASE_ID!,
+        INVENTORY_COLLECTION_ID!,
         [Query.orderAsc("name")]
       );
 
       return parseStringify(items.documents);
 
-    }catch (error: any){
-      console.error(error);
+    } catch (error: any) {
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
+      throw Error(errorMessage);
     }
   };
 
   export const listVariants = async ( ) => {
+    const { database } = await checkRequirements(INVENTORY_COLLECTION_ID);
+
     try {
-      if (!DATABASE_ID || !INVENTORY_VARIANTS_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      const { database } = await createAdminClient();
-
       const items = await database.listDocuments(
-        DATABASE_ID,
-        INVENTORY_VARIANTS_COLLECTION_ID,
+        DATABASE_ID!,
+        INVENTORY_VARIANTS_COLLECTION_ID!,
       );
 
       return parseStringify(items.documents);
 
-    }catch (error: any){
-      console.error(error);
+    } catch (error: any) {
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
+      throw Error(errorMessage);
     }
   };
 
@@ -88,14 +124,12 @@ const {
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    if (!DATABASE_ID || !INVENTORY_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
+    const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
   
-    try {
-      const { database } = await createAdminClient();
-  
+    console.log("Business ID", businessId)
+    try {  
       const queries = [];
+      //queries.push(Query.equal("businessId", businessId));
       queries.push(Query.orderAsc("name"));
 
       if ( limit ) {
@@ -112,8 +146,8 @@ const {
       }
   
       const items = await database.listDocuments(
-        DATABASE_ID,
-        INVENTORY_COLLECTION_ID,
+        DATABASE_ID!,
+        INVENTORY_COLLECTION_ID!,
         queries
       );
   
@@ -127,9 +161,13 @@ const {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
-  }
+  };
 
 
   export const getVariantItems = async (
@@ -138,14 +176,11 @@ const {
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    if (!DATABASE_ID || !INVENTORY_VARIANTS_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
+    const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
   
-    try {
-      const { database } = await createAdminClient();
-  
+    try {  
       const queries = [];
+      //queries.push(Query.equal("businessId", businessId));
 
       if ( limit ) {
         queries.push(Query.limit(limit));
@@ -161,8 +196,8 @@ const {
       }
   
       const items = await database.listDocuments(
-        DATABASE_ID,
-        INVENTORY_VARIANTS_COLLECTION_ID,
+        DATABASE_ID!,
+        INVENTORY_VARIANTS_COLLECTION_ID!,
         queries
       );
   
@@ -176,21 +211,19 @@ const {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
-  }
+  };
 
   export const getItem = async (id: string) => {
+    const { database } = await checkRequirements(INVENTORY_COLLECTION_ID);
+
     try {
-      if (!DATABASE_ID || !INVENTORY_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      if (!id) {
-        throw new Error('Document ID is missing');
-      }
-
-      const { database } = await createAdminClient();
+      if (!id) throw new Error('Document ID is missing');
   
       const item = await database.listDocuments(
         DATABASE_ID!,
@@ -204,22 +237,19 @@ const {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
-  }
+  };
 
   export const deleteItem = async ({ $id }: Inventory) => {
+    const { database } = await checkRequirements(INVENTORY_COLLECTION_ID);
     try {
-      if (!DATABASE_ID || !INVENTORY_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      if ( !$id ){
-        throw new Error('Item id is missing');
-      }
+      if ( !$id ) throw new Error('Item id is missing');
       
-      const { database } = await createAdminClient();
-  
       const item = await database.deleteDocument(
         DATABASE_ID!,
         INVENTORY_COLLECTION_ID!,
@@ -231,30 +261,40 @@ const {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
-  }
+
+    revalidatePath('/inventory')
+    redirect('/inventory')
+  };
 
   export const updateItem = async (id: string, data: Inventory) => {  
-    try {
-      if (!DATABASE_ID || !INVENTORY_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
+    const { database } = await checkRequirements(INVENTORY_COLLECTION_ID);
 
-      const { database } = await createAdminClient();
-  
-      const item = await database.updateDocument(
+    console.log("Data", data)
+    try {
+      await database.updateDocument(
         DATABASE_ID!,
         INVENTORY_COLLECTION_ID!,
         id,
         data);
   
-      return parseStringify(item);
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
-  }
+
+    revalidatePath('/inventory')
+    redirect('/inventory')
+  };

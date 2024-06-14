@@ -26,13 +26,7 @@ import TimeSelector from "../layout/time-selector";
 import DaysSelector from "../layout/days-selector";
 import { BranchSchema } from "@/types/data-schemas";
 
-// import { useSession } from '@/context/SessionContext';
-// import LoadingWidget from "../layout/loading";
-
 const BranchForm = ({ item }: { item?: Branch | null }) => {
-    // const { sessionData, sessionLoading } = useSession();
-    // if (sessionLoading) { return <><LoadingWidget /></> }
-    // const branchData = sessionData.branch;
 
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
@@ -72,23 +66,18 @@ const BranchForm = ({ item }: { item?: Branch | null }) => {
                     description: "Branch has been created succesfully!"
                 });
             }
-            
-            // Redirect to the list page after submission
-            router.push("/branches");
-            router.refresh();
-            setIsLoading(false);
         } catch (error: any) {
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.", 
                 description: error.message || "There was an issue submitting your form, please try later"
             });
-            } finally {
-            //delay loading
-            setTimeout(() => {
-                setIsLoading(false);
-                }, 1000); 
-            }
+        } finally {
+        //delay loading
+        setTimeout(() => {
+            setIsLoading(false);
+            }, 1000);
+        }
     };
 
 return (
@@ -105,7 +94,6 @@ return (
                         <FormControl>
                             <Input
                             placeholder="Branch full name (eg. Nairobi Branch)"
-                            className="input-class"
                             {...field}
                             />
                         </FormControl>
@@ -124,7 +112,6 @@ return (
                             <Input
                             type="email"
                             placeholder="Enter branch email address"
-                            className="input-class"
                             {...field}
                             />
                         </FormControl>
@@ -143,7 +130,6 @@ return (
                             <Input
                             type="tel"
                             placeholder="Enter branch phone number"
-                            className="input-class"
                             {...field}
                             />
                         </FormControl>
@@ -161,7 +147,6 @@ return (
                             <FormControl>
                                 <Input
                                 placeholder="Enter branch location"
-                                className="input-class"
                                 {...field}
                                 />
                             </FormControl>
@@ -179,7 +164,6 @@ return (
                                 <FormControl>
                                     <Input
                                     placeholder="Enter branch location"
-                                    className="input-class"
                                     {...field}
                                     />
                                 </FormControl>
@@ -199,7 +183,6 @@ return (
                                     type="number"
                                     min="1"
                                     placeholder="Enter number of staff"
-                                    className="input-class"
                                     {...field}
                                     />
                                 </FormControl>

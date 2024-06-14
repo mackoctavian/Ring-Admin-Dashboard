@@ -118,7 +118,6 @@ return (
                         <FormControl>
                             <Input
                             placeholder="Section name ( eg. Room 01 / Table 01 )"
-                            className="input-class"
                             {...field}
                             />
                         </FormControl>

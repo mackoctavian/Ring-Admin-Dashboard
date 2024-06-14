@@ -1,63 +1,85 @@
 const env = process.env.NODE_ENV
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentBusiness } from "@/lib/actions/business.actions";
-import { getCurrentBranch } from "@/lib/actions/branch.actions";
+import { clerkClient } from "@clerk/nextjs/server";
 
-let debug = false
+let debugState = false
 
-if(env == "development"){ debug = true }
+//TODO: Enable debug option
+//process.env.NODE_ENV === "development";
+//if(env == "development"){ debugState = true }
+
+
 const isOnboardingRoute = createRouteMatcher(["/business-registration"]);
 const isPublicRoute = createRouteMatcher(["/sign-in", "/sign-up", "/sign-up/verify-email-address", "/business-registration"]);
 
-export default clerkMiddleware((auth, req) => {
+
+export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims, redirectToSignIn } = auth();
+  let { orgId } = auth();
 
-  //if onboarding is complete take them home
-  if (userId && sessionClaims?.metadata?.onboardingComplete && isOnboardingRoute(req) ) {
-    const takeMeHome = new URL("/", req.url);
-    return NextResponse.redirect(takeMeHome);
+  // Extract the first key from the membership object if orgId is not already set
+  if (!orgId && sessionClaims?.membership) {
+    orgId = Object.keys(sessionClaims.membership)[0];
   }
 
-  // For users visiting /onboarding, don't try to redirect
-  if (userId && isOnboardingRoute(req)) {
-    return NextResponse.next();
-  }
+//  console.log("USER ID", userId);
+//  console.log("ORG ID", orgId);
+//  console.log("SESSIONDATA", sessionClaims);
 
-  // If the user isn't signed in and the route is private, redirect to sign-in
   if (!userId && !isPublicRoute(req)) {
+    // If the user isn't signed in and the route is private, redirect to sign-in
     return redirectToSignIn({ returnBackUrl: req.url });
   }
 
-  // Catch users who do not have `onboardingComplete: true` in their publicMetadata
-  // Redirect them to the /onboading route to complete onboarding
-  if (userId && !sessionClaims?.metadata?.onboardingComplete) {
-    const onboardingUrl = new URL("/business-registration", req.url);
-    return NextResponse.redirect(onboardingUrl);
-  }
+  if (userId) {
+    // If userId but no orgId, redirect to business registration unless already on business-registration route
+    if (!orgId) {
+      if (!req.url.includes('/business-registration')) {
+        return NextResponse.redirect(new URL("/business-registration", req.url));
+      }
+      return NextResponse.next();
+    }
 
-  // If the user is logged in and the route is protected, let them view.
-  if (userId && !isPublicRoute(req)) {
-    return handleProtectedRoute();
+    // Handle the scenario where onboarding is complete but no organization id
+    if (!orgId && sessionClaims?.metadata?.onboardingComplete) {
+      return redirectToSignIn();
+    }
+
+    // User is registered and is already tied to an organization and onboarding is complete
+    if (orgId && sessionClaims?.metadata?.onboardingComplete) {
+      if (isOnboardingRoute(req)) {
+        // If onboarding is complete and user is on the onboarding route, redirect to home
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+      // Allow the request to proceed for signed-in users on other routes
+      return NextResponse.next();
+    }
+
+    // If userId and orgId but onboarding not complete
+    if (orgId && !sessionClaims?.metadata?.onboardingComplete) {
+      if (!req.url.includes('/business-registration')) {
+        // Update onboardingComplete to true using Clerk client
+        await clerkClient.users.updateUser(userId, {
+          publicMetadata: {
+            onboardingComplete: true,
+          },
+          privateMetadata: {
+            onboardingComplete: true,
+          },
+        });
+        // Redirect to home page
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+      // Allow the request to proceed if already on the business-registration route
+      return NextResponse.next();
+    }
   }
 
   // For public routes and other cases, continue to the next middleware
   return NextResponse.next();
-}, { debug: process.env.NODE_ENV === "development" });
+}, { debug: debugState });
 
-async function handleProtectedRoute() {
-  const res = NextResponse.next();
-
-  // Fetch business and branch data asynchronously
-   //const businessData = await getCurrentBusiness();
-  // const branchData = await getCurrentBranch();
-
-  // // Set headers with fetched data
-  // res.headers.set('x-business-data', JSON.stringify(businessData));
-  // res.headers.set('x-branch-data', JSON.stringify(branchData));
-
-  return res;
-}
 
 export const config = {
   matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],

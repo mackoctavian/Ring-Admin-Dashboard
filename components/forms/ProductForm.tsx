@@ -36,6 +36,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { SubmitButton } from '../ui/submit-button';
+import UnitSelector from '../layout/unit-selector';
 
 const ProductForm = ({ item }: { item?: Product | null }) => {
   const router = useRouter();
@@ -151,7 +153,6 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                 <FormControl>
                   <Input
                     placeholder="Product name"
-                    className="input-class"
                     {...field}
                   />
                 </FormControl>
@@ -168,7 +169,6 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                 <FormControl>
                   <Input
                     placeholder="Product sku ( Auto-generated )"
-                    className="input-class"
                     {...field}
                   />
                 </FormControl>
@@ -201,7 +201,6 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                   <Input
                     type="file"
                     placeholder="Product image"
-                    className="input-class"
                     {...field}
                   />
                 </FormControl>
@@ -232,14 +231,13 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
           {variants.map((variant, variantIndex) => (
             <div key={variant.$id} className="space-y-2 border p-4 rounded-md">
               <div className="flex justify-between items-center">
-                <h2 className='text-base font-bold'>Variant</h2>
                 {variants.length > 1 && (
                   <Button type="button" onClick={() => handleRemoveVariant(variantIndex)} variant="link">
                     <Cross2Icon className="mr-2 h-4 w-4" /> Remove variant
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <FormField
                   control={control}
                   name={`variants[${variantIndex}].name`}
@@ -295,74 +293,18 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
 
                 <FormField
                   control={control}
-                  name={`variants[${variantIndex}].minPrice`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Variant minimum price</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='number'
-                          step='0.01'
-                          placeholder="Variant minimum price"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={control}
-                  name={`variants[${variantIndex}].discount`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Variant discount</FormLabel>
-                      <FormControl>
-                        <DiscountSelector
-                          value={selectedDiscount}
-                          onChange={(disc) => { setSelectedDiscount(disc); field.onChange(disc); }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={control}
-                  name={`variants[${variantIndex}].allowDiscount`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Allow discount at counter *</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(value === "true")} defaultValue={String(field.value)}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Enable discounts at counter" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="true">Discounts ALLOWED at counter</SelectItem>
-                          <SelectItem value="false">Discounts NOT allowed at counter</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={control}
                   name={`variants[${variantIndex}].status`}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
                       <FormControl>
-                        <Switch
-                          id={`variant-status-${variant.$id}`}
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <div className="mt-2">
+                          <Switch
+                            id={`variant-status-${variant.$id}`}
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </div>
                       </FormControl>
                     </FormItem>
                   )}
@@ -372,11 +314,8 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                 {variant.inventoryItems.map((inv, inventoryIndex) => (
                   <div key={inv.$id} className="space-y-2 p-2 rounded-md">
                     <Separator className="my-7" />
-                    <div className="flex justify-between items-center">
-                      <h5 className="text-md font-medium">Inventory Item</h5>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <FormField
                         control={control}
                         name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].item`}
@@ -407,7 +346,20 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                           </FormItem>
                         )}
                       />
-                      <Button type="button" className='mt-7' onClick={() => handleRemoveInventory(variantIndex, inv.$id)} variant='destructive'>
+
+                      <FormField
+                        control={control}
+                        name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].unit`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Unit</FormLabel>
+                            <FormControl>
+                              <UnitSelector {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="button" className='mt-8' onClick={() => handleRemoveInventory(variantIndex, inv.$id)} variant='destructive'>
                         Remove item
                       </Button>
                     </div>
@@ -426,15 +378,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
         <div className="flex h-5 items-center space-x-4">
           <CancelButton />
           <Separator orientation="vertical" />
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-              </>
-            ) : (
-              item ? "Update product" : "Save product"
-            )}
-          </Button>
+          <SubmitButton label={item ? "Update product" : "Save product"} loading={isLoading} />
         </div>
       </form>
     </Form>

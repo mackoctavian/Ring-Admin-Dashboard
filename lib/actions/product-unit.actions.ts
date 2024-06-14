@@ -1,184 +1,86 @@
 'use server';
 
-import { ID, Query, AppwriteException } from "node-appwrite";
-import { createAdminClient } from "../appwrite";
+const env = process.env.NODE_ENV
+import * as Sentry from "@sentry/nextjs"
+import { Query, AppwriteException } from "node-appwrite";
+import { createSaaSAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { ProductUnitDto, ProductUnit } from "@/types";
+import { ProductUnit } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
+import { auth } from "@clerk/nextjs/server";
+import { getBusinessId } from "./business.actions";
 
 const {
-    APPWRITE_DATABASE: DATABASE_ID,
-    PRODUCT_UNITS_COLLECTION: PRODUCT_UNITS_ID
-  } = process.env;
+    //SAAS Settings
+  APPWRITE_SAAS_DATABASE: SAAS_DATABASE_ID,
+  PRODUCT_UNITS_COLLECTION: UNITS_COLLECTION_ID,
+} = process.env;
 
-  export const createItem = async (item: ProductUnitDto) => {
-    try {
-      if (!DATABASE_ID || !PRODUCT_UNITS_ID) {
-        throw Error('Database ID or Collection ID is missing');
-      }
+const checkRequirements = async (collectionId: string | undefined) => {
+  if (!SAAS_DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
 
-      const { database } = await createAdminClient();
-  
-      const newItem = await database.createDocument(
-        DATABASE_ID!,
-        PRODUCT_UNITS_ID!,
-        ID.unique(),
-        {
-          ...item,
-        }
-      )
-  
-      return parseStringify(newItem);
-    } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-      throw Error(errorMessage);
-    }
+  const { database } = await createSaaSAdminClient();
+  if (!database) throw new Error('Database client could not be initiated');
+
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error('You must be signed in to use this feature');
   }
+  
+  const businessId = await getBusinessId();
+  if( !businessId ) throw new Error('Business ID could not be initiated');
+
+  return { database, userId, businessId };
+};
+
 
   export const list = async ( ) => {
+    const { database } = await checkRequirements(UNITS_COLLECTION_ID);
+
     try {
-      if (!DATABASE_ID || !PRODUCT_UNITS_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      const { database } = await createAdminClient();
-
       const items = await database.listDocuments(
-        DATABASE_ID,
-        PRODUCT_UNITS_ID,
+        SAAS_DATABASE_ID!,
+        UNITS_COLLECTION_ID!,
         [Query.orderAsc("name")]
       );
 
       return parseStringify(items.documents);
 
     }catch (error: any){
-      console.error(error);
-    }
-  };
-
-  export const getItems = async (
-    q?: string | null,
-    status?: boolean | null,
-    limit?: number | null, 
-    offset?: number | 1,
-  ) => {
-    if (!DATABASE_ID || !PRODUCT_UNITS_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-  
-    try {
-      const { database } = await createAdminClient();
-  
-      const queries = [];
-      queries.push(Query.orderAsc("name"));
-
-      if ( limit ) {
-        queries.push(Query.limit(limit));
-        queries.push(Query.offset(offset!));
-      }
-  
-      if (q) {
-        queries.push(Query.search('name', q));
-      }
-
-      if (status) {
-        queries.push(Query.equal('status', status));
-      }
-  
-      const items = await database.listDocuments(
-        DATABASE_ID,
-        PRODUCT_UNITS_ID,
-        queries
-      );
-  
-      if (items.documents.length === 0) {
-        return [];
-      }
-  
-      return parseStringify(items.documents);
-    } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
-  }
+};
 
   export const getItem = async (id: string) => {
+    const { database } = await checkRequirements(UNITS_COLLECTION_ID);
+
     try{
-      if (!DATABASE_ID || !PRODUCT_UNITS_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      if (!id) {
-        throw new Error('Document ID is missing');
-      }
-
-      const { database } = await createAdminClient();
+      if (!id) throw new Error('Document ID is missing')
 
       const item = await database.listDocuments(
-        DATABASE_ID!,
-        PRODUCT_UNITS_ID!,
+        SAAS_DATABASE_ID!,
+        UNITS_COLLECTION_ID!,
         [Query.equal('$id', id)]
       )
 
       return parseStringify(item.documents[0]);
-    } catch (error: any) {
+    }catch (error: any){
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
-      throw Error(error.message);
-    }
-  }
 
-  export const deleteItem = async ({ $id }: ProductUnit) => {
-    try {
-      if (!DATABASE_ID || !PRODUCT_UNITS_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
+      if(env == "development"){ console.error(error); }
 
-      const { database } = await createAdminClient();
-  
-      const item = await database.deleteDocument(
-        DATABASE_ID!,
-        PRODUCT_UNITS_ID!,
-        $id);
-  
-      return parseStringify(item);
-    } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-      throw Error(errorMessage);
-    }
-  }
-
-  export const updateItem = async (id: string, data: ProductUnitDto) => {
-    try {
-      if (!DATABASE_ID || !PRODUCT_UNITS_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      const { database } = await createAdminClient();
-  
-      const item = await database.updateDocument(
-        DATABASE_ID!,
-        PRODUCT_UNITS_ID!,
-        id,
-        data);
-  
-      return parseStringify(item);
-    } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
   }

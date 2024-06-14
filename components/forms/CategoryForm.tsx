@@ -33,6 +33,7 @@ import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 import ParentCategorySelector from "@/components/layout/parent-category-selector";
 import DiscountSelector from "../layout/discount-selector";
+import { SubmitButton } from "../ui/submit-button";
 
  const CategoryForm = ({ item }: { item?: Category | null }) => {
     const router = useRouter();
@@ -126,7 +127,6 @@ import DiscountSelector from "../layout/discount-selector";
                             <FormControl>
                                 <Input
                                 placeholder="Product category name (eg. Hair Products)"
-                                className="input-class"
                                 {...field}
                                 />
                             </FormControl>
@@ -182,7 +182,6 @@ import DiscountSelector from "../layout/discount-selector";
                                 <FormControl>
                                     <Input
                                     placeholder="Category identifier"
-                                    className="input-class"
                                     disabled
                                     {...field}
                                     />
@@ -232,18 +231,8 @@ import DiscountSelector from "../layout/discount-selector";
         
                 <div className="flex h-5 items-center space-x-4">
                     <CancelButton />
-                
                     <Separator orientation="vertical" />
-
-                    <Button type="submit">
-                        {isLoading ? (
-                            <>
-                                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-                            </>
-                            ) : (
-                            item ? "Update category" : "Save category"
-                        )}
-                    </Button> 
+                    <SubmitButton label={item ? "Update category" : "Save category"} loading={isLoading} />
                 </div>
             </form>
         </Form>

@@ -4,7 +4,6 @@ import SubscriptionNotice from '@/components/subscription-notice';
 import CookieConsent from "@/components/layout/cookie-consent";
 import { Toaster } from "@/components/ui/toaster"
 import {
-    ClerkProvider,
     SignedIn,
     SignedOut,
     RedirectToSignIn,
@@ -18,7 +17,7 @@ export default function RootLayout({ children, }: Readonly<{ children: React.Rea
                 <SubscriptionNotice />
                 <div className="flex overflow-x-hidden">
                     <Sidebar />
-                    <main className="w-full pt-16">{children}</main>
+                        <main className="w-full pt-16 bg-gray-100 dark:bg-darkgray-25">{children}</main>
                     <Toaster />
                     <CookieConsent demo={false} />
                 </div>

@@ -3,8 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ReloadIcon } from "@radix-ui/react-icons";
-import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -24,9 +22,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import PackagingSelector from '../layout/packaging-selector';
+import { SubmitButton } from '../ui/submit-button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+
 
 const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit[] }) => {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const isEditMode = Boolean(item);
@@ -37,11 +45,9 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
       ? item
       : {
           variants: [{ 
-            quantity: 0, 
-            startingQuantity: 0, 
-            lowQuantity: 1, 
             status: InventoryStatus.OUT_OF_STOCK, 
-            fullName: '', // Add fullName to the default values
+            fullName: '',
+            unit: ''
           }],
         },
   });
@@ -52,19 +58,18 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
   });
 
   const onInvalid = (errors: any) => {
+    console.log("Validation errors", errors);
     toast({
       variant: "warning",
       title: "Uh oh! Something went wrong.",
       description: "There was an issue submitting your form please try later",
     });
-    console.error("Creating inventory failed: ", JSON.stringify(errors));
   };
 
   const onSubmit = async (data: z.infer<typeof InventorySchema>) => {
     setIsLoading(true);
 
     try {
-      // Update the status, full name, and quantity of each variant based on the form values
       data.variants = data.variants.map(variant => {
         if (variant.startingQuantity === 0) {
           variant.status = InventoryStatus.OUT_OF_STOCK;
@@ -74,9 +79,8 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
           variant.status = InventoryStatus.IN_STOCK;
         }
 
-        variant.fullName = capitalizeFirstLetter(`${data.title} ${data.unit?.name ?? ''} ${variant.name ?? ''}`.trim());
-        variant.quantity = variant.startingQuantity; // Set quantity to startingQuantity
-
+        variant.fullName = capitalizeFirstLetter(`${data.title} ${data.packaging ?? ''} ${variant.name ?? ''}`.trim());
+        variant.quantity = variant.startingQuantity;
         return variant;
       });
 
@@ -95,10 +99,6 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
           description: "Inventory item created successfully!",
         });
       }
-
-      router.push("/inventory");
-      router.refresh();
-      setIsLoading(false);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -112,14 +112,13 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
     }
   };
 
-  // Update variant status, full name, and quantity whenever startingQuantity, lowQuantity, or unit changes
   useEffect(() => {
     fields.forEach((field, index) => {
       const startingQuantity = form.watch(`variants.${index}.startingQuantity`);
       const lowQuantity = form.watch(`variants.${index}.lowQuantity`);
       const variantName = form.watch(`variants.${index}.name`);
       const itemName = form.watch(`title`);
-      const itemUnit = form.watch(`unit`);
+      const itemPackage = form.watch(`packaging`);
 
       let status;
       if (startingQuantity === 0) {
@@ -130,169 +129,210 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
         status = InventoryStatus.IN_STOCK;
       }
 
-      const fullName = `${itemName} ${itemUnit?.name ?? ''} ${variantName ?? ''}`.trim();
+      const fullName = `${itemName} ${itemPackage} ${variantName ?? ''}`.trim();
 
       if (status !== field.status || fullName !== field.fullName || startingQuantity !== field.quantity) {
         update(index, { ...field, status, fullName, quantity: startingQuantity });
       }
     });
-  }, [fields, form]);
+  }, [fields, form, form.watch]);
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Inventory item name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Inventory item name" className="input-class" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Unit</FormLabel>
-                  <UnitSelector
-                    value={field.value}
-                    units={units}
-                    onChange={(unit) => field.onChange(unit)}
+
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Inventory details</CardTitle>
+            <CardDescription>
+              Details used to identify your inventory item
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Inventory item name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Inventory item name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="packaging"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Packaging</FormLabel>
+                    <PackagingSelector {...field} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Inventory variants</CardTitle>
+            <CardDescription>
+              Variants of the inventory item
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {fields.map((field, index) => (
+                <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 pt-4 bo-rder  roun-ded-md">
+                  <FormField
+                    control={form.control}
+                    name={`variants.${index}.name`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Variant name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Variant name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
 
-        {fields.map((field, index) => (
-          <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 border p-4 rounded-md">
-            <FormField
-              control={form.control}
-              name={`variants.${index}.name`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Variant name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Variant name" className="input-class" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name={`variants.${index}.startingQuantity`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Starting quantity</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="0" placeholder="Starting quantity" className="input-class" {...field} readOnly={isEditMode} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <FormField
+                    control={form.control}
+                    name={`variants.${index}.image`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Image</FormLabel>
+                        <FormControl>
+                          <Input type='file' placeholder="Variant image" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <FormField
-              control={form.control}
-              name={`variants.${index}.lowQuantity`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Low quantity level</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="1" placeholder="Low quantity level" className="input-class" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <FormField
+                    control={form.control}
+                    name={`variants.${index}.startingQuantity`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Starting quantity</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="0" placeholder="Starting quantity" {...field} readOnly={isEditMode} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <FormField
-              control={form.control}
-              name={`variants.${index}.itemsPerUnit`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Items per unit</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="1" placeholder="Items per unit" className="input-class" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <FormField
+                    control={form.control}
+                    name={`variants.${index}.lowQuantity`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Low quantity level</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="1" placeholder="Low quantity level" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <FormField
-              control={form.control}
-              name={`variants.${index}.image`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Image</FormLabel>
-                  <FormControl>
-                    <Input type='file' placeholder="Variant image" className="input-class" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <FormField
+                    control={form.control}
+                    name={`variants.${index}.itemsPerPackage`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Items in package</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="1" placeholder="Items in package" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <FormField
-              control={form.control}
-              name={`variants.${index}.barcodeId`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bar code id</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Variant barcode" className="input-class" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <FormField
+                    control={form.control}
+                    name={`variants.${index}.volume`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unit volume</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" placeholder="Unit volume" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <Button
-              variant="destructive"
-              type="button"
-              onClick={() => fields.length > 1 && remove(index)}
-              disabled={fields.length === 1}>
-              Remove Item
+                  <FormField
+                    control={form.control}
+                    name={`variants.${index}.unit`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unit per item</FormLabel>
+                        <FormControl>
+                          <UnitSelector {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`variants.${index}.barcodeId`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bar code id</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Variant barcode" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button
+                    variant="destructive"
+                    type="button"
+                    className='mt-8'
+                    onClick={() => fields.length > 1 && remove(index)}
+                    disabled={fields.length === 1}>
+                    Remove variant
+                  </Button>
+                </div>
+              ))}
+          </CardContent>
+          <CardFooter className="border-t px-6 py-4">
+            <Button type="button" onClick={() => append({
+                status: InventoryStatus.OUT_OF_STOCK,
+                startingQuantity: 0,
+                fullName: '',
+                unit: ''
+              })}>
+                Add Variant
             </Button>
-          </div>
-        ))}
+          </CardFooter>
+        </Card>
 
-        <Button type="button" onClick={() => append({ 
-          name: '',
-          quantity: 0, 
-          startingQuantity: 0, 
-          lowQuantity: 1, 
-          status: InventoryStatus.OUT_OF_STOCK, 
-          fullName: '', 
-        })}>
-          Add Item
-        </Button>
+
+
+
 
         <div className="flex h-5 items-center space-x-4">
           <CancelButton />
-
           <Separator orientation="vertical" />
-
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-              </>
-            ) : (
-              item ? "Update inventory" : "Save inventory"
-            )}
-          </Button>
+          <SubmitButton label={item ? "Update inventory" : "Save inventory"} loading={isLoading} />
         </div>
       </form>
     </Form>

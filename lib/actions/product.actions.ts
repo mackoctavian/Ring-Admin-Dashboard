@@ -1,44 +1,67 @@
 'use server';
 
+const env = process.env.NODE_ENV
+import * as Sentry from "@sentry/nextjs"
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
 import { Product } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
+import { auth } from "@clerk/nextjs/server";
+import { getBusinessId } from "./business.actions";
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation'
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     PRODUCTS_COLLECTION: PRODUCTS_COLLECTION_ID,
-  } = process.env;
+} = process.env;
 
-  export const createItem = async (item: Product) => {
-    try {
-      if (!DATABASE_ID || !PRODUCTS_COLLECTION_ID) {
-        throw Error('Database ID or Collection ID is missing');
-      }
+const checkRequirements = async (collectionId: string | undefined) => {
+  if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
 
-      console.error(JSON.stringify(item) );
+  const { database } = await createAdminClient();
+  if (!database) throw new Error('Database client could not be initiated');
 
-      const { database } = await createAdminClient();
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error('You must be signed in to use this feature');
+  }
   
-      const newItem = await database.createDocument(
+  const businessId = await getBusinessId();
+  if( !businessId ) throw new Error('Business ID could not be initiated');
+
+  return { database, userId, businessId };
+};
+  
+export const createItem = async (item: Product) => {
+    const { database, businessId } = await checkRequirements(PRODUCTS_COLLECTION_ID);
+
+    try {
+      await database.createDocument(
         DATABASE_ID!,
         PRODUCTS_COLLECTION_ID!,
         ID.unique(),
         {
           ...item,
+          businessId: businessId
         }
       )
-  
-      return parseStringify(newItem);
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
-      throw Error(JSON.stringify(error));
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
+      throw Error(errorMessage);
     }
-  }
+
+  revalidatePath('/products')
+  redirect('/products')
+};
 
   export const list = async ( ) => {
     try {

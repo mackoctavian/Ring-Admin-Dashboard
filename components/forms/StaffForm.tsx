@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
-import { ReloadIcon } from "@radix-ui/react-icons"
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -28,6 +27,7 @@ import "react-day-picker/style.css";
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -46,17 +46,19 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { SubmitButton } from '../ui/submit-button';
 
 
 const StaffForm = ({ item }: { item?: Staff | null }) => {
-const router = useRouter();
 const [isLoading, setIsLoading] = useState(false);
 const { toast } = useToast();
 
 const form = useForm<z.infer<typeof StaffSchema>>({
     resolver: zodResolver(StaffSchema),
     defaultValues: item ? item : {
-    status: false,
+    status: true,
+    posAccess: false,
+    dashboardAccess: false,
     },
 });
 
@@ -89,7 +91,7 @@ const onSubmit = async (data: z.infer<typeof StaffSchema>) => {
         }
 
         // Redirect to the list page after submission
-        router.push("/staff");
+        //router.push("/staff");
     } catch (error: any) {
     toast({
         variant: "destructive",
@@ -366,6 +368,46 @@ return (
                     </FormItem>
                 )}
             />
+            
+            <FormField
+                control={form.control}
+                name="dashboardAccess"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Allow dashboard access *</FormLabel>
+                        <FormControl>
+                            <div className="mt-2">
+                                <Switch
+                                    id="dashboardAccess"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </div>
+                        </FormControl>
+                        <FormDescription>Invitation will be sent to email address</FormDescription>
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="posAccess"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Allow POS application access *</FormLabel>
+                        <FormControl>
+                            <div className="mt-2">
+                                <Switch
+                                    id="posAccess"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </div>
+                        </FormControl>
+                        <FormDescription>User will be prompted to set credentials on first use</FormDescription>
+                    </FormItem>
+                )}
+            />
 
             <FormField
                 control={form.control}
@@ -467,18 +509,8 @@ return (
 
         <div className="flex h-5 items-center space-x-4">
             <CancelButton />
-        
             <Separator orientation="vertical" />
-
-            <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                    <>
-                        <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-                    </>
-                    ) : (
-                    item ? "Update employee details" : "Save employee details"
-                )}
-            </Button> 
+            <SubmitButton label={item ? "Update employee details" : "Save employee details"} loading={isLoading} />
         </div>
     </form>
 </Form>

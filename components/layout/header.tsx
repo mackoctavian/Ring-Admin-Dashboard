@@ -5,6 +5,7 @@ import { UserNav } from "./user-nav";
 import Link from "next/link";
 import { siteConfig } from "@/config/site"
 import Image from 'next/image'
+import { BranchNav } from "./branch-nav";
 
 export default function Header() {
   return (
@@ -27,6 +28,7 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2">
+          <BranchNav />
           <UserNav />
           <ThemeToggle />
         </div>

@@ -1,25 +1,22 @@
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import BreadCrumb from "@/components/layout/breadcrumb";
-import { getItem } from '@/lib/actions/product-unit.actions';
-import { ProductUnit } from "@/types";
-import ProductUnitForm from "@/components/forms/ProductUnitForm";
+import { getItem } from '@/lib/actions/modifier.actions';
+import { Modifier } from "@/types";
+import ModifierForm from "@/components/forms/ModifierForm";
+import { notFound } from 'next/navigation'
 
-const breadcrumbItems = [{ title: "Units", link: "/units" }, { title: "New", link: "" } ];
+const breadcrumbItems = [{ title: "Modifiers", link: "/modifiers" }, { title: "New", link: "" } ];
 
-const ProductUnitPage = async ({ params }: { params: { unitid: string } }) => {
-    let item: ProductUnit | null = null;
+const ModifierPage = async ({ params }: { params: { id: string } }) => {
+    let item: Modifier | null = null;
     let newItem = true;
 
-    if (params.unitid && params.unitid !== "new") {
-        try {
-            item = await getItem(params.unitid);
-            newItem = false;
-        } catch (error) {
-            throw new Error("Error loading data" + error);
-        }
+    if (params.id && params.id !== "new") {
+        newItem = false;
+        item = await getItem(params.id)
+        if( !item ) notFound()
     }
-
     
     return (
         <>
@@ -27,14 +24,14 @@ const ProductUnitPage = async ({ params }: { params: { unitid: string } }) => {
                 <BreadCrumb items={breadcrumbItems} />
 
                 <div className="flex items-start justify-between">
-                    <Heading title={!newItem ? `Edit product unit` : `Create product unit`} description={!newItem ? "Edit your product unit" : "Add new product unit to your business"} />
+                    <Heading title={!newItem ? `Edit modifier` : `Create modifier`} description={!newItem ? "Edit your modifier" : "Add new modifier to your business"} />
                 </div>
                 <Separator />
 
-                <ProductUnitForm item={item} />
+                <ModifierForm modifier={item} />
             </div>
         </>
     );
 };
 
-export default ProductUnitPage;
+export default ModifierPage;

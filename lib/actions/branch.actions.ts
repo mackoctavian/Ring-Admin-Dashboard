@@ -8,20 +8,40 @@ import { parseStringify } from "../utils";
 import { Branch, Business, User } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 import { getBusinessId, getCurrentBusiness } from "./business.actions";
+import { auth } from "@clerk/nextjs/server";
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation'
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     BRANCHES_COLLECTION: BRANCH_COLLECTION_ID,
+    OPEN_DAYS_COLLECTION: BRANCH_DAYS_COLLECTION_ID,
   } = process.env;
 
+const checkRequirements = async (collectionId: string | undefined) => {
+  if (!DATABASE_ID || !collectionId) throw new Error('Check requirements failed: Database ID or Collection ID is missing');
+
+  const { database } = await createAdminClient();
+  if (!database) throw new Error('Database client could not be initiated');
+
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error('You must be signed in to use this feature');
+  }
+
+  const businessId = await getBusinessId();
+  if( !businessId ) throw new Error('Business ID could not be initiated');
+
+  return { database, userId, businessId };
+};
 
 export const createDefaultBranch = async (business: Business) => {
   try {
-    if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
-      throw Error('Database ID or Collection ID is missing');
-    }
+    //Create connection directly, redirect loop when using checkRequirements
+    if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {  throw Error('Default branch failed: Database ID or Collection ID is missing') }
 
     const { database } = await createAdminClient();
+    if (!database) throw new Error('Database client could not be initiated');
 
     const newItem = await database.createDocument(
       DATABASE_ID!,
@@ -38,7 +58,6 @@ export const createDefaultBranch = async (business: Business) => {
           { label: "Wednesday", value: "Wednesday" },
           { label: "Thursday", value: "Thursday" },
           { label: "Friday", value: "Friday" },
-          { label: "Saturday", value: "Saturday" },
         ],
         staffCount: 1,
         city: business.city,
@@ -67,11 +86,7 @@ export const createDefaultBranch = async (business: Business) => {
 
 export const getCurrentBranch = async () => {
   try {
-    if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
+    const { database } = await checkRequirements(BRANCH_COLLECTION_ID);
 
     const item = await database.listDocuments(
       DATABASE_ID!,
@@ -99,26 +114,29 @@ export const getCurrentBranch = async () => {
 
 export const createItem = async (item: Branch) => {
   try {
-      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
-        throw Error('Database ID or Collection ID is missing');
-      }
-
-      const { database } = await createAdminClient();
+      const { database } = await checkRequirements(BRANCH_COLLECTION_ID);
       const currentBusiness: Business = await getCurrentBusiness();
 
-      const newItem = await database.createDocument(
-        DATABASE_ID,
-        BRANCH_COLLECTION_ID,
-        ID.unique(),
+      const genBranchId = ID.unique();
+
+      const daysOpen = item.daysOpen.map(option => ({
+        ...option,
+        branchId: genBranchId,
+      }));
+
+      item.daysOpen = daysOpen
+
+      //create branch
+      const createdBranch = await database.createDocument(
+        DATABASE_ID!,
+        BRANCH_COLLECTION_ID!,
+        genBranchId,
         {
           ...item,
           business: currentBusiness,
           businessId: currentBusiness.$id,
         }
       );
-
-      return parseStringify(newItem);
-  
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
@@ -130,22 +148,19 @@ export const createItem = async (item: Branch) => {
       Sentry.captureException(error);
       throw Error(errorMessage);
     }
-  }
+
+    revalidatePath('/branches')
+    redirect('/branches')
+}
 
   export const list = async ( ) => {
     try {
-      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) throw new Error('Database ID or Collection ID is missing');
-
-      const { database } = await createAdminClient();
-      if( !database ) throw new Error('Database could not be initiated');
-
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
+      const { database, businessId } = await checkRequirements(BRANCH_COLLECTION_ID);
 
       const items = await database.listDocuments(
-        DATABASE_ID,
-        BRANCH_COLLECTION_ID,
-        [Query.equal('businessId', businessId!)]
+        DATABASE_ID!,
+        BRANCH_COLLECTION_ID!,
+        [Query.equal('businessId', [businessId])]
       );
 
       return parseStringify(items.documents);
@@ -169,44 +184,37 @@ export const createItem = async (item: Branch) => {
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-  
+    const { database, businessId } = await checkRequirements(BRANCH_COLLECTION_ID);
     try {
-      const { database } = await createAdminClient();
-      const queries = [];
+       const queries = [];
 
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
+       queries.push(Query.equal('businessId', [businessId]));
+       queries.push(Query.orderDesc("$createdAt"));
 
-      queries.push(Query.equal('businessId', businessId));
-      queries.push(Query.orderDesc("$createdAt"));
-
-      if ( limit ) {
-        queries.push(Query.limit(limit));
-        queries.push(Query.offset(offset!));
-      }
+       if ( limit ) {
+         queries.push(Query.limit(limit));
+         queries.push(Query.offset(offset!));
+       }
   
-      if (q) {
-        queries.push(Query.search('name', q));
-      }
+       if (q) {
+         queries.push(Query.search('name', q));
+       }
   
-      if (status) {
-        queries.push(Query.equal('status', status));
-      }
+       if (status) {
+         queries.push(Query.equal('status', status));
+       }
   
-      const items = await database.listDocuments(
-        DATABASE_ID,
-        BRANCH_COLLECTION_ID,
-        queries
-      );
+       const items = await database.listDocuments(
+         DATABASE_ID!,
+         BRANCH_COLLECTION_ID!,
+         queries
+       );
   
-      if (items.documents.length === 0) {
-        return [];
-      }
+       if (items.documents.length === 0) {
+         return [];
+       }
   
-      return parseStringify(items.documents);
+       return parseStringify(items.documents);
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
@@ -221,16 +229,10 @@ export const createItem = async (item: Branch) => {
   }
 
   export const getItem = async (id: string) => {
+    const { database } = await checkRequirements(BRANCH_COLLECTION_ID);
+
     try {
-      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      if (!id) {
-        throw new Error('Document ID is missing');
-      }
-
-      const { database } = await createAdminClient();
+      if (!id) throw new Error('Document ID is missing')
   
       const item = await database.listDocuments(
         DATABASE_ID!,
@@ -244,18 +246,19 @@ export const createItem = async (item: Branch) => {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
   }
 
   export const deleteItem = async ({ $id }: Branch) => {
-    try {
-      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
+    const { database } = await checkRequirements(BRANCH_COLLECTION_ID)
 
-      const { database } = await createAdminClient();
-  
+    try {
+
       const item = await database.deleteDocument(
         DATABASE_ID!,
         BRANCH_COLLECTION_ID!,
@@ -267,30 +270,43 @@ export const createItem = async (item: Branch) => {
       if (error instanceof AppwriteException) {
         errorMessage = getStatusMessage(error.code as HttpStatusCode);
       }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
       throw Error(errorMessage);
     }
   }
 
-  export const updateItem = async (id: string, data: Branch) => {  
-    try {
-      if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
+export const updateItem = async (id: string, data: Branch) => {
+  const { database } = await checkRequirements(BRANCH_COLLECTION_ID);
 
-      const { database } = await createAdminClient();
-  
-      const item = await database.updateDocument(
-        DATABASE_ID!,
-        BRANCH_COLLECTION_ID!,
-        id,
-        data);
-  
-      return parseStringify(item);
-    } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-      throw Error(errorMessage);
+  const daysOpen = data.daysOpen.map(option => ({
+    ...option,
+    branchId:id,
+  }));
+
+  data.daysOpen = daysOpen;
+
+  try {
+    await database.updateDocument(
+      DATABASE_ID!,
+      BRANCH_COLLECTION_ID!,
+      id,
+      data);
+
+  } catch (error: any) {
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+    if (error instanceof AppwriteException) {
+      errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
+    throw Error(errorMessage);
   }
+
+  revalidatePath('/branches')
+  redirect('/branches')
+}

@@ -67,7 +67,7 @@ declare type User = {
   image?: string;
   city?: string;
   country?: string;
-  gender?: string;
+  gender?: Gender;
   dateOfBirth?: Date;
   points: number;
   status: boolean;
@@ -85,7 +85,7 @@ declare type Business = {
   size: string;
   branches: Branch[];
   registrationNumber?: string;
-  logo?: File;
+  logo?: FileList;
   email: string;
   phoneNumber: string;
   address?: string;
@@ -103,18 +103,21 @@ declare type Business = {
 declare type ProductUnit = {
   $id?: string;
   name: string;
-  shortName: string;
-  status: boolean;
+  abbreviation: string;
+  isConvertible: boolean;
+  unitConversions: ProductUnitConversion[];
   $createdAt?: Date;
   $updatedAt?: Date;
 };
 
-declare type ProductUnitDto = {
-  name: string;
-  shortName: string;
-  status: boolean;
+declare type ProductUnitConversion = {
+  $id?: string;
+  conversionFactor: number;
+  from: ProductUnit;
+  to: ProductUnit;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
-
 /* End Product Unit Data types */
 
 
@@ -243,7 +246,8 @@ declare type Modifier = {
   type: ModifierType;
   allowMultiple: boolean;
   businessId: string;
-  modifierItems: ModifierItem[];
+  image: string;
+  items: ModifierItem[];
   branches: Branch[];
   status: boolean;
   $createdAt?: Date;
@@ -252,10 +256,9 @@ declare type Modifier = {
 
 declare type ModifierItem = {
   $id?: string;
-  title: string;
-  image: string;
+  name: string;
   price: number;
-  status: boolean;
+  inventoryItem: InventoryVariant;
   $createdAt?: Date;
   $updatedAt?: Date;
 };
@@ -394,28 +397,11 @@ declare type Staff = {
   image?: string;
   businessId: string;
   status: boolean;
+  posAccess: boolean;
+  dashboardAccess: boolean;
   $createdAt?: Date;
   $updatedAt?: Date;
 }
-
-declare type StaffDto = {
-  name: string;
-  email: string;
-  phoneNumber: string;
-  code?:code;
-  gender: Gender;
-  dateOfBirth?: Date;
-  nationality?: string;
-  joiningDate: Date;
-  jobTitle: string;
-  emergencyNumber?: string;
-  address?: string;
-  notes?: string;
-  department?: Department;
-  image?: string;
-  status: boolean;
-}
-
 /* End Staff */
 
 
@@ -497,11 +483,12 @@ declare type InventoryVariant = {
   fullName: string,
   quantity: number,
   startingQuantity: number;
-  itemsPerUnit?: number,
+  itemsPerPackage?: number,
   lowQuantity: number,
   barcodeId?: string,
   image?: string,
-  inventory?: Inventory;
+  volume?: number,
+  inventory: Inventory;
   status: InventoryStatus,
   $createdAt?: Date;
   $updatedAt?: Date;
@@ -511,6 +498,7 @@ declare type Stock = {
   $id?: string;
   item: InvenvtoryVariant;
   quantity: number;
+  actualQuantity: number;
   staff?: Staff;
   department?: Department;
   supplier: Supplier;
