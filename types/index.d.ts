@@ -245,6 +245,7 @@ declare type Modifier = {
   name: string;
   type: ModifierType;
   allowMultiple: boolean;
+  optional: boolean;
   businessId: string;
   image: string;
   items: ModifierItem[];
@@ -409,7 +410,7 @@ declare type Staff = {
 /* Customer */
 
 declare type Customer = {
-  $id: string;
+  $id?: string;
   name: string;
   email?: string;
   phoneNumber?: string;
@@ -421,30 +422,11 @@ declare type Customer = {
   address?: string;
   notes?: string;
   allowNotifications: boolean;
-  status: boolean;
   points: number;
   totalSpend: number;
   totalVisits: number;
-  $createdAt: Date;
-  $updatedAt: Date;
-}
-
-declare type CustomerDto = {
-  name: string;
-  email?: string;
-  phoneNumber?: string;
-  gender: Gender;
-  dateOfBirth?: Date;
-  nationality?: string;
-  lastVisitDate: Date;
-  registrationBranch?: Branch;
-  address?: string;
-  notes?: string;
-  allowNotifications: boolean;
-  status: boolean;
-  points: number;
-  totalSpend: number;
-  totalVisits: number;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
 
 /* End Customer */
@@ -483,11 +465,14 @@ declare type InventoryVariant = {
   fullName: string,
   quantity: number,
   startingQuantity: number;
+  actualQuantity: number;
   itemsPerPackage?: number,
   lowQuantity: number,
   barcodeId?: string,
   image?: string,
   volume?: number,
+  startingValue: number;
+  value: number;
   inventory: Inventory;
   status: InventoryStatus,
   $createdAt?: Date;
@@ -557,6 +542,7 @@ declare type Section = {
   branchId: string;
   businessId: string;
   description: string;
+  noOfCustomers: number;
   status: boolean;
   $createdAt?: Date;
   $updatedAt?: Date;

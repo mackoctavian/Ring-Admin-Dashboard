@@ -7,23 +7,38 @@ import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
 import { Section, Business } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
-import { getBusinessId, getCurrentBusiness } from "./business.actions";
+import { auth } from "@clerk/nextjs/server";
+import { getBusinessId } from "./business.actions";
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation'
 
 const {
   APPWRITE_DATABASE: DATABASE_ID,
   SECTIONS_COLLECTION: SECTIONS_COLLECTION_ID
 } = process.env;
 
+const checkRequirements = async (collectionId: string | undefined) => {
+  if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
+
+  const { database } = await createAdminClient();
+  if (!database) throw new Error('Database client could not be initiated');
+
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error('You must be signed in to use this feature');
+  }
+
+  const businessId = await getBusinessId();
+  if( !businessId ) throw new Error('Business ID could not be initiated');
+
+  return { database, userId, businessId };
+};
+
 export const createItem = async (item: Section) => {
+  const { database, businessId } = await checkRequirements(SECTIONS_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
-      throw Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
-    const businessId = await getBusinessId();
-    const newItem = await database.createDocument(
+    await database.createDocument(
       DATABASE_ID!,
       SECTIONS_COLLECTION_ID!,
       ID.unique(),
@@ -33,8 +48,6 @@ export const createItem = async (item: Section) => {
         branchId: item.branch.$id,
       }
     )
-
-    return parseStringify(newItem);
   } catch (error: any) {
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
@@ -46,17 +59,15 @@ export const createItem = async (item: Section) => {
     Sentry.captureException(error);
     throw Error(errorMessage);
   }
+
+  revalidatePath('/sections')
+  redirect('/sections')
 }
 
 export const list = async ( ) => {
+  const { database, businessId } = await checkRequirements(SECTIONS_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) throw new Error('Database ID or Collection ID is missing')
-    const { database } = await createAdminClient();
-
-    const businessData = await getCurrentBusiness();
-    const businessId = businessData.$id;
-    if (!businessId) throw new Error('Could not find the current business');
-
     const items = await database.listDocuments(
       DATABASE_ID,
       SECTIONS_COLLECTION_ID,
@@ -64,7 +75,6 @@ export const list = async ( ) => {
     );
 
     return parseStringify(items.documents);
-
   }catch (error: any){
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
@@ -84,18 +94,10 @@ export const getItems = async (
   limit?: number | null, 
   offset?: number | 1,
 ) => {
-  if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
-    throw new Error('Database ID or Collection ID is missing');
-  }
+  const { database, businessId } = await checkRequirements(SECTIONS_COLLECTION_ID);
 
   try {
-    const { database } = await createAdminClient();
-
     const queries = [];
-
-    const businessId = await getBusinessId();
-    if (!businessId) throw new Error('Could not find the current business');
-
     queries.push(Query.equal('businessId', businessId));
     queries.push(Query.orderDesc("$createdAt"));
 
@@ -123,32 +125,31 @@ export const getItems = async (
     }
 
     return parseStringify(items.documents);
-  } catch (error: any) {
+  }catch (error: any){
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
     throw Error(errorMessage);
   }
-}
+};
 
 export const getItem = async (id: string) => {
+  if (!id) return null;
+  const { database, businessId } = await checkRequirements(SECTIONS_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
-    if (!id) {
-      throw new Error('Document ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
     const item = await database.listDocuments(
       DATABASE_ID!,
       SECTIONS_COLLECTION_ID!,
       [Query.equal('$id', id)]
     )
+
+    if ( item.total < 1 ) return null;
 
     return parseStringify(item.documents[0]);
   } catch (error: any) {
@@ -165,19 +166,14 @@ export const getItem = async (id: string) => {
 }
 
 export const deleteItem = async ({ $id }: Section) => {
+  if (!id) return null;
+  const { database, businessId } = await checkRequirements(SECTIONS_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
     const item = await database.deleteDocument(
       DATABASE_ID!,
       SECTIONS_COLLECTION_ID!,
       $id);
-
-    return parseStringify(item);
   } catch (error: any) {
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
@@ -189,23 +185,21 @@ export const deleteItem = async ({ $id }: Section) => {
     Sentry.captureException(error);
     throw Error(errorMessage);
   }
+
+  revalidatePath('/sections')
+  redirect('/sections')
 }
 
-export const updateItem = async (id: string, data: Section) => {  
+export const updateItem = async (id: string, data: Section) => {
+  if (!id || !data) return null;
+  const { database, businessId } = await checkRequirements(SECTIONS_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !SECTIONS_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
-    const item = await database.updateDocument(
+    await database.updateDocument(
       DATABASE_ID!,
       SECTIONS_COLLECTION_ID!,
       id,
       data);
-
-    return parseStringify(item);
   } catch (error: any) {
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
@@ -217,4 +211,6 @@ export const updateItem = async (id: string, data: Section) => {
     Sentry.captureException(error);
     throw Error(errorMessage);
   }
+  revalidatePath('/sections')
+  redirect('/sections')
 }

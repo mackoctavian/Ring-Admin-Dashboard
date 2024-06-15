@@ -232,7 +232,7 @@ export const DepartmentSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     shortName: z.string(),
-    branch: BranchSchema.omit({business: true}),
+    branch: BranchSchema.omit({business: true, daysOpen: true}),
     status: z.boolean(),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -316,7 +316,7 @@ export const StaffSchema = z.object({
     dashboardAccess: z.boolean(),
     status: z.boolean(),
     department: z.array(DepartmentSchema.omit({branch: true})).min(1, { message: "Select at least one department" }),
-    branch: z.array(BranchSchema.omit({business: true})).min(1, { message: "Select at least one branch" }),
+    branch: z.array(BranchSchema.omit({business: true, daysOpen: true})).min(1, { message: "Select at least one branch" }),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
@@ -346,7 +346,7 @@ export const SupplierSchema = z.object({
     name: z.string(),
     email: z.string().email("Invalid email address").optional(),
     contactPersonName: z.string(),
-    branch: z.array(BranchSchema.omit({business: true})).min(1, { message: "Select at least one branch" }),
+    branch: z.array(BranchSchema.omit({business: true, daysOpen: true})).min(1, { message: "Select at least one branch" }),
     phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
     address: z.string().optional().nullable(),
     description: z.string().optional().nullable(),
@@ -485,6 +485,12 @@ export const InventoryVariantSchema = z.object({
         }
         return val;
     }, z.number().nonnegative()),
+    startingValue: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
     lowQuantity: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
@@ -568,6 +574,13 @@ export const ModifierItemSchema = z.object({
         }
         return val;
     }, z.number()),
+    quantity: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().optional()),
+    unit: z.string().optional(),
     inventoryItem: InventoryVariantSchema.optional().nullable(),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -589,8 +602,8 @@ export const ModifierSchema = z.object({
     name: z.string(),
     type: z.nativeEnum(ModifierType),
     allowMultiple: z.boolean(),
+    optional: z.boolean(),
     image: z.string().optional(),
-    branches: z.array(BranchSchema.omit({business: true, daysOpen: true})).min(1, "At least one branch is required"),
     modifierItems: z.array(ModifierItemSchema).min(1, "At least one item is required"),
     status: z.boolean(),
     $createdAt: z.preprocess((val) => {
@@ -658,8 +671,8 @@ export const StockSchema = z.object({
 
 export const CustomerSchema = z.object({
     name: z.string(),
-    email: z.string().email("Invalid email address").trim(),
-    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
+    email: z.string().email("Invalid email address").trim().optional(),
+    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits.").optional(),
     code: z.preprocess((val) => val === null ? undefined : val, z.string().optional()),
     gender: z.enum([Gender.UNDISCLOSED, Gender.MALE, Gender.FEMALE]),
     dateOfBirth: z.preprocess((val) => {
@@ -670,11 +683,10 @@ export const CustomerSchema = z.object({
         return val;
     }, z.date().optional()),
     nationality: z.preprocess((val) => val === null ? "" : val, z.string().optional()),        
-    registrationBranch: BranchSchema.omit({business: true}),
+    registrationBranch: BranchSchema.omit({business: true, daysOpen: true}),
     address: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     allowNotifications: z.boolean(),
-    status: z.boolean(),
 });
 
 
@@ -885,7 +897,7 @@ export const ExpenseSchema = z.object({
         return val;
     }, z.date()),
     document: z.string().optional(),
-    branch: BranchSchema.omit({business: true}).nullable().optional(),
+    branch: BranchSchema.omit({business: true, daysOpen: true}).nullable().optional(),
     description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     status: z.enum([ExpenseStatus.PAID, ExpenseStatus.PARTIAL, ExpenseStatus.UNPAID], {
         required_error: "Expense status is required",
@@ -941,11 +953,17 @@ export const SectionSchema = z.object({
         required_error: "Section name is required",
         invalid_type_error: "Section name must be more than 2 characters long",
     }).min(2),
+    noOfCustomers: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseInt(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
     type: z.enum([SectionType.ROOM, SectionType.SEAT, SectionType.TABLE], {
         required_error: "Section type is required",
         invalid_type_error: "Select a valid section type",
     }),
-    branch: BranchSchema.omit({business: true}),
+    branch: BranchSchema.omit({business: true, daysOpen: true}),
     description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     status: z.boolean(),
     $createdAt: z.preprocess((val) => {

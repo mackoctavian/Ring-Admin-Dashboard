@@ -41,7 +41,7 @@ const InventorySelector: React.FC<Props> = ({ value, onChange }) => {
     <Select value={value ? value.$id : 'Select inventory item'} onValueChange={handleSelectChange}>
       <SelectTrigger>
         <SelectValue>
-          {value ? value.inventory?.title + " " + value.name : 'Select inventory item'}
+          {value ? value.fullName : 'Select inventory item'}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>

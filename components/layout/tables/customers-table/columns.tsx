@@ -4,6 +4,7 @@ import { Customer } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { StateColumn } from "../state-column";
+import { DateTimeColumn } from "../date-colum";
 
 export const columns: ColumnDef<Customer>[] = [
   {
@@ -38,13 +39,13 @@ export const columns: ColumnDef<Customer>[] = [
     header: "EMAIL",
   },
   {
-    accessorKey: "address",
-    header: "ADDRESS",
+    accessorKey: "registrationBranch.name",
+    header: "BRANCH",
   },
   {
-    header: "STATUS",
-    id: "status",
-    cell: ({ row }) => <StateColumn state={row.original.status} />,
+    header: "LAST VISIT",
+    id: "lastVisitDate",
+    cell: ({ row }) => <DateTimeColumn value={row.original.lastVisitDate} />,
   },
   {
     id: "actions",

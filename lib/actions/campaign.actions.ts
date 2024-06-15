@@ -7,27 +7,37 @@ import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
 import { Campaign } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
+import { auth } from "@clerk/nextjs/server";
 import { getBusinessId } from "./business.actions";
-
 import { revalidatePath } from 'next/cache';
-import { FormState, fromErrorToFormState, toFormState,} from '@/lib/utils/zod-form-state';
+import { redirect } from 'next/navigation'
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     CAMPAIGN_COLLECTION: CAMPAIGN_COLLECTION_ID,
 } = process.env;
 
+const checkRequirements = async (collectionId: string | undefined) => {
+  if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
+
+  const { database } = await createAdminClient();
+  if (!database) throw new Error('Database client could not be initiated');
+
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error('You must be signed in to use this feature');
+  }
+
+  const businessId = await getBusinessId();
+  if( !businessId ) throw new Error('Business ID could not be initiated');
+
+  return { database, userId, businessId };
+};
+
 export const createItem = async ( item: Campaign, formState: FormState ) => {
-  console.log("SUBMITTED DATA", item)
+  const { database, businessId } = await checkRequirements(CAMPAIGN_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !CAMPAIGN_COLLECTION_ID) {
-      throw Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-    const businessId = await getBusinessId();
-    if( !businessId ) throw new Error('Business ID could not be initiated');
-
     await database.createDocument(
       DATABASE_ID,
       CAMPAIGN_COLLECTION_ID,
@@ -43,19 +53,13 @@ export const createItem = async ( item: Campaign, formState: FormState ) => {
   }
 
   revalidatePath('/campaigns');
-  return toFormState('SUCCESS', 'Campaign created');
+  redirect('/campaigns')
 }
 
-  export const list = async ( ) => {
+export const list = async ( ) => {
+  const { database, businessId } = await checkRequirements(CAMPAIGN_COLLECTION_ID);
+
     try {
-      if (!DATABASE_ID || !CAMPAIGN_COLLECTION_ID) throw new Error('Database ID or Collection ID is missing');
-
-      const { database } = await createAdminClient();
-      if( !database ) throw new Error('Database could not be initiated');
-
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
-
       const items = await database.listDocuments(
         DATABASE_ID,
         CAMPAIGN_COLLECTION_ID,
@@ -75,25 +79,18 @@ export const createItem = async ( item: Campaign, formState: FormState ) => {
       Sentry.captureException(error);
       throw Error(errorMessage);
     }
-  };
+};
 
-  export const getItems = async (
+export const getItems = async (
     q?: string,
     status?: boolean | null,
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    if (!DATABASE_ID || !CAMPAIGN_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-  
+      const { database, businessId } = await checkRequirements(CAMPAIGN_COLLECTION_ID);
+
     try {
-      const { database } = await createAdminClient();
       const queries = [];
-
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
-
       queries.push(Query.equal('businessId', businessId));
       queries.push(Query.orderDesc("$createdAt"));
 
@@ -134,24 +131,18 @@ export const createItem = async ( item: Campaign, formState: FormState ) => {
     }
   }
 
-  export const getItem = async (id: string) => {
+export const getItem = async (id: string) => {
+  if (!id) return null;
+  const { database, businessId } = await checkRequirements(CAMPAIGN_COLLECTION_ID);
+
     try {
-      if (!DATABASE_ID || !CAMPAIGN_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      if (!id) {
-        throw new Error('Document ID is missing');
-      }
-
-      const { database } = await createAdminClient();
-  
       const item = await database.listDocuments(
         DATABASE_ID!,
         CAMPAIGN_COLLECTION_ID!,
         [Query.equal('$id', id)]
       )
-  
+
+      if ( item.total < 1 ) return null;
       return parseStringify(item.documents[0]);
     } catch (error: any) {
         let errorMessage = 'Something went wrong with your request, please try again later.';
@@ -166,20 +157,15 @@ export const createItem = async ( item: Campaign, formState: FormState ) => {
     }
   }
 
-  export const deleteItem = async ({ $id }: Campaign) => {
-    try {
-      if (!DATABASE_ID || !CAMPAIGN_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
+export const deleteItem = async ({ $id }: Campaign) => {
+  if (!id) return null;
+  const { database, businessId } = await checkRequirements(CAMPAIGN_COLLECTION_ID);
 
-      const { database } = await createAdminClient();
-  
-      const item = await database.deleteDocument(
+    try {
+      await database.deleteDocument(
         DATABASE_ID!,
         CAMPAIGN_COLLECTION_ID!,
         $id);
-  
-      return parseStringify(item);
     } catch (error: any) {
         let errorMessage = 'Something went wrong with your request, please try again later.';
         if (error instanceof AppwriteException) {
@@ -191,23 +177,20 @@ export const createItem = async ( item: Campaign, formState: FormState ) => {
         Sentry.captureException(error);
         throw Error(errorMessage);
     }
-  }
+    revalidatePath('/campaigns')
+    redirect('/campaigns')
+}
 
-  export const updateItem = async (id: string, data: Campaign) => {  
+export const updateItem = async (id: string, data: Campaign) => {
+  if (!id || !data ) return null;
+  const { database, businessId } = await checkRequirements(CAMPAIGN_COLLECTION_ID);
+
     try {
-      if (!DATABASE_ID || !CAMPAIGN_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      const { database } = await createAdminClient();
-  
-      const item = await database.updateDocument(
+      await database.updateDocument(
         DATABASE_ID!,
         CAMPAIGN_COLLECTION_ID!,
         id,
         data);
-  
-      return parseStringify(item);
     } catch (error: any) {
         let errorMessage = 'Something went wrong with your request, please try again later.';
         if (error instanceof AppwriteException) {
@@ -219,4 +202,7 @@ export const createItem = async ( item: Campaign, formState: FormState ) => {
         Sentry.captureException(error);
         throw Error(errorMessage);
     }
-  }
+
+    revalidatePath('/campaigns')
+    redirect('/campaigns')
+}

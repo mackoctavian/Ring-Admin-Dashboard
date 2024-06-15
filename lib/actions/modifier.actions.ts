@@ -10,7 +10,8 @@ import { getStatusMessage, HttpStatusCode } from '../status-handler';
 import { auth } from "@clerk/nextjs/server";
 import { getBusinessId } from "./business.actions";
 import { revalidatePath } from 'next/cache';
-import { notFound, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
+
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     MODIFIERS_COLLECTION: MODIFIERS_COLLECTION_ID,
@@ -135,10 +136,10 @@ export const getItems = async (q?: string, status?: boolean | null, limit?: numb
 
 
 export const getItem = async (id: string) => {
-  try {
-    const { database } = await checkRequirements(MODIFIERS_COLLECTION_ID);
-    if (!id) return notFound();
+  if (!id) return null;
+  const { database } = await checkRequirements(MODIFIERS_COLLECTION_ID);
 
+  try {
     const item = await database.listDocuments(
       DATABASE_ID!,
       MODIFIERS_COLLECTION_ID!,
@@ -202,6 +203,7 @@ export const updateItem = async (id: string, data: Modifier) => {
     );
 
   } catch (error: any) {
+    console.log(error);
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);

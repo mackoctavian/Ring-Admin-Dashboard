@@ -37,13 +37,13 @@ export const mainMenu = [
   
     {
       type: 'title',
-      label: 'Stock',
+      label: 'Inventory management',
     },
     { type: 'separator' },
     {
       icon: "/icons/icons/stock-management.svg",
       route: "/inventory",
-      label: "Inventory",
+      label: "Stock",
     },
     {
       icon: "/icons/icons/stock-management.svg",

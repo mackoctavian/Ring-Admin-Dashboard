@@ -10,7 +10,7 @@ import { columns } from "@/components/layout/tables/inventory-table/columns";
 import { getVariantItems } from "@/lib/actions/inventory.actions";
 import { InventoryTable } from "@/components/layout/tables/inventory-table/inventory-table";
 
-const breadcrumbItems = [{ title: "Inventory", link: "/inventory" }];
+const breadcrumbItems = [{ title: "Stock", link: "/inventory" }];
 
 type ParamsProps = {
   searchParams: {
@@ -34,10 +34,10 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Inventory`} total={total.toString()} description="Manage inventory" />
+            <Heading title={`Stock`} total={total.toString()} description="Manage stock" />
 
             <Link href={"/inventory/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add Inventory
+                <Plus className="mr-2 h-4 w-4" /> Add stock
             </Link>
         </div>
         <Separator />

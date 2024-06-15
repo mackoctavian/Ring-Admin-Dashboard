@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { createItem, updateItem } from "@/lib/actions/section.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { SectionSchema, SectionType } from "@/types/data-schemas";
 import {
     Select,
@@ -30,6 +31,7 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
+    FormDescription
   } from "@/components/ui/form";
 import BranchSelector from "../layout/branch-selector";
   
@@ -86,10 +88,6 @@ const SectionForm = ({ item }: { item?: Section | null }) => {
                     description: "Section / space created succesfully!"
                 });
             }
-            
-            // Redirect to the list page after submission
-            router.push("/sections");
-            router.refresh();
         } catch (error: any) {
             toast({
                 variant: "destructive",
@@ -108,7 +106,7 @@ return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
                 <FormField
                 control={form.control}
                 name="name"
@@ -125,6 +123,7 @@ return (
                     </FormItem>
                     )}
                 />
+
                 <FormField
                 control={form.control}
                 name="type"
@@ -163,25 +162,44 @@ return (
                 )}
                 />
 
+                <FormField
+                    control={form.control}
+                    name="noOfCustomers"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Number of customers *</FormLabel>
+                            <FormControl>
+                                <Input
+                                    type="number"
+                                    placeholder="Number of customers"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                            <FormDescription>Number of customers the section can handle at a time</FormDescription>
+                        </FormItem>
+                        )}
+                    />
 
+                    <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Status *</FormLabel>
+                                <FormControl>
+                                    <div className="mt-2">
+                                        <Switch
+                                            id="status"
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </div>
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
             </div>
-
-            <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <FormControl>
-                        <Switch
-                            id="status"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                        />
-                    </FormControl>
-                </FormItem>
-                )}
-            />
 
             <FormField
                     control={form.control}
@@ -211,15 +229,7 @@ return (
             
                 <Separator orientation="vertical" />
 
-                <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                        <>
-                            <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-                        </>
-                        ) : (
-                        item ? "Update section / space" : "Save section / space"
-                    )}
-                </Button> 
+                <SubmitButton loading={isLoading} label={item ? "Update section / space" : "Save section / space"} />
             </div>
         </form>
     </Form>

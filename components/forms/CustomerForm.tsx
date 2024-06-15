@@ -19,6 +19,7 @@ import { Customer } from "@/types";
 import { createItem, updateItem } from "@/lib/actions/customer.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
+import { SubmitButton } from "@/components/ui/submit-button"
 import CountrySelector from "../layout/country-selector";
 import {
   Form,
@@ -64,7 +65,6 @@ import BranchSelector from "../layout/branch-selector";
                 title: 'Data validation failed!',
                 description: 'Please make sure all the fields marked with * are filled correctly.',
             });
-            console.error(JSON.stringify(errors));
         }
 
         const onSubmit = async (data: z.infer<typeof CustomerSchema>) => {
@@ -86,11 +86,6 @@ import BranchSelector from "../layout/branch-selector";
                         description: "Customer added succesfully!"
                     });
                 }
-                
-                // Redirect to the list page after submission
-                router.push("/customers");
-                router.refresh();
-                setIsLoading(false);
             } catch (error: any) {
                 toast({
                     variant: "destructive",
@@ -119,7 +114,6 @@ import BranchSelector from "../layout/branch-selector";
                             <FormControl>
                                 <Input
                                 placeholder="Enter customer's full name"
-                                className="input-class"
                                 {...field}
                                 />
                             </FormControl>
@@ -138,7 +132,6 @@ import BranchSelector from "../layout/branch-selector";
                                 <Input
                                 type="email"
                                 placeholder="Enter customer's email address"
-                                className="input-class"
                                 {...field}
                                 />
                             </FormControl>
@@ -157,7 +150,6 @@ import BranchSelector from "../layout/branch-selector";
                                 <Input
                                 type="tel"
                                 placeholder="Enter customer's phone number"
-                                className="input-class"
                                 {...field}
                                 />
                             </FormControl>
@@ -175,7 +167,6 @@ import BranchSelector from "../layout/branch-selector";
                             <FormControl>
                                 <Input
                                 placeholder="Enter customer's unique code"
-                                className="input-class"
                                 {...field}
                                 />
                             </FormControl>
@@ -207,7 +198,6 @@ import BranchSelector from "../layout/branch-selector";
                             <FormControl>
                                 <Input
                                 placeholder="Enter customer's address"
-                                className="input-class"
                                 {...field}
                                 />
                             </FormControl>
@@ -303,63 +293,30 @@ import BranchSelector from "../layout/branch-selector";
                             </FormItem>
                         )}
                     />
-
-                    <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Status *</FormLabel>
-                                <FormControl>
-                                    <div className="mt-2">
-                                        <Switch
-                                            id="status"
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    </div>
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
                     
                 </div>
-                    <FormField
-                        control={form.control}
-                        name="notes"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Admin notes</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Any other important details about the customer"
-                                    className="resize-none"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Admin notes</FormLabel>
+                        <FormControl>
+                            <Textarea
+                                placeholder="Any other important details about the customer"
+                                className="resize-none"
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 
-
-                    
-
-        
                 <div className="flex h-5 items-center space-x-4">
                     <CancelButton />
-                
                     <Separator orientation="vertical" />
-
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading ? (
-                            <>
-                                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-                            </>
-                            ) : (
-                            item ? "Update customer details" : "Save customer details"
-                        )}
-                    </Button> 
+                    <SubmitButton loading={isLoading} label={ item ? "Update customer details" : "Save customer details" } />
                 </div>
             </form>
         </Form>

@@ -81,6 +81,7 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
 
         variant.fullName = capitalizeFirstLetter(`${data.title} ${data.packaging ?? ''} ${variant.name ?? ''}`.trim());
         variant.quantity = variant.startingQuantity;
+        variant.actualQuantity = variant.startingQuantity;
         return variant;
       });
 
@@ -117,6 +118,7 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
       const startingQuantity = form.watch(`variants.${index}.startingQuantity`);
       const lowQuantity = form.watch(`variants.${index}.lowQuantity`);
       const variantName = form.watch(`variants.${index}.name`);
+      const startingValue = form.watch(`variants.${index}.startingValue`);
       const itemName = form.watch(`title`);
       const itemPackage = form.watch(`packaging`);
 
@@ -132,7 +134,7 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
       const fullName = `${itemName} ${itemPackage} ${variantName ?? ''}`.trim();
 
       if (status !== field.status || fullName !== field.fullName || startingQuantity !== field.quantity) {
-        update(index, { ...field, status, fullName, quantity: startingQuantity });
+        update(index, { ...field, status, fullName, quantity: startingQuantity, startingValue: startingValue, actualQuantity: startingQuantity });
       }
     });
   }, [fields, form, form.watch]);
@@ -189,6 +191,7 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
           </CardHeader>
           <CardContent>
             {fields.map((field, index) => (
+              <>
                 <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 pt-4 bo-rder  roun-ded-md">
                   <FormField
                     control={form.control}
@@ -221,11 +224,27 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
                   <FormField
                     control={form.control}
                     name={`variants.${index}.startingQuantity`}
+                    disabled={isEditMode}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Starting quantity</FormLabel>
                         <FormControl>
                           <Input type="number" min="0" placeholder="Starting quantity" {...field} readOnly={isEditMode} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`variants.${index}.startingValue`}
+                    disabled={isEditMode}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Starting stock value</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="0" placeholder="Starting stock value" {...field} readOnly={isEditMode} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -311,6 +330,9 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
                     Remove variant
                   </Button>
                 </div>
+
+                <Separator className="my-10" />
+                </>
               ))}
           </CardContent>
           <CardFooter className="border-t px-6 py-4">

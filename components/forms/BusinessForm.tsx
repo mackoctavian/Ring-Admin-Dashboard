@@ -26,6 +26,7 @@ import { BusinessType, Business } from "@/types"
 import { BusinessSchema } from '@/types/data-schemas'
 import CancelButton from "../layout/cancel-button"
 import { updateItem } from "@/lib/actions/business.actions"
+import { SubmitButton } from "@/components/ui/submit-button"
 
 const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
   const router = useRouter();
@@ -110,7 +111,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
                 <FormItem>
                   <FormLabel>Business name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Business full name" className="input-class" {...field} />
+                    <Input placeholder="Business full name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -124,7 +125,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
                 <FormItem>
                   <FormLabel>Slug ( Auto-generated ) *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Slug" className="input-class" {...field} />
+                    <Input placeholder="Slug" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -138,7 +139,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
                 <FormItem>
                   <FormLabel>Logo</FormLabel>
                   <FormControl>
-                    <Input type="file" placeholder="Business logo" className="input-class" {...field} />
+                    <Input type="file" placeholder="Business logo" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -152,7 +153,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
                 <FormItem>
                   <FormLabel>Email address *</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="Email address" className="input-class" {...field} />
+                    <Input type="email" placeholder="Email address" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -166,7 +167,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
                 <FormItem>
                   <FormLabel>Registration number *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter registration number" className="input-class" {...field} />
+                    <Input placeholder="Enter registration number" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -208,7 +209,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
                 <FormItem>
                   <FormLabel>Phone number *</FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder="Enter phone number" className="input-class" {...field} />
+                    <Input type="tel" placeholder="Enter phone number" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -236,7 +237,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
                 <FormItem>
                   <FormLabel>City *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter city / region name" className="input-class" {...field} />
+                    <Input placeholder="Enter city / region name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -250,7 +251,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter address" className="input-class" {...field} />
+                    <Input placeholder="Enter address" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -274,18 +275,8 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
 
         <div className="flex h-5 items-center space-x-4">
           <CancelButton />
-
           <Separator orientation="vertical" />
-
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-              </>
-            ) : (
-              item ? 'Update business details' : 'Save business details'
-            )}
-          </Button>
+          <SubmitButton loading={isLoading} label={item ? 'Update business details' : 'Save business details'} />
         </div>
       </form>
     </Form>

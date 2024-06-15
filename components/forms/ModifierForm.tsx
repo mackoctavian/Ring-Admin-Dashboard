@@ -15,6 +15,7 @@ import CancelButton from "../layout/cancel-button"
 import { ModifierSchema, ModifierType } from "@/types/data-schemas"
 import BranchSelector from "../layout/branch-multiselector"
 import InventorySelector from "@/components/layout/inventory-selector"
+import UnitSelector from "@/components/layout/unit-selector"
 import {
     Card,
     CardContent,
@@ -44,27 +45,16 @@ import { Button } from "../ui/button";
 
 
 const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
-    
-    console.log("MODIFIER DATA",modifier)
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
-
-    const [selectedBranch, setSelectedBranch] = useState<Branch[] | null>(modifier?.branches ?? null);
-
-    useEffect(() => {
-        if (modifier && modifier.branches) {
-            setSelectedBranch(modifier.branches);
-        } else {
-            setSelectedBranch(null);
-        }
-    }, [modifier]);
 
     const form = useForm<z.infer<typeof ModifierSchema>>({
         resolver: zodResolver(ModifierSchema),
         defaultValues: modifier ? modifier : {
             status: true,
             allowMultiple: false,
+            optional: true,
             modifierItems: [
                 { price: 0, inventoryItem: null }
              ]
@@ -174,34 +164,24 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                           />
                           <FormField
                               control={form.control}
-                              name="branches"
+                              name="optional"
                               render={({ field }) => (
                                   <FormItem>
-                                      <FormLabel>Branches *</FormLabel>
+                                      <FormLabel>Is the modifier optional ? *</FormLabel>
                                       <FormControl>
-                                          <BranchSelector
-                                              value={selectedBranch}
-                                              onChange={(branch) => { setSelectedBranch(branch); field.onChange(branch); }}
-                                          />
+                                          <div className="mt-2">
+                                              <Switch
+                                                  id="optional"
+                                                  checked={field.value}
+                                                  onCheckedChange={field.onChange}
+                                              />
+                                          </div>
                                       </FormControl>
-                                      <FormMessage />
+                                      <FormDescription>Set to false if atleast one item should be selected before comleting the purchase</FormDescription>
                                   </FormItem>
                               )}
                           />
-      
-                          <FormField
-                              control={form.control}
-                              name="image"
-                              render={({ field }) => (
-                                  <FormItem>
-                                      <FormLabel>Image</FormLabel>
-                                      <FormControl>
-                                          <Input type="file" placeholder="Modifier image" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                  </FormItem>
-                              )}
-                          />
+
                           <FormField
                               control={form.control}
                               name="allowMultiple"
@@ -221,6 +201,10 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                   </FormItem>
                               )}
                           />
+
+
+
+
                           <FormField
                               control={form.control}
                               name="status"
@@ -253,7 +237,7 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                   <CardContent>
                     {fields.map((field, index) => (
                     <>
-                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 rounded-md">
+                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 rounded-md">
                             <FormField
                                 control={form.control}
                                 name={`modifierItems.${index}.name`}
@@ -285,10 +269,36 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                 name={`modifierItems.${index}.inventoryItem`}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Inventory Item</FormLabel>
+                                        <FormLabel>Stock item</FormLabel>
                                         <FormControl>
                                             <InventorySelector {...field} />
                                         </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`modifierItems.${index}.quantity`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Stock item quantity used</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" min="0" placeholder="Quantity of stock item used per sale" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`modifierItems.${index}.unit`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Stock quantity unit</FormLabel>
+                                        <FormControl>
+                                            <UnitSelector {...field} />
+                                        </FormControl>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -301,7 +311,7 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                 Remove Item
                             </Button>
                         </div>
-                        <Separator className="m-4" />
+                        <Separator className="my-10" />
                     </>
 
                     ))}

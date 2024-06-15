@@ -1,22 +1,24 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { list } from "@/lib/actions/product-unit.actions"
+import { list } from "@/lib/actions/product-unit.actions";
 import { ProductUnit } from "@/types";
 
 interface Props {
-  value?: ProductUnit;
-  onChange: (value: ProductUnit) => void;
+  value?: string; // Changed to string to represent unit's $id
+  onChange: (value: string) => void; // Changed to string
 }
 
 const UnitSelector: React.FC<Props> = ({ value, onChange }) => {
   const [units, setUnits] = useState<ProductUnit[]>([]);
+  const [loading, setLoading] = useState<boolean>(true); // State to track loading
 
   useEffect(() => {
     async function fetchUnits() {
@@ -25,30 +27,53 @@ const UnitSelector: React.FC<Props> = ({ value, onChange }) => {
         setUnits(unitsData);
       } catch (error) {
         console.error('Error fetching units:', error);
+      } finally {
+        setLoading(false); // Set loading to false after data is fetched
       }
     }
     fetchUnits();
   }, []);
 
   const handleSelectChange = (value: string) => {
-    const selectedUnit = units.find(unt => unt.$id === value);
-    if (selectedUnit) {
-      onChange(selectedUnit);
+    onChange(value);
+  };
+
+  const selectedUnit = units.find(unit => unit.$id === value);
+
+  // Group units by type
+  const groupedUnits = units.reduce((groups, unit) => {
+    if (!groups[unit.type]) {
+      groups[unit.type] = [];
     }
+    groups[unit.type].push(unit);
+    return groups;
+  }, {} as { [key: string]: ProductUnit[] });
+
+  // Function to convert type to lowercase with the first letter capitalized
+  const formatType = (type: string) => {
+    return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
   };
 
   return (
-    <Select value={value ? value.$id : 'Select Unit'} onValueChange={handleSelectChange}>
+    <Select value={value || 'default'} onValueChange={handleSelectChange} disabled={loading}>
       <SelectTrigger>
         <SelectValue>
-          {value ? value.name : 'Select Unit'}
+          {loading ? 'Loading...' : (selectedUnit ? `${selectedUnit.name} (${selectedUnit.abbreviation})` : 'Select Unit')}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {units.map((unit) => (
-          <SelectItem key={unit.$id} value={unit.$id}>
-            {unit.name}
-          </SelectItem>
+        <SelectItem value="default" disabled>
+          Select Unit
+        </SelectItem> {/* Default option */}
+        {Object.keys(groupedUnits).map(type => (
+          <SelectGroup key={type}>
+            <SelectLabel>{formatType(type)}</SelectLabel>
+            {groupedUnits[type].map(unit => (
+              <SelectItem key={unit.$id} value={unit.$id}>
+                {unit.name} ({unit.abbreviation})
+              </SelectItem>
+            ))}
+          </SelectGroup>
         ))}
       </SelectContent>
     </Select>

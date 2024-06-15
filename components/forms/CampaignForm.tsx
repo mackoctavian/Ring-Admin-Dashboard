@@ -2,7 +2,9 @@
 
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { useToast } from "@/components/ui/use-toast"
+import { useState } from "react";
 import { format } from "date-fns"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
@@ -34,64 +36,64 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { useRouter } from "next/navigation";
-
 import * as z from "zod";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { useFormState } from 'react-dom';
-import { useToastMessage } from '@/hooks/use-toast-messages';
-import { useFormReset } from '@/hooks/use-form-reset';
-import { EMPTY_FORM_STATE } from '@/lib/utils/zod-form-state';
-import { FieldError } from '@/components/ui/field-error';
-
-import { fromErrorToFormState, toFormState,} from '@/lib/utils/zod-form-state';
-import { revalidatePath } from 'next/cache';
-
-//TODO: Implement campaign type and status
+import "react-day-picker/style.css";
 
 const CampaignForm = ({ item }: { item?: Campaign | null }) => {
-    const router = useRouter();
-  
-    const form = useForm({
-      resolver: zodResolver(CampaignSchema),
-      defaultValues: item ? item : {},
-    });
-  
-    const [formState, action] = useFormState( createItem, EMPTY_FORM_STATE );
-    const formRef = useFormReset(formState);
+    const [isLoading, setIsLoading] = useState(false)
+    const { toast } = useToast()
 
-    console.log('formState', formState);
-  
-    const onInvalid = (error: any) => {
-        formState.status = 'ERROR';
-        formState.message = 'Data validation failed!';
-        return fromErrorToFormState(error);
-    };
-  
-    const onSubmit = async (data: z.infer<typeof CampaignSchema>) => {
-        formState.status = 'UNSET';
+    const form = useForm<z.infer<typeof CampaignSchema>>({
+        resolver: zodResolver(CampaignSchema),
+        defaultValues: item ? item : {
+            status: false,
+        },
+    });
+
+    const onInvalid = (errors : any ) => {
+        toast({
+            variant: "warning",
+            title: "Data validation failed!",
+            description: "Please make sure all the fields marked with * are filled correctly."
+        });
+    }
+
+    const onSubmit = async (data: z.infer<typeof BranchSchema>) => {
+        setIsLoading(true);
         try {
             if (item) {
                 await updateItem(item.$id!, data);
+                toast({
+                    variant: "success",
+                    title: "Success",
+                    description: "Broadcast message has been updated succesfully!"
+                });
             } else {
-                await createItem(data, EMPTY_FORM_STATE);
+                await createItem(data);
+                toast({
+                    variant: "success",
+                    title: "Success",
+                    description: "Broadcast message has been scheduled succesfully!"
+                });
             }
-            formState.status = 'SUCCESS';
-            formState.message = 'Succesfully submitted campaign data';
-            router.push("/campaigns");
         } catch (error: any) {
-            formState.status = 'ERROR';
-            return fromErrorToFormState(error);
-        }finally{
-            formState.status = 'UNSET';
+            toast({
+                variant: "destructive",
+                title: "Uh oh! Something went wrong.",
+                description: "There was an issue submitting your form, please try later"
+            });
+        } finally {
+        //delay loading
+        setTimeout(() => {
+            setIsLoading(false);
+            }, 1000);
         }
     };
 
-    const noScriptFallback = useToastMessage(formState);
-  
-    return (
-      <FormProvider {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} ref={formRef} className="space-y-8">
+return (
+    <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
           <div className="grid grid-cols-3 gap-4">
             <FormField
               name="title"
@@ -101,7 +103,6 @@ const CampaignForm = ({ item }: { item?: Campaign | null }) => {
                   <FormControl>
                     <Input
                       placeholder="Title"
-                      className="input-class"
                       {...field}
                     />
                   </FormControl>
@@ -150,11 +151,12 @@ const CampaignForm = ({ item }: { item?: Campaign | null }) => {
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
+                        hideNavigation={true}
+                        captionLayout="dropdown"
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
                         disabled={(date) => date < new Date() || date < new Date("1970-01-01")}
-                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -184,13 +186,11 @@ const CampaignForm = ({ item }: { item?: Campaign | null }) => {
           <div className="flex h-5 items-center space-x-4">
             <CancelButton />
             <Separator orientation="vertical" />
-            <SubmitButton label={item ? "Re-broadcast campaign" : "Broadcast campaign"} loading="Processing..." />
+            <SubmitButton label={item ? "Re-broadcast campaign" : "Schedule broadcast"} loading={isLoading} />
           </div>
 
-          {noScriptFallback}
-
         </form>
-      </FormProvider>
+      </Form>
     );
   };
   

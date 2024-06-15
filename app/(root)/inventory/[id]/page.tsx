@@ -4,20 +4,18 @@ import BreadCrumb from "@/components/layout/breadcrumb";
 import { getItem } from '@/lib/actions/inventory.actions';
 import { Inventory } from "@/types";
 import InvenvtoryForm from "@/components/forms/InventoryForm";
+import { notFound } from 'next/navigation'
 
-const breadcrumbItems = [{ title: "Categories", link: "/categories" }, { title: "New", link: "" } ];
+const breadcrumbItems = [{ title: "Stock", link: "/categories" }, { title: "New", link: "" } ];
 
 const InventoryPage = async ({ params }: { params: { id: string } }) => {
     let item: Inventory | null = null;
     let newItem = true;
 
     if (params.id && params.id !== "new") {
-        try {
-            item = await getItem(params.id);
-            newItem = false;
-        } catch (error) {
-            throw new Error("Error loading data" + error);
-        }
+        newItem = false;
+        item = await getItem(params.id)
+        if( !item ) notFound()
     }
 
     return (
@@ -26,7 +24,7 @@ const InventoryPage = async ({ params }: { params: { id: string } }) => {
                 <BreadCrumb items={breadcrumbItems} />
 
                 <div className="flex items-start justify-between">
-                    <Heading title={!newItem ? `Edit inventory` : `Create inventory`} description={!newItem ? "Edit your inventory" : "Add new inventory to your business"} />
+                    <Heading title={!newItem ? `Edit stock item` : `Create stock item`} description={!newItem ? "Edit your stock item" : "Add new stock items to your business"} />
                 </div>
                 <Separator />
 

@@ -30,11 +30,11 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
     try {
         if (data) {
-            await deleteItem(data);
+            await deleteItem(data.$id);
             toast({
-                variant: "default",
+                variant: "warning",
                 title: "Success", 
-                description: "Supplier deleted succesfully!"
+                description: "Supplier details have been deleted succesfully!"
             });
         } else {
           toast({
@@ -44,9 +44,6 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           });
         }
         
-        // Redirect to the list page after submission
-        router.push("/suppliers");
-        router.refresh();
     } catch (error: any) {
       toast({
           variant: "destructive",

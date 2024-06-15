@@ -38,7 +38,7 @@ export const createItem = async (item: Supplier) => {
   const { database, businessId } = await checkRequirements(VENDOR_COLLECTION_ID);
 
     try {
-      const newItem = await database.createDocument(
+      await database.createDocument(
         DATABASE_ID!,
         VENDOR_COLLECTION_ID!,
         ID.unique(),
@@ -47,8 +47,6 @@ export const createItem = async (item: Supplier) => {
           businessId: businessId
         }
       )
-  
-      return parseStringify(newItem);
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
@@ -141,6 +139,7 @@ export const list = async ( ) => {
 }
 
 export const getItem = async (id: string) => {
+  if (!id) return null;
   const { database, businessId } = await checkRequirements(VENDOR_COLLECTION_ID);
 
     try {
@@ -149,6 +148,8 @@ export const getItem = async (id: string) => {
         VENDOR_COLLECTION_ID!,
         [Query.equal('$id', id)]
       )
+
+      if ( item.total < 1 ) return null;
   
       return parseStringify(item.documents[0]);
     } catch (error: any) {
@@ -164,16 +165,16 @@ export const getItem = async (id: string) => {
     }
 }
 
-export const deleteItem = async ({ $id }: Supplier) => {
+export const deleteItem = async (id : string) => {
+    if (!id) return null;
     const { database, businessId } = await checkRequirements(VENDOR_COLLECTION_ID);
 
     try {
-      const item = await database.deleteDocument(
+      await database.deleteDocument(
         DATABASE_ID!,
         VENDOR_COLLECTION_ID!,
-        $id);
-  
-      return parseStringify(item);
+        id)
+
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
@@ -185,12 +186,15 @@ export const deleteItem = async ({ $id }: Supplier) => {
       Sentry.captureException(error);
       throw Error(errorMessage);
     }
+
+    revalidatePath('/suppliers')
+    redirect('/suppliers')
   }
 
 export const updateItem = async (id: string, data: Supplier) => {
   const { database, businessId } = await checkRequirements(VENDOR_COLLECTION_ID);
   try {
-    const item = await database.updateDocument(
+    await database.updateDocument(
       DATABASE_ID!,
       VENDOR_COLLECTION_ID!,
       id,
@@ -206,6 +210,7 @@ export const updateItem = async (id: string, data: Supplier) => {
       Sentry.captureException(error);
       throw Error(errorMessage);
   }
+
   revalidatePath('/suppliers')
   redirect('/suppliers')
 }

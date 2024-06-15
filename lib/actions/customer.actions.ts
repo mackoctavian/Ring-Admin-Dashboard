@@ -5,26 +5,41 @@ import * as Sentry from "@sentry/nextjs";
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Customer, CustomerDto } from "@/types";
+import { Customer } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
+import { auth } from "@clerk/nextjs/server";
 import { getBusinessId } from "./business.actions";
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation'
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     CUSTOMERS_COLLECTION: CUSTOMER_COLLECTION_ID
   } = process.env;
 
-  export const createItem = async (item: CustomerDto) => {
+const checkRequirements = async (collectionId: string | undefined) => {
+  if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
+
+  const { database } = await createAdminClient();
+  if (!database) throw new Error('Database client could not be initiated');
+
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error('You must be signed in to use this feature');
+  }
+
+  const businessId = await getBusinessId();
+  if( !businessId ) throw new Error('Business ID could not be initiated');
+
+  return { database, userId, businessId };
+};
+
+
+export const createItem = async (item: Customer) => {
+  const { database, businessId } = await checkRequirements(CUSTOMER_COLLECTION_ID);
+
     try {
-      if (!DATABASE_ID || !CUSTOMER_COLLECTION_ID) {
-        throw Error('Database ID or Collection ID is missing');
-      }
-
-      const { database } = await createAdminClient();
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
-
-      const newItem = await database.createDocument(
+      await database.createDocument(
         DATABASE_ID!,
         CUSTOMER_COLLECTION_ID!,
         ID.unique(),
@@ -37,8 +52,6 @@ const {
           totalVisits: 1,
         }
       )
-  
-      return parseStringify(newItem);
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
@@ -50,18 +63,15 @@ const {
       Sentry.captureException(error);
       throw Error(errorMessage);
     }
-  }
 
-  export const list = async ( ) => {
+    revalidatePath('/customers')
+    redirect('/customers')
+  };
+
+export const list = async ( ) => {
+  const { database, businessId } = await checkRequirements(CUSTOMER_COLLECTION_ID);
+
     try {
-      if (!DATABASE_ID || !CUSTOMER_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      const { database } = await createAdminClient();
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
-
       const items = await database.listDocuments(
         DATABASE_ID,
         CUSTOMER_COLLECTION_ID,
@@ -69,7 +79,6 @@ const {
       );
 
       return parseStringify(items.documents);
-
     }catch (error: any){
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
@@ -89,13 +98,9 @@ const {
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    if (!DATABASE_ID || !CUSTOMER_COLLECTION_ID) throw new Error('Database ID or Collection ID is missing')
+    const { database, businessId } = await checkRequirements(CUSTOMER_COLLECTION_ID);
   
     try {
-      const { database } = await createAdminClient();
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
-  
       const queries = []
       queries.push(Query.equal('businessId', businessId))
       queries.push(Query.orderAsc("name"))
@@ -137,24 +142,19 @@ const {
     }
   }
 
-  export const getItem = async (id: string) => {
+export const getItem = async (id: string) => {
+  if (!id) return null;
+  const { database, businessId } = await checkRequirements(CUSTOMER_COLLECTION_ID);
+
     try {
-      if (!DATABASE_ID || !CUSTOMER_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
-
-      if (!id) {
-        throw new Error('Document ID is missing');
-      }
-
-      const { database } = await createAdminClient();
-  
       const item = await database.listDocuments(
         DATABASE_ID!,
         CUSTOMER_COLLECTION_ID!,
         [Query.equal('$id', id)]
       )
-  
+
+      if ( item.total < 1 ) return null;
+
       return parseStringify(item.documents[0]);
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
@@ -169,14 +169,11 @@ const {
     }
   }
 
-  export const deleteItem = async ({ $id }: Customer) => {
-    try {
-      if (!DATABASE_ID || !CUSTOMER_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
+export const deleteItem = async ({ $id }: Customer) => {
+  if (!id) return null;
+  const { database, businessId } = await checkRequirements(CUSTOMER_COLLECTION_ID);
 
-      const { database } = await createAdminClient();
-  
+    try {
       const item = await database.deleteDocument(
         DATABASE_ID!,
         CUSTOMER_COLLECTION_ID!,
@@ -194,23 +191,21 @@ const {
       Sentry.captureException(error);
       throw Error(errorMessage);
     }
+
+    revalidatePath('/customers')
+    redirect('/customers')
   }
 
-  export const updateItem = async (id: string, data: CustomerDto) => {  
-    try {
-      if (!DATABASE_ID || !CUSTOMER_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-      }
+export const updateItem = async (id: string, data: CustomerDto) => {
+  if (!id) return null;
+  const { database, businessId } = await checkRequirements(CUSTOMER_COLLECTION_ID);
 
-      const { database } = await createAdminClient();
-  
-      const item = await database.updateDocument(
+    try {
+      await database.updateDocument(
         DATABASE_ID!,
         CUSTOMER_COLLECTION_ID!,
         id,
         data);
-  
-      return parseStringify(item);
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
@@ -222,4 +217,7 @@ const {
       Sentry.captureException(error);
       throw Error(errorMessage);
     }
+
+    revalidatePath('/customers')
+    redirect('/customers')
   }

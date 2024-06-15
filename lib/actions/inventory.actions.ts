@@ -43,6 +43,8 @@ const checkRequirements = async (collectionId: string | undefined) => {
 export const createItem = async (data: Inventory) => {
   const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
 
+  console.log(data)
+
   try {
     await database.createDocument(
       DATABASE_ID!,

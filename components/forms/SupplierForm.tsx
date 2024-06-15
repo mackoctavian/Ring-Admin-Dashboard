@@ -25,6 +25,7 @@ import CancelButton from "../layout/cancel-button";
 import { Textarea } from "@/components/ui/textarea"
 import { SupplierSchema } from "@/types/data-schemas";
 import BranchSelector from "../layout/branch-multiselector";
+import { SubmitButton } from "@/components/ui/submit-button"
 
 const SupplierForm = ({ item }: { item?: Supplier | null }) => {
     const router = useRouter();
@@ -45,7 +46,6 @@ const SupplierForm = ({ item }: { item?: Supplier | null }) => {
             title: "Data validation failed!", 
             description: "Please make sure all the fields marked with * are filled correctly."
         });
-        console.log(errors)
     }
 
     const onSubmit = async (data: z.infer<typeof SupplierSchema>) => {
@@ -205,8 +205,6 @@ return (
                 )}
             />
             </div>
-
-                
             
             <FormField
                 control={form.control}
@@ -225,25 +223,11 @@ return (
                     </FormItem>
                 )}
             />
-        
-
-            
-
     
             <div className="flex h-5 items-center space-x-4">
                 <CancelButton />
-            
                 <Separator orientation="vertical" />
-
-                <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                        <>
-                            <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-                        </>
-                        ) : (
-                        item ? "Update supplier" : "Save supplier"
-                    )}
-                </Button> 
+                <SubmitButton label={item ? "Update supplier" : "Save supplier"} loading={isLoading} />
             </div>
         </form>
     </Form>
