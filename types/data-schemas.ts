@@ -344,7 +344,7 @@ export const StaffSchema = z.object({
 export const SupplierSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
-    email: z.string().email("Invalid email address").optional(),
+    email: z.string().email("Invalid email address").optional().nullable(),
     contactPersonName: z.string(),
     branch: z.array(BranchSchema.omit({business: true, daysOpen: true})).min(1, { message: "Select at least one branch" }),
     phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
@@ -497,6 +497,18 @@ export const InventoryVariantSchema = z.object({
         }
         return val;
     }, z.number().nonnegative()),
+    actualQuantity: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseInt(val);
+        }
+        return val;
+    }, z.number().optional()),
+    quantity: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseInt(val);
+        }
+        return val;
+    }, z.number().nonnegative().optional()),
     barcodeId: z.string().length(13, { message: "Must be exactly 13 characters long" }).nullable().optional(),
     itemsPerPackage: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -563,7 +575,30 @@ export const InventorySchema = z.object({
     }, z.date().optional()),
   });
 
-
+export const InventoryModificationSchema = z.object({
+    $id: z.string().optional(),
+    item: InventoryVariantSchema,
+    quantity: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseInt(val);
+        }
+        return val;
+    }, z.number()),
+    reason: z.string(),
+    notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+});
 
 export const ModifierItemSchema = z.object({
     $id: z.string().optional(),
@@ -579,8 +614,8 @@ export const ModifierItemSchema = z.object({
             return parseFloat(val);
         }
         return val;
-    }, z.number().optional()),
-    unit: z.string().optional(),
+    }, z.number().optional().nullable()),
+    unit: z.string().optional().nullable(),
     inventoryItem: InventoryVariantSchema.optional().nullable(),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -979,5 +1014,3 @@ export const SectionSchema = z.object({
         return val;
     }, z.date().optional()),
 });
-
-

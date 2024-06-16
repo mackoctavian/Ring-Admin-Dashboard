@@ -479,6 +479,16 @@ declare type InventoryVariant = {
   $updatedAt?: Date;
 }
 
+declare type InventoryModification = {
+  $id?: string;
+  item: InventoryVariant,
+  quantity: number,
+  reason: string,
+  notes: string,
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
 declare type Stock = {
   $id?: string;
   item: InvenvtoryVariant;

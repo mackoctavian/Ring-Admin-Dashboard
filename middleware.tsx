@@ -11,7 +11,14 @@ let debugState = false
 
 
 const isOnboardingRoute = createRouteMatcher(["/business-registration"]);
-const isPublicRoute = createRouteMatcher(["/sign-in", "/sign-up", "/sign-up/verify-email-address", "/business-registration"]);
+const isPublicRoute = createRouteMatcher([
+  "/sign-in",
+  "/sign-up",
+  "/sign-up/verify-email-address",
+  "/business-registration",
+  "/_not-found",
+  "/not-found"
+]);
 
 
 export default clerkMiddleware(async (auth, req) => {

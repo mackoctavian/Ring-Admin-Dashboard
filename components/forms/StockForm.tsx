@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { InventoryVariant, Staff, Supplier, Department } from "@/types";
 import { StockSchema, SupplierSchema } from "@/types/data-schemas";
@@ -42,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import "react-day-picker/style.css"
 
 export const StockIntakeSchema = z.object({
   items: z
@@ -88,16 +90,12 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
     setIsLoading(true);
 
     try {
-      console.info("Submitted data", JSON.stringify(data));
       await createItem(data.items);
       toast({
         variant: "success",
         title: "Success",
         description: "Stock intake recorded successfully!",
       });
-
-      router.push("/stock");
-      router.refresh();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -142,7 +140,7 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
                 <FormItem>
                   <FormLabel>Quantity</FormLabel>
                   <FormControl>
-                    <Input type="number" min="1" placeholder="Quantity" className="input-class" {...field} />
+                    <Input type="number" min="1" placeholder="Quantity" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -156,7 +154,7 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
                 <FormItem>
                   <FormLabel>Value</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="Value" className="input-class" {...field} />
+                    <Input type="number" placeholder="Value" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -224,7 +222,7 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
                 <FormItem>
                   <FormLabel>Order Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="Order number" className="input-class" {...field} />
+                    <Input placeholder="Order number" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -249,13 +247,14 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
                             </FormControl>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
+                              <Calendar
+                                hideNavigation={true}
+                                captionLayout="dropdown"
                                 mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
                                 disabled={ (date) => date > new Date() || date < new Date("1970-01-01") }
-                                initialFocus
-                            />
+                              />
                             </PopoverContent>
                         </Popover>
                         <FormMessage />
@@ -281,13 +280,14 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
                             </FormControl>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
+                              <Calendar
+                                hideNavigation={true}
+                                captionLayout="dropdown"
                                 mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
                                 disabled={ (date) => date > new Date() || date < new Date("1970-01-01") }
-                                initialFocus
-                            />
+                              />
                             </PopoverContent>
                         </Popover>
                         <FormMessage />
@@ -342,18 +342,8 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
 
         <div className="flex h-5 items-center space-x-4">
           <CancelButton />
-          
           <Separator orientation="vertical" />
-
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-              </>
-            ) : (
-              "Record Stock Intake"
-            )}
-          </Button>
+          <SubmitButton label="Record Stock Intake" loading={isLoading} />
         </div>
       </form>
     </Form>

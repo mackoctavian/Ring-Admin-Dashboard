@@ -16,7 +16,8 @@ import { redirect } from 'next/navigation'
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     INVENTORY_COLLECTION: INVENTORY_COLLECTION_ID,
-    INVENTORY_VARIANTS_COLLECTION: INVENTORY_VARIANTS_COLLECTION_ID
+    INVENTORY_VARIANTS_COLLECTION: INVENTORY_VARIANTS_COLLECTION_ID,
+    INVENTORY_MODIFICATION_COLLECTION: INVENTORY_MODIFICATION_COLLECTION_ID,
 } = process.env;
 
 const checkRequirements = async (collectionId: string | undefined) => {
@@ -33,17 +34,12 @@ const checkRequirements = async (collectionId: string | undefined) => {
   const businessId = await getBusinessId();
   if( !businessId ) throw new Error('Business ID could not be initiated');
 
-
-  console.log("Business ID", businessId)
-
   return { database, userId, businessId };
 };
 
 
 export const createItem = async (data: Inventory) => {
-  const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
-
-  console.log(data)
+  const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID)
 
   try {
     await database.createDocument(
@@ -73,12 +69,13 @@ export const createItem = async (data: Inventory) => {
 
   export const list = async ( ) => {
     try {
-        const { database } = await checkRequirements(INVENTORY_COLLECTION_ID);
+        const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
 
       const items = await database.listDocuments(
         DATABASE_ID!,
         INVENTORY_COLLECTION_ID!,
-        [Query.orderAsc("name")]
+        [Query.orderAsc("name")],
+        [Query.equal('businessId', businessId!)]
       );
 
       return parseStringify(items.documents);
@@ -127,11 +124,10 @@ export const createItem = async (data: Inventory) => {
     offset?: number | 1,
   ) => {
     const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
-  
-    console.log("Business ID", businessId)
+
     try {  
       const queries = [];
-      //queries.push(Query.equal("businessId", businessId));
+      queries.push(Query.equal("businessId", businessId));
       queries.push(Query.orderAsc("name"));
 
       if ( limit ) {
@@ -274,16 +270,44 @@ export const createItem = async (data: Inventory) => {
     redirect('/inventory')
   };
 
-  export const updateItem = async (id: string, data: Inventory) => {  
-    const { database } = await checkRequirements(INVENTORY_COLLECTION_ID);
+  export const updateItem = async (data: InventoryModification) => {
+    const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
 
-    console.log("Data", data)
     try {
+      //Create record of modification
+      await database.createDocument(
+        DATABASE_ID!,
+        INVENTORY_MODIFICATION_COLLECTION_ID!,
+        ID.unique(),
+        {
+          ...data,
+          businessId: businessId,
+          itemId: data.item.$id
+        }
+      )
+
+      //modify item quantity
+      data.item.actualQuantity = data.quantity;
+      data.item.quantity = data.quantity;
+
+      //Update stock status
+      if ( data.item.quantity === 0 ) {
+        data.item.status = InventoryStatus.OUT_OF_STOCK;
+      } else if (data.item.quantity <= data.item.lowQuantity) {
+        data.item.status = InventoryStatus.LOW_STOCK;
+      } else {
+        data.item.status = InventoryStatus.IN_STOCK;
+      }
+
+      console.log("Data to update", data.item)
+      const itemId = data.item.$id
+      const item = data.item
+
       await database.updateDocument(
         DATABASE_ID!,
-        INVENTORY_COLLECTION_ID!,
-        id,
-        data);
+        INVENTORY_VARIANTS_COLLECTION_ID!,
+        data.item.$id,
+        data.item);
   
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';

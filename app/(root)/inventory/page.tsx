@@ -1,10 +1,10 @@
 import BreadCrumb from "@/components/layout/breadcrumb";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button"
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { InventoryVariant } from "@/types";
 import { cn } from "@/lib/utils";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import Link from "next/link";
 import { columns } from "@/components/layout/tables/inventory-table/columns";
 import { getVariantItems } from "@/lib/actions/inventory.actions";
@@ -34,11 +34,17 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Stock`} total={total.toString()} description="Manage stock" />
+          <Heading title="Stock" total={total.toString()} description="Manage stock" />
 
-            <Link href={"/inventory/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add stock
+          <div className="ml-auto flex space-x-4">
+            <Link href="/inventory/new" className={cn(buttonVariants({ variant: "default" }))} >
+                <Plus className="mr-2 h-4 w-4" /> Add stock item
             </Link>
+
+            <Link href="/inventory/modify" className={cn(buttonVariants({ variant: "outline" }))} >
+                <Pencil className="mr-2 h-4 w-4" /> Modify stock values
+            </Link>
+          </div>
         </div>
         <Separator />
 

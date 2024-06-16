@@ -23,7 +23,7 @@ import DepartmentSelector from "@/components/layout/department-multiselector"
 import BranchSelector from "@/components/layout/branch-multiselector";
 import CountrySelector from "@/components/layout/country-selector";
 
-import "react-day-picker/style.css";
+import "react-day-picker/style.css"
 import {
     Form,
     FormControl,

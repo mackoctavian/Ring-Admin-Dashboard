@@ -6,7 +6,7 @@ import { Inventory } from "@/types";
 import InvenvtoryForm from "@/components/forms/InventoryForm";
 import { notFound } from 'next/navigation'
 
-const breadcrumbItems = [{ title: "Stock", link: "/categories" }, { title: "New", link: "" } ];
+const breadcrumbItems = [{ title: "Stock", link: "/stock" }];
 
 const InventoryPage = async ({ params }: { params: { id: string } }) => {
     let item: Inventory | null = null;

@@ -31,56 +31,55 @@ const checkRequirements = async (collectionId: string | undefined) => {
   if( !businessId ) throw new Error('Business ID could not be initiated');
 
   return { database, userId, businessId };
-};
+}
 
+export const list = async ( ) => {
+  const { database } = await checkRequirements(UNITS_COLLECTION_ID);
 
-  export const list = async ( ) => {
-    const { database } = await checkRequirements(UNITS_COLLECTION_ID);
+  try {
+    const items = await database.listDocuments(
+      SAAS_DATABASE_ID!,
+      UNITS_COLLECTION_ID!,
+      [Query.orderAsc("name")]
+    );
 
-    try {
-      const items = await database.listDocuments(
-        SAAS_DATABASE_ID!,
-        UNITS_COLLECTION_ID!,
-        [Query.orderAsc("name")]
-      );
+    return parseStringify(items.documents);
 
-      return parseStringify(items.documents);
-
-    }catch (error: any){
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+  }catch (error: any){
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+    if (error instanceof AppwriteException) {
+      errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
-};
 
-  export const getItem = async (id: string) => {
-    const { database } = await checkRequirements(UNITS_COLLECTION_ID);
+    if(env == "development"){ console.error(error); }
 
-    try{
-      if (!id) throw new Error('Document ID is missing')
-
-      const item = await database.listDocuments(
-        SAAS_DATABASE_ID!,
-        UNITS_COLLECTION_ID!,
-        [Query.equal('$id', id)]
-      )
-
-      return parseStringify(item.documents[0]);
-    }catch (error: any){
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
-    }
+    Sentry.captureException(error);
+    throw Error(errorMessage);
   }
+};
+
+export const getItem = async (id: string) => {
+  const { database } = await checkRequirements(UNITS_COLLECTION_ID);
+
+  try{
+    if (!id) throw new Error('Document ID is missing')
+
+    const item = await database.listDocuments(
+      SAAS_DATABASE_ID!,
+      UNITS_COLLECTION_ID!,
+      [Query.equal('$id', id)]
+    )
+
+    return parseStringify(item.documents[0]);
+  }catch (error: any){
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+    if (error instanceof AppwriteException) {
+      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+    }
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
+    throw Error(errorMessage);
+  }
+}

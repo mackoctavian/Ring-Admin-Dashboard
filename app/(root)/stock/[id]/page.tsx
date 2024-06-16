@@ -4,6 +4,7 @@ import BreadCrumb from "@/components/layout/breadcrumb";
 import { getItem } from '@/lib/actions/stock.actions';
 import { Stock } from "@/types";
 import StockForm from "@/components/forms/StockForm";
+import { notFound } from 'next/navigation'
 
 const breadcrumbItems = [{ title: "Stock", link: "/stock" }, { title: "New", link: "" } ];
 
@@ -12,12 +13,9 @@ const StockPage = async ({ params }: { params: { id: string } }) => {
     let newItem = true;
 
     if (params.id && params.id !== "new") {
-        try {
-            item = await getItem(params.id);
-            newItem = false;
-        } catch (error) {
-            throw new Error("Error loading data" + error);
-        }
+        newItem = false;
+        item = await getItem(params.id)
+        if( !item ) notFound()
     }
 
     return (
