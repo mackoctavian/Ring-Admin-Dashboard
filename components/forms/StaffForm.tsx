@@ -89,9 +89,6 @@ const onSubmit = async (data: z.infer<typeof StaffSchema>) => {
             description: "Employee added successfully!"
             });
         }
-
-        // Redirect to the list page after submission
-        //router.push("/staff");
     } catch (error: any) {
     toast({
         variant: "destructive",

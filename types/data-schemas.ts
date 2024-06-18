@@ -62,6 +62,7 @@ export enum CampaignAudience{
     STAFF = "STAFF",
     CUSTOMERS = "CUSTOMERS",
 }
+
 export enum SubscriptionStatus {
     PAST = 'PAST_DUE',
     DUE = 'DUE',
@@ -69,6 +70,12 @@ export enum SubscriptionStatus {
     OK = 'OK',
     ALMOST = 'ALMOST_DUE',
     TRIAL = 'TRIAL'
+}
+
+export enum POSItemStatus {
+    DRAFT = 'Draft',
+    ACTIVE = 'Active',
+    ARCHIVED = 'Archived'
 }
 
 export const MultiSelectSchema = z.object({
@@ -766,14 +773,15 @@ export const CustomerSchema = z.object({
 export const ProductInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
     z.object({
         $id: z.string().optional(),
-        inventoryItem: InventoryVariantSchema,
+        item: InventoryVariantSchema,
         amountUsed: z.preprocess((val) => {
             if (typeof val === "string" && val.trim() !== "") {
                 return parseFloat(val);
             }
             return val;
         }, z.number().nonnegative()),
-        product: ProductSchema.nullable().optional(),
+        unit: z.string(),
+        //TODO: use unit object unit: ProductUnitSchema,
         $createdAt: z.preprocess((val) => {
             if (typeof val === "string" && val.trim() !== "") {
                 return new Date(val);
@@ -792,7 +800,19 @@ export const ProductInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
 export const ProductVariantSchema = z.object({
     id: z.string().optional(),
     name: z.string(),
-    allowDiscount: z.boolean(),
+    price: z.preprocess((val) => {
+            if (typeof val === "string" && val.trim() !== "") {
+                return parseFloat(val);
+            }
+            return val;
+        }, z.number().nonnegative()),
+    tax: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
+    barcode: z.string().optional().nullable(),
     status: z.boolean(),
     inventoryItems: z.array(ProductInventoryUsageSchema).optional(), 
   });
@@ -802,10 +822,14 @@ export const ProductSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     sku: z.string(),
-    category: CategorySchema,
+    category: z.array(CategorySchema),
+    description: z.string().min(5),
+    posStatus: z.nativeEnum(POSItemStatus),
+    branch: z.array(BranchSchema.omit({daysOpen: true})),
+    department: z.array(DepartmentSchema),
+    modifier: z.array(ModifierSchema),
     image: z.string(),
     variants: z.array(ProductVariantSchema).min(1, "At least one variant is required"),
-    description: z.string(),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);

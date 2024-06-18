@@ -271,10 +271,14 @@ declare type Product = {
   $id?: string;
   name: string;
   sku: string;
-  image?: string;
-  category: Category;
-  variants: ProductVariant[];
+  category: Category[];
   description: string;
+  status: string;
+  branch: Branch[];
+  department: Department[];
+  modifier: Modifier[]
+  image?: string;
+  variants: ProductVariant[];
   $createdAt?: Date;
   $updatedAt?: Date;
 };
@@ -283,11 +287,8 @@ declare type ProductVariant = {
   $id?: string;
   name: string;
   price: number;
-  minPrice?: number;
-  discount?: Discount;
-  image?: string;
+  tax: number;
   barcode?: string;
-  allowDiscount: boolean;
   status: boolean;
   inventoryItems: ProductInventoryItemUsage[];
   $createdAt?: Date;
@@ -297,8 +298,8 @@ declare type ProductVariant = {
 declare type ProductInventoryItemUsage = {
   $id?: string;
   item: InventoryVariant;
-  productVariant: ProductVariant;
   amountUsed: number;
+  unit: ProductUnit;
   $createdAt?: Date;
   $updatedAt?: Date;
 }
