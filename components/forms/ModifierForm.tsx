@@ -202,9 +202,6 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                               )}
                           />
 
-
-
-
                           <FormField
                               control={form.control}
                               name="status"

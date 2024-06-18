@@ -1,11 +1,12 @@
 "use client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Product } from "@/types";
+import { Device } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { StateColumn } from "../state-column";
+import { DateTimeColumn } from "../date-colum";
 
-export const columns: ColumnDef<Product>[] = [
+export const columns: ColumnDef<Device>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -30,16 +31,18 @@ export const columns: ColumnDef<Product>[] = [
     header: "NAME",
   },
   {
-    accessorKey: "sku",
-    header: "SKU",
+    accessorKey: "branchId",
+    header: "BRANCH",
   },
   {
-    accessorKey: "posStatus",
+    header: "LAST SYNC",
+    id: "lastSync",
+    cell: ({ row }) => <DateTimeColumn value={row.original.lastSync} />,
+  },
+  {
     header: "STATUS",
-  },
-  {
-    accessorKey: "description",
-    header: "DESCRIPTION",
+    id: "status",
+    cell: ({ row }) => <StateColumn state={row.original.status} />,
   },
   {
     id: "actions",

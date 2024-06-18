@@ -192,8 +192,10 @@ export const deleteItem = async ({ $id }: Modifier) => {
 };
   
 export const updateItem = async (id: string, data: Modifier) => {
+  if (!id || !data ) return null;
+  const { database } = await checkRequirements(MODIFIERS_COLLECTION_ID);
+
   try {
-    const { database } = await checkRequirements(MODIFIERS_COLLECTION_ID);
   
     await database.updateDocument(
       DATABASE_ID!,

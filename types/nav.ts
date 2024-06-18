@@ -153,15 +153,15 @@ export const mainMenu = [
   
     { type: 'separator' },
   
-    {
-      icon: "/icons/icons/business-settings.svg",
-      route: "/business",
-      label: "Business Settings",
-    },
+//    {
+//      icon: "/icons/icons/business-settings.svg",
+//      route: "/business",
+//      label: "Business Settings",
+//    },
     
     {
       icon: "/icons/icons/settings.svg",
-      route: "/settings/profile",
+      route: "/settings/user-profile",
       label: "System Settings",
     },
     

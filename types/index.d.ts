@@ -562,6 +562,29 @@ declare type Section = {
 /* End Section */
 
 
+/* Device */
+declare type Device = {
+  $id?: string;
+  imei?: string;
+  name: string;
+  branchId: string;
+  businessId: string;
+  code: number;
+  status: boolean;
+  lastSync: Date;
+  forceSync: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+/* End Device */
+
+
+
+
+
+
+
+
 
 
 // ========================================

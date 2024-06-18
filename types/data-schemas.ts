@@ -798,7 +798,7 @@ export const ProductInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
 );
 
 export const ProductVariantSchema = z.object({
-    id: z.string().optional(),
+    $id: z.string().optional(),
     name: z.string(),
     price: z.preprocess((val) => {
             if (typeof val === "string" && val.trim() !== "") {
@@ -814,7 +814,19 @@ export const ProductVariantSchema = z.object({
     }, z.number().nonnegative()),
     barcode: z.string().optional().nullable(),
     status: z.boolean(),
-    inventoryItems: z.array(ProductInventoryUsageSchema).optional(), 
+    inventoryItems: z.array(ProductInventoryUsageSchema).optional(),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
   });
 
 
@@ -825,10 +837,10 @@ export const ProductSchema = z.object({
     category: z.array(CategorySchema),
     description: z.string().min(5),
     posStatus: z.nativeEnum(POSItemStatus),
-    branch: z.array(BranchSchema.omit({daysOpen: true})),
+    branch: z.array(BranchSchema.omit({daysOpen: true, business: true})),
     department: z.array(DepartmentSchema),
-    modifier: z.array(ModifierSchema),
-    image: z.string(),
+    modifier: z.array(ModifierSchema).optional().nullable(),
+    image: z.string().optional().nullable(),
     variants: z.array(ProductVariantSchema).min(1, "At least one variant is required"),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -1025,6 +1037,37 @@ export const SectionSchema = z.object({
     branch: BranchSchema.omit({business: true, daysOpen: true}),
     description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     status: z.boolean(),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+});
+
+
+export const DeviceSchema = z.object({
+    $id: z.string().optional(),
+    name: z.string({
+        required_error: "Device name is required",
+        invalid_type_error: "Device name must be more than 2 characters long",
+    }).min(2),
+    branch: BranchSchema.omit({business: true, daysOpen: true}),
+    status: z.boolean(),
+    code: z.coerce
+            .string()
+            .trim()
+            .toUpperCase()
+            .regex(/^[A-Z0-9]*$/, "Activation code can only have letters and numbers!")
+            .min(6, "Activation code must be 6 characters long!")
+            .max(6, "Activation code must be 6 characters long!")
+            .transform((val) => val.toUpperCase()),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);

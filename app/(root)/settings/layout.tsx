@@ -25,7 +25,7 @@ export default function RootLayout({ children, }: Readonly<{ children: React.Rea
           <aside className='sticky top-0 lg:w-1/5'>
             <SidebarNav items={sidebarNavItems} />
           </aside>
-          <div className='w-full p-1 pr-4 lg:max-w-xl'>
+          <div className='w-full p-1 pr-4 lg:max-w-xxl'>
             <div className='pb-16'>
               {children}
             </div>
@@ -39,17 +39,22 @@ const sidebarNavItems = [
   {
     title: 'Profile',
     icon: <IconUser size={18} />,
-    href: '/settings/profile',
+    href: '/settings/user-profile',
   },
-  {
-    title: 'Account',
-    icon: <IconTool size={18} />,
-    href: '/settings/account',
-  },
+//  {
+//    title: 'Account',
+//    icon: <IconTool size={18} />,
+//    href: '/settings/account',
+//  },
   {
     title: 'Business',
     icon: <IconTool size={18} />,
     href: '/settings/business',
+  },
+  {
+    title: 'Devices',
+    icon: <IconBrowserCheck size={18} />,
+    href: '/settings/devices',
   },
   {
     title: 'Appearance',
@@ -60,10 +65,5 @@ const sidebarNavItems = [
     title: 'Notifications',
     icon: <IconNotification size={18} />,
     href: '/settings/notifications',
-  },
-  {
-    title: 'Display',
-    icon: <IconBrowserCheck size={18} />,
-    href: '/settings/display',
   },
 ]

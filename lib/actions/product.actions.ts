@@ -35,18 +35,6 @@ const checkRequirements = async (collectionId: string | undefined) => {
   return { database, userId, businessId };
 };
   
-const flattenObject = (obj) => {
-  const result = {};
-  for (const key in obj) {
-    if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
-      result[key] = JSON.stringify(obj[key]);
-    } else {
-      result[key] = obj[key];
-    }
-  }
-  return result;
-};
-
 export const createItem = async (item: Product) => {
     const { database, businessId } = await checkRequirements(PRODUCTS_COLLECTION_ID);
     const { variants, ...productData } = item;
@@ -58,7 +46,8 @@ export const createItem = async (item: Product) => {
         ID.unique(),
         {
           ...productData,
-          businessId: businessId
+          businessId: businessId,
+          canDelete: true
         }
       )
 
@@ -221,12 +210,48 @@ export const deleteItem = async ({ $id }: Product) => {
 export const updateItem = async (id: string, data: Product) => {
   if (!id || !data) return null;
   const { database, businessId } = await checkRequirements(PRODUCTS_COLLECTION_ID);
+  const { variants, ...productData } = data;
+
+  console.log(JSON.stringify(data));
+
     try {
       await database.updateDocument(
         DATABASE_ID!,
         PRODUCTS_COLLECTION_ID!,
         id,
-        data);
+        data
+      )
+
+      //Create variants
+//      for (const variant of variants) {
+//        console.log("VARIANT UPDATE", variant)
+//
+//        if ( variant.$id ){
+//          await database.updateDocument(
+//            DATABASE_ID,
+//            PRODUCTS_VARIANTS_COLLECTION_ID,
+//            variant.$id,
+//            {
+//              ...variant,
+//              product: id,
+//              productId: id
+//            }
+//          )
+//        }else{
+//          //
+//          await database.createDocument(
+//            DATABASE_ID,
+//            PRODUCTS_VARIANTS_COLLECTION_ID,
+//            ID.unique(),
+//            {
+//              ...variant,
+//              product: id,
+//              productId: id
+//            }
+//          )
+//        }
+//
+//      }
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
