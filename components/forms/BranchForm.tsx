@@ -34,10 +34,14 @@ const BranchForm = ({ item }: { item?: Branch | null }) => {
 
     const form = useForm<z.infer<typeof BranchSchema>>({
         resolver: zodResolver(BranchSchema),
-        defaultValues: item ? item : {
-            status: false,
-        },
-    });
+        defaultValues: item ? {
+                ...item,
+                daysOpen: item.daysOpen ? JSON.parse(item.daysOpen) : [] 
+              } : {
+                status: false,
+                daysOpen: [],
+              },
+          });
 
     const onInvalid = (errors : any ) => {
         console.error("Creating branch failed: ", JSON.stringify(errors));

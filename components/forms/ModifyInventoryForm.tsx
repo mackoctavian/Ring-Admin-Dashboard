@@ -25,7 +25,7 @@ import {
     SelectValue,
   } from "@/components/ui/select"
 import { Input } from "@/components/ui/input";
-import { updateItem } from "@/lib/actions/inventory.actions"
+import { modifyStockItem } from "@/lib/actions/inventory.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 import { SubmitButton } from "../ui/submit-button";
@@ -53,7 +53,7 @@ import InventorySelector from "@/components/layout/inventory-selector"
         setIsLoading(true);
     
         try {
-            await updateItem(data);
+            await modifyStockItem(data);
             toast({
                 variant: "success",
                 title: "Success", 

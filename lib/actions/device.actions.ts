@@ -74,7 +74,10 @@ export const list = async ( ) => {
     const items = await database.listDocuments(
       DATABASE_ID!,
       DEVICES_COLLECTION_ID!,
-      [Query.equal('businessId', [businessId])]
+      [
+        Query.orderAsc("$createdAt"),
+        Query.equal('businessId', businessId!)
+      ]
     );
 
     return parseStringify(items.documents);

@@ -33,6 +33,7 @@ export enum InventoryStatus {
     OUT_OF_STOCK = "OUT OF STOCK",
     IN_STOCK = "AVAILABLE",
     LOW_STOCK = "LOW STOCK",
+    ALARM = "ALARM",
     EXPIRED = "EXPIRED",
 }
 
@@ -476,10 +477,61 @@ export const ProductUnitSchema = z.object({
     }, z.date().optional()),
 });
 
+
+export const UpdateInventoryVariantSchema = z.object({
+    $id: z.string().optional(),
+    name: z.string().trim().nonempty(),
+    itemsPerUnit: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseInt(val);
+        }
+        return val;
+    }, z.number().nonnegative().optional()),
+    lowQuantity: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseInt(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
+    barcodeId: z.string().length(13, { message: "Must be exactly 13 characters long" }).nullable().optional(),
+    itemsPerPackage: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseInt(val);
+        }
+        return val;
+    }, z.number().nonnegative().optional()),
+    volume: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative().optional()),
+    unit: z.string().optional(),
+    amount: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative().optional()),
+    image: z.string().optional().nullable(),
+    status: z.nativeEnum(InventoryStatus),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+});
+
 export const InventoryVariantSchema = z.object({
     $id: z.string().optional(),
     name: z.string().trim().nonempty(),
-    fullName: z.string().trim().nonempty(),
     itemsPerUnit: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
@@ -504,18 +556,6 @@ export const InventoryVariantSchema = z.object({
         }
         return val;
     }, z.number().nonnegative()),
-    actualQuantity: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return parseInt(val);
-        }
-        return val;
-    }, z.number().optional()),
-    quantity: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return parseInt(val);
-        }
-        return val;
-    }, z.number().nonnegative().optional()),
     barcodeId: z.string().length(13, { message: "Must be exactly 13 characters long" }).nullable().optional(),
     itemsPerPackage: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -548,7 +588,6 @@ export const InventoryVariantSchema = z.object({
     //     "Only .jpg .jpeg and .png formats are supported"
     // ),
     status: z.nativeEnum(InventoryStatus),
-    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
@@ -580,7 +619,26 @@ export const InventorySchema = z.object({
         }
         return val;
     }, z.date().optional()),
-  });
+});
+
+export const UpdateInventorySchema = z.object({
+    $id: z.string().optional(),
+    title: z.string().nonempty("Title is required"),
+    packaging: z.string(),
+    variants: z.array(UpdateInventoryVariantSchema).min(1, "At least one item is required"),
+    $createdAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+    $updatedAt: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return new Date(val);
+        }
+        return val;
+    }, z.date().optional()),
+});
 
 export const InventoryModificationSchema = z.object({
     $id: z.string().optional(),
@@ -947,7 +1005,13 @@ export const ExpenseSchema = z.object({
     category: z.string(),
     amount: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
-            return parseInt(val);
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
+    balance: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
         }
         return val;
     }, z.number().nonnegative()),
@@ -967,7 +1031,7 @@ export const ExpenseSchema = z.object({
         }
         return val;
     }, z.date()),
-    document: z.string().optional(),
+    document: z.string().optional().nullable(),
     branch: BranchSchema.omit({business: true, daysOpen: true}).nullable().optional(),
     description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     status: z.enum([ExpenseStatus.PAID, ExpenseStatus.PARTIAL, ExpenseStatus.UNPAID], {
@@ -992,10 +1056,7 @@ export const ExpensePaymentSchema = z.object({
     $id: z.string().optional(),
     expense: ExpenseSchema,
     paymentDate: z.date(),
-    paymentMethod: z.enum([PaymentMethod.BANK, PaymentMethod.CARD, PaymentMethod.CASH, PaymentMethod.CHEQUE, PaymentMethod.MOBILE, PaymentMethod.OTHER], {
-        required_error: "Payment method is required",
-        invalid_type_error: "Select a valid payment method",
-    }),
+    paymentMethod: z.nativeEnum(PaymentMethod, {message: "Select the repayment method"}),
     amount: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);

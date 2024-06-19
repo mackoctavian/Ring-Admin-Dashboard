@@ -14,8 +14,9 @@ import { createDefaultBranch } from "@/lib/actions/branch.actions"
 import { createDefaultDepartment } from "@/lib/actions/department.actions" 
 
 import { BusinessRegistrationSchema } from "@/types/data-schemas";
-import { notFound, redirect } from 'next/navigation';
 import { useClerk } from "@clerk/nextjs";
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation'
 
 const { 
   APPWRITE_DATABASE: DATABASE_ID, 
@@ -73,43 +74,61 @@ export const getCurrentBusiness = async () => {
 
 export const getBusinessId = async () => {
     try{
-//      let { orgId, userId, sessionClaims } = auth();
-//      if (!userId) { throw Error("User not found") }
-//
-//      if ( sessionClaims?.metadata?.businessId ) return sessionClaims.metadata.businessId as string;
-//
-//      if (!orgId && sessionClaims?.membership) orgId = Object.keys(sessionClaims.membership)[0]
-//      if (!orgId) { useClerk().signOut() }
-//
-//      const { database } = await checkRequirements(BUSINESS_COLLECTION_ID);
-//      const response = await database.listDocuments(
-//        DATABASE_ID!,
-//        BUSINESS_COLLECTION_ID!,
-//        [Query.equal('orgId', [orgId!])]
-//      );
-//      const business: Business = parseStringify(response.documents[0]);
-//      if (!business) { return notFound() }
-//
-//      const businessId = business.$id;
-//      if (!businessId) throw new Error('Could not find the current business');
-//
-//      await clerkClient.users.updateUser(userId, {
-//        publicMetadata: {
-//          businessId: business.$id,
-//        },
-//        privateMetadata: {
-//          businessId: business.$id,
-//        },
-//      });
-//
-//      return { businessId }
-      return "666be40900355a16ea37";
-    }catch(error: any){
-      //return notFound()
-      console.error("Error getting business id", error);
+      let { orgId, userId, sessionClaims } = auth();
+      if (!userId) { throw Error("User not found") }
+
+      //If business Id is available on session data, use that
+      if ( sessionClaims?.metadata?.businessId ) return sessionClaims.metadata.businessId as string;
+
+      //If org Id is available on session data, use that to fetch business id
+      if (!orgId && sessionClaims?.membership) orgId = Object.keys(sessionClaims.membership)[0]
+
+      // TODO: Log out user and redirect to sign in page instead of returning null
+      if ( !orgId ) return null;
+
+      //Create connection directly, redirect loop when using checkRequirements
+      if (!DATABASE_ID || !BUSINESS_COLLECTION_ID) {  throw Error('Fetch business id failed: Database ID or Collection ID is missing') }
+
+      const { database } = await createAdminClient();
+      if (!database) throw new Error('Database client could not be initiated');
+
+      const item = await database.listDocuments(
+        DATABASE_ID!,
+        BUSINESS_COLLECTION_ID!,
+        [Query.equal('orgId', [orgId!])]
+      );
+
+      // TODO: Log out user and redirect to sign in page instead of returning null
+      if ( item.total < 1 ) return null;
+
+      const business: Business = parseStringify(item.documents[0]);
+      const businessId = business.$id;
+
+      //Update session metadata since you reached here means its missing
+      await clerkClient.users.updateUser(userId, {
+        publicMetadata: {
+          businessId: businessId,
+        },
+        privateMetadata: {
+          businessId: businessId,
+        },
+      });
+
+      return businessId
+    } catch (error: any) {
+      console.error(error)
+
+      let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
+      throw Error(errorMessage);
     }
 }
-
 export const getBusiness = async () => {
   const { database, businessId, userId } = await checkRequirements(BUSINESS_COLLECTION_ID);
 
@@ -120,10 +139,17 @@ export const getBusiness = async () => {
       [Query.equal('owner', [userId])]
     );
     return parseStringify(user.documents[0]);
-  } catch (error) {
-    console.error(error);
-    throw new Error('Error fetching user information');
-  }
+  } catch (error: any) {
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+      if (error instanceof AppwriteException) {
+        errorMessage = getStatusMessage(error.code as HttpStatusCode);
+      }
+
+      if(env == "development"){ console.error(error); }
+
+      Sentry.captureException(error);
+      throw Error(errorMessage);
+    }
 }
 
  export const getSubscriptionStatus = async () => {
@@ -144,6 +170,8 @@ export const getBusiness = async () => {
        SUBSCRIBERS_COLLECTION_ID!,
        [Query.equal('businessId', businessId as string)]
      )
+
+     if ( item.total < 1 ) return status;
 
      const subscription = parseStringify(item.documents[0]) as SubscriptionDetails;
      status = subscription.status
@@ -327,7 +355,10 @@ export const registerBusiness = async (data: Business) => {
     Sentry.captureException(error);
     throw Error(errorMessage);
   }finally {
-    if (redirectPath) redirect(redirectPath)
+    //redirect same path, if succesfull then path will take you home
+    console.log("Redirect to homepage")
+    revalidatePath("/")
+    redirect('/')
   }
 }
 

@@ -5,13 +5,13 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductUnit } from "@/types";
-import { InventorySchema, InventoryStatus } from "@/types/data-schemas";
+import { InventorySchema, UpdateInventorySchema, InventoryStatus } from "@/types/data-schemas";
 import { createItem, updateItem } from "@/lib/actions/inventory.actions";
 import { useToast } from "@/components/ui/use-toast";
 import CancelButton from "../layout/cancel-button";
+import { Button } from "@/components/ui/button"
 import { capitalizeFirstLetter } from "@/lib/utils"
 import UnitSelector from "../layout/unit-selector";
 import {
@@ -39,15 +39,19 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
   const { toast } = useToast();
   const isEditMode = Boolean(item);
 
-  const form = useForm<z.infer<typeof InventorySchema>>({
-    resolver: zodResolver(InventorySchema),
+  const schema = isEditMode ? UpdateInventorySchema : InventorySchema;
+
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
     defaultValues: item
       ? item
       : {
           variants: [{ 
             status: InventoryStatus.OUT_OF_STOCK, 
             fullName: '',
-            unit: ''
+            unit: '',
+            quantity: 0,
+            value: 0,
           }],
         },
   });
@@ -66,45 +70,31 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
     });
   };
 
-  const onSubmit = async (data: z.infer<typeof InventorySchema>) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     setIsLoading(true);
 
     try {
-      data.variants = data.variants.map(variant => {
-        if (variant.startingQuantity === 0) {
-          variant.status = InventoryStatus.OUT_OF_STOCK;
-        } else if (variant.startingQuantity <= variant.lowQuantity) {
-          variant.status = InventoryStatus.LOW_STOCK;
-        } else {
-          variant.status = InventoryStatus.IN_STOCK;
-        }
-
-        variant.fullName = capitalizeFirstLetter(`${data.title} ${data.packaging ?? ''} ${variant.name ?? ''}`.trim());
-        variant.quantity = variant.startingQuantity;
-        variant.actualQuantity = variant.startingQuantity;
-        return variant;
-      });
-
       if (isEditMode && item?.$id) {
+
         await updateItem(item.$id, data);
         toast({
           variant: "success",
           title: "Success",
-          description: "Inventory item updated successfully!",
+          description: "Stock item updated successfully!",
         });
       } else {
         await createItem(data);
         toast({
           variant: "success",
           title: "Success",
-          description: "Inventory item created successfully!",
+          description: "Stock item created successfully!",
         });
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
-        description: error.message || "There was an issue submitting your form, please try later",
+        description: "There was an issue submitting your form, please try later",
       });
     } finally {
       setTimeout(() => {
@@ -113,32 +103,6 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
     }
   };
 
-  useEffect(() => {
-    fields.forEach((field, index) => {
-      const startingQuantity = form.watch(`variants.${index}.startingQuantity`);
-      const lowQuantity = form.watch(`variants.${index}.lowQuantity`);
-      const variantName = form.watch(`variants.${index}.name`);
-      const startingValue = form.watch(`variants.${index}.startingValue`);
-      const itemName = form.watch(`title`);
-      const itemPackage = form.watch(`packaging`);
-
-      let status;
-      if (startingQuantity === 0) {
-        status = InventoryStatus.OUT_OF_STOCK;
-      } else if (startingQuantity <= lowQuantity) {
-        status = InventoryStatus.LOW_STOCK;
-      } else {
-        status = InventoryStatus.IN_STOCK;
-      }
-
-      const fullName = `${itemName} ${itemPackage} ${variantName ?? ''}`.trim();
-
-      if (status !== field.status || fullName !== field.fullName || startingQuantity !== field.quantity) {
-        update(index, { ...field, status, fullName, quantity: startingQuantity, startingValue: startingValue, actualQuantity: startingQuantity });
-      }
-    });
-  }, [fields, form, form.watch]);
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
@@ -146,9 +110,9 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
 
         <Card>
           <CardHeader>
-            <CardTitle>Inventory details</CardTitle>
+            <CardTitle>Stock item details</CardTitle>
             <CardDescription>
-              Details used to identify your inventory item
+              Details used to identify your stock item
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -158,9 +122,9 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Inventory item name</FormLabel>
+                    <FormLabel>Stock item name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Inventory item name" {...field} />
+                      <Input placeholder="Stock item name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -184,9 +148,9 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
 
         <Card>
           <CardHeader>
-            <CardTitle>Inventory variants</CardTitle>
+            <CardTitle>Stock item variants</CardTitle>
             <CardDescription>
-              Variants of the inventory item
+              Variants of the stock item
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -200,7 +164,7 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
                       <FormItem>
                         <FormLabel>Variant name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Variant name" {...field} />
+                          <Input placeholder="Stock variant name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -340,15 +304,14 @@ const InventoryForm = ({ item, units }: { item?: ProductUnit, units: ProductUnit
                 status: InventoryStatus.OUT_OF_STOCK,
                 startingQuantity: 0,
                 fullName: '',
-                unit: ''
+                unit: '',
+                quantity: 0,
+                value: 0
               })}>
                 Add Variant
             </Button>
           </CardFooter>
         </Card>
-
-
-
 
 
         <div className="flex h-5 items-center space-x-4">

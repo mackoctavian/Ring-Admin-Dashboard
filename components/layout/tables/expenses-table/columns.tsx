@@ -40,6 +40,11 @@ export const columns: ColumnDef<Expense>[] = [
     cell: ({ row }) => <NumberColumn suffix={row.original.currency} value={row.original.amount} />,
   },
   {
+    header: "BALANCE",
+    id: "balance",
+    cell: ({ row }) => <NumberColumn suffix={row.original.currency} value={row.original.balance} />,
+  },
+  {
     id: "dueDate",
     header: "DUE DATE",
     cell: ({ row }) => <DateTimeColumn value={row.original.dueDate}  />,

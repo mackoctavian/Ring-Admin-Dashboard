@@ -453,7 +453,8 @@ declare type Campaign = {
 declare type Inventory = {
   $id?: string;
   title: string,
-  unit: ProductUnit,
+  packaging: string,
+  businessId: string,
   variants: InventoryVariant[],
   $createdAt?: Date;
   $updatedAt?: Date;
@@ -463,19 +464,21 @@ declare type Inventory = {
 declare type InventoryVariant = {
   $id?: string;
   name: string,
-  fullName: string,
   quantity: number,
   startingQuantity: number;
-  actualQuantity: number;
-  itemsPerPackage?: number,
   lowQuantity: number,
   barcodeId?: string,
-  image?: string,
-  volume?: number,
-  startingValue: number;
-  value: number;
-  inventory: Inventory;
   status: InventoryStatus,
+  image?: string,
+  fullName: string,
+  itemsPerPackage: number,
+  volume?: number,
+  inventory: Inventory;
+  unit: string;
+  startingValue: number;
+  actualQuantity: number;
+  businessId: string;
+  value: number;
   $createdAt?: Date;
   $updatedAt?: Date;
 }
@@ -524,6 +527,7 @@ declare type Expense = {
   dueDate: Date;
   document?: string;
   description: string;
+  balance: number;
   status: ExpenseStatus;
   $createdAt?: Date;
   $updatedAt?: Date;

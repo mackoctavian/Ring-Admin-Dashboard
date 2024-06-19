@@ -15,6 +15,7 @@ import { ExpenseSchema, ExpenseStatus } from "@/types/data-schemas";
 import { createItem, updateItem } from "@/lib/actions/expense.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
+import { SubmitButton } from '../ui/submit-button';
 import DepartmentSelector from "../layout/department-selector";
 import StaffSelector from "../layout/staff-selector";
 import ExpenseCategorySelector from "../layout/expense-category-selector";
@@ -64,6 +65,7 @@ import BranchSelector from "../layout/branch-selector";
         defaultValues: item ? item : {
             tax: 0,
             status: ExpenseStatus.UNPAID,
+            balance: 0
         },
     });
 
@@ -293,10 +295,6 @@ import BranchSelector from "../layout/branch-selector";
                             )}
                     />
 
-                    
-
-                    
-
                     <FormField
                         control={form.control}
                         name="tax"
@@ -356,18 +354,8 @@ import BranchSelector from "../layout/branch-selector";
         
                 <div className="flex h-5 items-center space-x-4">
                     <CancelButton />
-                
                     <Separator orientation="vertical" />
-
-                    <Button type="submit">
-                        {isLoading ? (
-                            <>
-                                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-                            </>
-                            ) : (
-                            item ? "Update expense details" : "Record expense"
-                        )}
-                    </Button> 
+                    <SubmitButton label={item ? "Update expense details" : "Record expense"} loading={isLoading} />
                 </div>
             </form>
         </Form>

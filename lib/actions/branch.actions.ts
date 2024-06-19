@@ -52,13 +52,13 @@ export const createDefaultBranch = async (business: Business) => {
         email: business.email,
         phoneNumber: business.phoneNumber,
         address: business.address,
-        daysOpen: [
+        daysOpen: JSON.stringify([
           { label: "Monday", value: "Monday" },
           { label: "Tuesday", value: "Tuesday" },
           { label: "Wednesday", value: "Wednesday" },
           { label: "Thursday", value: "Thursday" },
           { label: "Friday", value: "Friday" },
-        ],
+        ]),
         staffCount: 1,
         city: business.city,
         openingTime: "09:00",
@@ -113,24 +113,22 @@ export const getCurrentBranch = async () => {
 }
 
 export const createItem = async (item: Branch) => {
+
   try {
       const { database } = await checkRequirements(BRANCH_COLLECTION_ID);
       const currentBusiness: Business = await getCurrentBusiness();
 
-      const genBranchId = ID.unique();
-
       const daysOpen = item.daysOpen.map(option => ({
-        ...option,
-        branchId: genBranchId,
+        ...option
       }));
 
-      item.daysOpen = daysOpen
+      item.daysOpen = JSON.stringify(daysOpen)
 
       //create branch
       const createdBranch = await database.createDocument(
         DATABASE_ID!,
         BRANCH_COLLECTION_ID!,
-        genBranchId,
+        ID.unique(),
         {
           ...item,
           business: currentBusiness,
@@ -229,17 +227,18 @@ export const createItem = async (item: Branch) => {
   }
 
   export const getItem = async (id: string) => {
+     if (!id) throw new Error('Document ID is missing')
     const { database } = await checkRequirements(BRANCH_COLLECTION_ID);
 
     try {
-      if (!id) throw new Error('Document ID is missing')
-  
       const item = await database.listDocuments(
         DATABASE_ID!,
         BRANCH_COLLECTION_ID!,
         [Query.equal('$id', id)]
       )
-  
+
+      if ( item.total < 1 ) return null;
+
       return parseStringify(item.documents[0]);
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
@@ -286,8 +285,8 @@ export const updateItem = async (id: string, data: Branch) => {
     branchId:id,
   }));
 
-  data.daysOpen = daysOpen;
-
+  data.daysOpen = JSON.stringify(daysOpen)
+  
   try {
     await database.updateDocument(
       DATABASE_ID!,

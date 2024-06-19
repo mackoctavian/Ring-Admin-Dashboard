@@ -4,7 +4,7 @@ import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { Expense } from "@/types";
 import { cn } from "@/lib/utils";
-import { Plus } from "lucide-react";
+import { Plus, ReceiptText } from "lucide-react";
 import Link from "next/link";
 
 import { columns } from "@/components/layout/tables/expenses-table/columns";
@@ -35,11 +35,17 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Expenses`} total={total.toString()} description="Manage expenses" />
+          <Heading title={`Expenses`} total={total.toString()} description="Manage expenses" />
 
-            <Link href={"/expenses/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Record Expense
+          <div className="ml-auto flex space-x-4">
+            <Link href="/expenses/new" className={cn(buttonVariants({ variant: "default" }))} >
+                <Plus className="mr-2 h-4 w-4" /> Record expense
             </Link>
+
+            <Link href="/expenses/repayment" className={cn(buttonVariants({ variant: "outline" }))} >
+                <ReceiptText className="mr-2 h-4 w-4" /> Record payment
+            </Link>
+          </div>
         </div>
         <Separator />
 

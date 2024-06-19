@@ -25,12 +25,10 @@ export const columns: ColumnDef<InventoryVariant>[] = [
     enableSorting: true,
     enableHiding: false,
   },
-
   {
     id: "fullName",
-    accessorKey: "inventory.title",
-    header: "TITLE",
-    cell: ({ row }) => <InventoryItemNameColumn data={row.original} />,
+    accessorKey: "fullName",
+    header: "NAME",
   },
   {
     id: "packaging",
@@ -38,16 +36,8 @@ export const columns: ColumnDef<InventoryVariant>[] = [
     header: "PACKAGING",
   },
   {
-    accessorKey: "name",
-    header: "VARIANT",
-  },
-  {
     accessorKey: "quantity",
     header: "QUANTITY",
-  },
-  {
-    accessorKey: "volume",
-    header: "VOLUME",
   },
   {
     accessorKey: "status",

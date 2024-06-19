@@ -16,7 +16,7 @@ const {
     APPWRITE_DATABASE: DATABASE_ID,
     MODIFIERS_COLLECTION: MODIFIERS_COLLECTION_ID,
     MODIFIER_ITEMS_COLLECTION: MODIFIER_ITEMS_COLLECTION_ID
-  } = process.env;
+} = process.env;
 
 const checkRequirements = async (collectionId: string | undefined) => {
   if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
@@ -65,13 +65,15 @@ export const createItem = async (item: Modifier) => {
 };
 
 export const list = async () => {
+  const { database, businessId } = await checkRequirements(MODIFIERS_COLLECTION_ID);
   try {
-    const { database } = await checkRequirements(MODIFIERS_COLLECTION_ID);
-
     const items = await database.listDocuments(
       DATABASE_ID!,
       MODIFIERS_COLLECTION_ID!,
-      [Query.orderAsc("name")]
+      [
+        Query.orderAsc("name"),
+        Query.equal('businessId', businessId!)
+      ]
     );
 
     return parseStringify(items.documents);
@@ -90,12 +92,12 @@ export const list = async () => {
   
   
 export const getItems = async (q?: string, status?: boolean | null, limit?: number | null, offset?: number | 1) => {
+    const { database, businessId } = await checkRequirements(MODIFIERS_COLLECTION_ID);
+
     try {
-      const { database, businessId } = await checkRequirements(MODIFIERS_COLLECTION_ID);
-    
       const queries = [];
       queries.push(Query.equal("businessId", businessId));
-      queries.push(Query.orderAsc("name"));
+      queries.push(Query.orderAsc("$createdAt"));
   
       if (limit) {
         queries.push(Query.limit(limit));
@@ -161,10 +163,11 @@ export const getItem = async (id: string) => {
   }
 };
   
-export const deleteItem = async ({ $id }: Modifier) => {
-  try {
-    const { database } = await checkRequirements(MODIFIERS_COLLECTION_ID);
 
+export const deleteItem = async ({ $id }: Modifier) => {
+  if (!$id) return null;
+  const { database } = await checkRequirements(MODIFIERS_COLLECTION_ID);
+  try {
     if (!$id) throw new Error('Item id is missing');
 
     const item = await database.deleteDocument(
@@ -172,8 +175,6 @@ export const deleteItem = async ({ $id }: Modifier) => {
       MODIFIERS_COLLECTION_ID!,
       $id
     );
-
-    return parseStringify(item);
   } catch (error: any) {
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
@@ -205,7 +206,6 @@ export const updateItem = async (id: string, data: Modifier) => {
     );
 
   } catch (error: any) {
-    console.log(error);
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);
