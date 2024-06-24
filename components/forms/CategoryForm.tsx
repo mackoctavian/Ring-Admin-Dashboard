@@ -2,13 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
-import { ReloadIcon } from "@radix-ui/react-icons"
-import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea"
 import {
   Form,
@@ -26,24 +23,18 @@ import {
     SelectValue,
   } from "@/components/ui/select"
 import { Input } from "@/components/ui/input";
-import { Category, Discount } from "@/types";
+import { Category } from "@/types";
 import { CategoryType, CategorySchema } from "@/types/data-schemas";
 import { createItem, updateItem } from "@/lib/actions/category.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
-import ParentCategorySelector from "@/components/layout/parent-category-selector";
-import DiscountSelector from "../layout/discount-selector";
+import CategorySelector from "@/components/layout/category-selector";
 import { SubmitButton } from "../ui/submit-button";
 
  const CategoryForm = ({ item }: { item?: Category | null }) => {
-    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false)
     const { toast } = useToast()
 
-    const [selectedParent, setSelectedParent] = useState<Category | undefined>(
-        item ? item.parent : undefined
-    );
-    
     const form = useForm<z.infer<typeof CategorySchema>>({
         resolver: zodResolver(CategorySchema),
         defaultValues: item ? { ...item, parent: item.parent } : {
@@ -59,17 +50,7 @@ import { SubmitButton } from "../ui/submit-button";
             title: "Data validation failed!", 
             description: "Please make sure all the fields marked with * are filled correctly."
         });
-        console.error(JSON.stringify(errors));
     }
-
-    const nameValue = form.watch('name');
-    useEffect(() => {
-        if (nameValue) {
-            const generatedSlug = nameValue.toLowerCase().replace(/\s+/g, '-');
-            form.setValue('slug', generatedSlug);
-        }
-    }, [nameValue, form.setValue]);
-        
         
     const onSubmit = async (data: z.infer<typeof CategorySchema>) => {
         setIsLoading(true);
@@ -90,10 +71,6 @@ import { SubmitButton } from "../ui/submit-button";
                     description: "Category created succesfully!"
                 });
             }
-            
-            // Redirect to the list page after submission
-            router.push("/categories");
-            router.refresh();
         } catch (error: any) {
             toast({
                 variant: "destructive",
@@ -107,13 +84,6 @@ import { SubmitButton } from "../ui/submit-button";
             }, 1000); 
         }
     };
-
-    useEffect(() => {
-        if (item) {
-          setSelectedParent(item.parent);
-        }
-      }, [item]);
-
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
@@ -123,10 +93,10 @@ import { SubmitButton } from "../ui/submit-button";
                         name="name"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Product category name</FormLabel>
+                            <FormLabel>Category name</FormLabel>
                             <FormControl>
                                 <Input
-                                placeholder="Product category name (eg. Hair Products)"
+                                placeholder="Category name (eg. Hair Products)"
                                 {...field}
                                 />
                             </FormControl>
@@ -140,7 +110,7 @@ import { SubmitButton } from "../ui/submit-button";
                         name="type"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Product category type</FormLabel>
+                            <FormLabel>Category type</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                     <SelectTrigger>
@@ -163,32 +133,10 @@ import { SubmitButton } from "../ui/submit-button";
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Parent category</FormLabel>
-                                <ParentCategorySelector
-                                type={ form.watch("type") }
-                                value={selectedParent}
-                                onChange={(cat) => { setSelectedParent(cat); field.onChange(cat); }}
-                                />
+                                <CategorySelector {...field} />
                                 <FormMessage />
                             </FormItem>
                             )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="slug"
-                        render={({ field }) => (
-                            <FormItem className="hidden">
-                                <FormLabel>Slug ( Auto-Generated )</FormLabel>
-                                <FormControl>
-                                    <Input
-                                    placeholder="Category identifier"
-                                    disabled
-                                    {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
                     />
 
                     <FormField

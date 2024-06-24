@@ -46,9 +46,7 @@ const CampaignForm = ({ item }: { item?: Campaign | null }) => {
 
     const form = useForm<z.infer<typeof CampaignSchema>>({
         resolver: zodResolver(CampaignSchema),
-        defaultValues: item ? item : {
-            status: false,
-        },
+        defaultValues: item ? item : {},
     });
 
     const onInvalid = (errors : any ) => {
@@ -59,7 +57,7 @@ const CampaignForm = ({ item }: { item?: Campaign | null }) => {
         });
     }
 
-    const onSubmit = async (data: z.infer<typeof BranchSchema>) => {
+    const onSubmit = async (data: z.infer<typeof CampaignSchema>) => {
         setIsLoading(true);
         try {
             if (item) {

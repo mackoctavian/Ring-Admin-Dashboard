@@ -198,7 +198,7 @@ export const getBusinessInfo = async ({ user }) => {
       BUSINESS_COLLECTION_ID!,
       [Query.equal('userId', [user])]
     );
-    return parseStringify(user.documents[0]);
+    return parseStringify(business.documents[0]);
   } catch (error) {
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {

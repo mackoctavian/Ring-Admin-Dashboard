@@ -95,7 +95,7 @@ import "react-day-picker/style.css"
                         <FormItem>
                             <FormLabel>Expense *</FormLabel>
                             <FormControl>
-                                <ExpenseSelector {...field} />
+                                <ExpenseSelector status="INCOMPLETE" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

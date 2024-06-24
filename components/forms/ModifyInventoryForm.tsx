@@ -60,7 +60,6 @@ import InventorySelector from "@/components/layout/inventory-selector"
                 description: "Stock items updated succesfully!"
             })
         } catch (error: any) {
-            console.log(error)
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.", 
@@ -77,7 +76,7 @@ import InventorySelector from "@/components/layout/inventory-selector"
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <FormField
                         control={form.control}
                         name="item"
@@ -97,11 +96,30 @@ import InventorySelector from "@/components/layout/inventory-selector"
                         name="quantity"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Updated quantity *</FormLabel>
+                            <FormLabel>Updated stock quantity *</FormLabel>
                             <FormControl>
                                 <Input
                                     type="number"
                                     placeholder="Updated stock quantity"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="value"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Updated stock value *</FormLabel>
+                            <FormControl>
+                                <Input
+                                    step="0.01"
+                                    type="number"
+                                    placeholder="Updated stock value"
                                     {...field}
                                 />
                             </FormControl>

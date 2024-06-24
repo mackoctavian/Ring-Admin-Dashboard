@@ -34,13 +34,13 @@ const checkRequirements = async (collectionId: string | undefined) => {
   return { database, userId, businessId };
 };
 
-export const createItem = async ( item: Campaign, formState: FormState ) => {
+export const createItem = async ( item: Campaign ) => {
   const { database, businessId } = await checkRequirements(CAMPAIGN_COLLECTION_ID);
 
   try {
     await database.createDocument(
-      DATABASE_ID,
-      CAMPAIGN_COLLECTION_ID,
+      DATABASE_ID!,
+      CAMPAIGN_COLLECTION_ID!,
       ID.unique(),
       {
         ...item,
@@ -48,11 +48,19 @@ export const createItem = async ( item: Campaign, formState: FormState ) => {
         status: true
       }
     );
-  } catch (error : any) {
-    return fromErrorToFormState(error);
+  } catch (error: any) {
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+    if (error instanceof AppwriteException) {
+      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+    }
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
+    throw Error(errorMessage);
   }
 
-  revalidatePath('/campaigns');
+  revalidatePath('/campaigns')
   redirect('/campaigns')
 }
 
@@ -61,8 +69,8 @@ export const list = async ( ) => {
 
     try {
       const items = await database.listDocuments(
-        DATABASE_ID,
-        CAMPAIGN_COLLECTION_ID,
+        DATABASE_ID!,
+        CAMPAIGN_COLLECTION_ID!,
         [Query.equal('businessId', businessId!)]
       );
 
@@ -108,8 +116,8 @@ export const getItems = async (
       }
   
       const items = await database.listDocuments(
-        DATABASE_ID,
-        CAMPAIGN_COLLECTION_ID,
+        DATABASE_ID!,
+        CAMPAIGN_COLLECTION_ID!,
         queries
       );
   
@@ -158,7 +166,7 @@ export const getItem = async (id: string) => {
   }
 
 export const deleteItem = async ({ $id }: Campaign) => {
-  if (!id) return null;
+  if (!$id) return null;
   const { database, businessId } = await checkRequirements(CAMPAIGN_COLLECTION_ID);
 
     try {

@@ -3,7 +3,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Inventory, InventoryVariant } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
-import { InventoryItemNameColumn } from "./inventory-fullname-cell";
+import { NumberColumn } from "../number-column";
+import { MoneyColumn } from "../money-colum";
 
 export const columns: ColumnDef<InventoryVariant>[] = [
   {
@@ -36,8 +37,14 @@ export const columns: ColumnDef<InventoryVariant>[] = [
     header: "PACKAGING",
   },
   {
-    accessorKey: "quantity",
     header: "QUANTITY",
+    id: "quantity",
+    cell: ({ row }) => <NumberColumn value={row.original.quantity} />,
+  },
+  {
+    header: "VALUE",
+    id: "value",
+    cell: ({ row }) => <MoneyColumn value={row.original.value} />,
   },
   {
     accessorKey: "status",

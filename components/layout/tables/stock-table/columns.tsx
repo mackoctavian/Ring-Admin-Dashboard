@@ -42,7 +42,7 @@ export const columns: ColumnDef<Stock>[] = [
     header: "SUPPLIER",
   },
   {
-    header: "COST",
+    header: "VALUE",
     id: "value",
     cell: ({ row }) => <MoneyColumn value={row.original.value} />,
   },
@@ -52,7 +52,11 @@ export const columns: ColumnDef<Stock>[] = [
     cell: ({ row }) => <DateTimeColumn value={row.original.$createdAt} />,
   },
   {
-    id: "actions",
-    cell: ({ row }) => <CellAction data={row.original} />,
+    header: "RECEIVED BY",
+    accessorKey: "staff.name",
   },
+//  {
+//    id: "actions",
+//    cell: ({ row }) => <CellAction data={row.original} />,
+//  },
 ];

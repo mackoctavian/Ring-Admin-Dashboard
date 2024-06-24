@@ -15,7 +15,6 @@ import { redirect } from 'next/navigation'
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     BRANCHES_COLLECTION: BRANCH_COLLECTION_ID,
-    OPEN_DAYS_COLLECTION: BRANCH_DAYS_COLLECTION_ID,
   } = process.env;
 
 const checkRequirements = async (collectionId: string | undefined) => {
@@ -36,6 +35,7 @@ const checkRequirements = async (collectionId: string | undefined) => {
 };
 
 export const createDefaultBranch = async (business: Business) => {
+  if (!business ) return null;
   try {
     //Create connection directly, redirect loop when using checkRequirements
     if (!DATABASE_ID || !BRANCH_COLLECTION_ID) {  throw Error('Default branch failed: Database ID or Collection ID is missing') }
@@ -113,7 +113,7 @@ export const getCurrentBranch = async () => {
 }
 
 export const createItem = async (item: Branch) => {
-
+  if (!item ) return null;
   try {
       const { database } = await checkRequirements(BRANCH_COLLECTION_ID);
       const currentBusiness: Business = await getCurrentBusiness();
@@ -227,7 +227,7 @@ export const createItem = async (item: Branch) => {
   }
 
   export const getItem = async (id: string) => {
-     if (!id) throw new Error('Document ID is missing')
+    if (!id ) return null;
     const { database } = await checkRequirements(BRANCH_COLLECTION_ID);
 
     try {
@@ -254,6 +254,7 @@ export const createItem = async (item: Branch) => {
   }
 
   export const deleteItem = async ({ $id }: Branch) => {
+    if (!$id ) return null;
     const { database } = await checkRequirements(BRANCH_COLLECTION_ID)
 
     try {
@@ -278,6 +279,7 @@ export const createItem = async (item: Branch) => {
   }
 
 export const updateItem = async (id: string, data: Branch) => {
+  if (!id || !data ) return null;
   const { database } = await checkRequirements(BRANCH_COLLECTION_ID);
 
   const daysOpen = data.daysOpen.map(option => ({

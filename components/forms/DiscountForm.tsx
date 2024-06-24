@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon } from "@radix-ui/react-icons"
 import BranchSelector from "@/components/layout/branch-multiselector"
+import DepartmentSelector from "@/components/layout/department-multiselector"
 import {
     Form,
     FormControl,
@@ -42,9 +43,18 @@ import {
     PopoverContent,
     PopoverTrigger,
   } from "@/components/ui/popover"
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+  } from "@/components/ui/card"
 import { DiscountSchema, DiscountType } from "@/types/data-schemas";
 import { SubmitButton } from "../ui/submit-button";
-    
+import "react-day-picker/style.css"
+
 const DiscountForm = ({ item }: { item?: Discount | null }) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false)
@@ -86,11 +96,6 @@ const onSubmit = async (data: z.infer<typeof DiscountSchema>) => {
                 description: "Discount created succesfully!"
             });
         }
-        
-        // Redirect to the list page after submission
-        router.push("/discounts");
-        router.refresh();
-        setIsLoading(false);
     } catch (error: any) {
         toast({
             variant: "destructive",
@@ -108,7 +113,20 @@ const onSubmit = async (data: z.infer<typeof DiscountSchema>) => {
 return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
+          {/* Left Column */}
+          <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
+            <Card>
+                <CardHeader>
+                  <CardTitle>Discount details</CardTitle>
+                  <CardDescription>
+                    Main discount details
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                     control={form.control}
                     name="name"
@@ -184,125 +202,6 @@ return (
 
                 <FormField
                     control={form.control}
-                    name="maximumValue"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Maximum discount value</FormLabel>
-                        <FormControl>
-                            <Input
-                                type="number"
-                                placeholder="Maximum discount value"
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormDescription>
-                            Only applys to percentage-based discounts.
-                        </FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-
-
-                <FormField
-                    control={form.control}
-                    name="branch"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Branches</FormLabel>
-                            <BranchSelector {...field} />
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-
-                <FormField
-                    control={form.control}
-                    name="redemptionStartDate"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col mt-2">
-                            <FormLabel>Redemption start date</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
-                                        {field.value ? ( format(field.value, "PPP") ) : (
-                                            <span>Select redemption start date</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={ (date) => date < new Date() }
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-
-                <FormField
-                    control={form.control}
-                    name="redemptionEndDate"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col mt-2">
-                            <FormLabel>Redemption end date</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
-                                        {field.value ? ( format(field.value, "PPP") ) : (
-                                            <span>Select redemption end date</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={ (date) => date < new Date() }
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                
-
-                <FormField
-                    control={form.control}
-                    name="redemptionLimit"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Redemption limit</FormLabel>
-                        <FormControl>
-                            <Input
-                                type="number"
-                                placeholder="Maximum number of redemptions"
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
                     name="applyAfterTax"
                     render={({ field }) => (
                         <FormItem>
@@ -362,13 +261,208 @@ return (
                     </FormItem>
                 )}
             />
-        
-    
+        </CardContent>
+    </Card>
+
+    <Card>
+        <CardHeader>
+          <CardTitle>Discount purchase rule</CardTitle>
+          <CardDescription>Apply the discount on the following selection only</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                    control={form.control}
+                    name="item"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Item(s)</FormLabel>
+                        <FormControl>
+                            <BranchSelector {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="branch"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Branches</FormLabel>
+                        <FormControl>
+                            <BranchSelector {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="department"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Departments</FormLabel>
+                        <FormControl>
+                            <DepartmentSelector {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="customer"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Customers</FormLabel>
+                        <FormControl>
+                            <DepartmentSelector {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+        </CardContent>
+    </Card>
             <div className="flex h-5 items-center space-x-4">
                 <CancelButton />
                 <Separator orientation="vertical" />
                 <SubmitButton loading={isLoading} label={item ? "Update discount" : "Create discount"} />
             </div>
+
+      </div>
+
+      {/* Right Column */}
+      <div className="space-y-8">
+          <Card>
+              <CardHeader>
+                <CardTitle>Discount schedule</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <div className="grid gap-6">
+                  <FormField
+                      control={form.control}
+                      name="redemptionStartDate"
+                      render={({ field }) => (
+                          <FormItem className="flex flex-col mt-2">
+                              <FormLabel>Redemption start date</FormLabel>
+                              <Popover>
+                                  <PopoverTrigger asChild>
+                                  <FormControl>
+                                      <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
+                                          {field.value ? ( format(field.value, "PPP") ) : (
+                                              <span>Select redemption start date</span>
+                                          )}
+                                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                  </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    hideNavigation={true}
+                                    captionLayout="dropdown"
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) => date < new Date() || date < new Date("1970-01-01") }
+                                  />
+                                  </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+
+                  <FormField
+                      control={form.control}
+                      name="redemptionEndDate"
+                      render={({ field }) => (
+                          <FormItem className="flex flex-col mt-2">
+                              <FormLabel>Redemption end date</FormLabel>
+                              <Popover>
+                                  <PopoverTrigger asChild>
+                                  <FormControl>
+                                      <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
+                                          {field.value ? ( format(field.value, "PPP") ) : (
+                                              <span>Select redemption end date</span>
+                                          )}
+                                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                  </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    hideNavigation={true}
+                                    captionLayout="dropdown"
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) => date < new Date() || date < new Date("1970-01-01") }
+                                  />
+                                  </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                  <CardTitle>Discount limits</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid gap-6">
+                        <FormField
+                            control={form.control}
+                            name="maximumValue"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Maximum discount value</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        placeholder="Maximum discount value"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormDescription>
+                                    Only applys to percentage-based discounts.
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="redemptionLimit"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Redemption limit</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        placeholder="Maximum number of redemptions"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+      </div>
+      </div>
         </form>
     </Form>
     );

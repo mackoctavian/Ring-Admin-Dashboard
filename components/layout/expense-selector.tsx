@@ -13,16 +13,17 @@ import { formatDateTime } from "@/lib/utils"
 
 interface Props {
   value?: Expense;
+  status?: string;
   onChange: (value: Expense) => void;
 }
 
-const ExpenseSelector: React.FC<Props> = ({ value, onChange }) => {
+const ExpenseSelector: React.FC<Props> = ({ value, onChange, status }) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
   useEffect(() => {
     async function fetchExpenses() {
       try {
-        const expensesData = await list();
+        const expensesData = await list(status);
         setExpenses(expensesData);
       } catch (error) {
         console.error('Error fetching expenses:', error);

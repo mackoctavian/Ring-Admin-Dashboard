@@ -43,10 +43,6 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
               description: "There was an issue with your request, please try again later"
             });
           }
-          
-          // Redirect to the list page after submission
-          router.push("/expenses");
-          router.refresh();
       } catch (error: any) {
         toast({
             variant: "destructive",
@@ -83,9 +79,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           <DropdownMenuItem onClick={() => router.push(`/expenses/${data.$id}`)}>
             <Edit className="mr-2 h-4 w-4" /> Update
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpen(true)}>
-            <Trash className="mr-2 h-4 w-4" /> Delete
-          </DropdownMenuItem>
+          {/*<DropdownMenuItem onClick={() => setOpen(true)}>*/}
+          {/*  <Trash className="mr-2 h-4 w-4" /> Delete*/}
+          {/*</DropdownMenuItem>*/}
         </DropdownMenuContent>
       </DropdownMenu>
     </>

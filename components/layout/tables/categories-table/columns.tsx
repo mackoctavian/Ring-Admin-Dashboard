@@ -34,7 +34,7 @@ export const columns: ColumnDef<Category>[] = [
     header: "TYPE",
   },
   {
-    accessorKey: "parent",
+    accessorKey: "parentName",
     header: "PARENT",
   },
   {

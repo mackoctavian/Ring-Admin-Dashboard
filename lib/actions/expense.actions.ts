@@ -77,17 +77,27 @@ export const createItem = async (item: Expense) => {
 };
 
 
-export const list = async ( ) => {
+export const list = async ( status?: string ) => {
     const { database, businessId } = await checkRequirements(EXPENSES_COLLECTION_ID);
+
+    console.log("Status received", status)
+
+
+    const queries = [];
+    queries.push(Query.equal("businessId", businessId));
+    queries.push(Query.orderDesc("$createdAt"));
+
+    if( status === "INCOMPLETE"){
+      queries.push(Query.notEqual("status", [ExpenseStatus.PAID]));
+    }else if( status === "COMPLETE"){
+      queries.push(Query.equal("status", [ExpenseStatus.PAID]));
+    }
 
     try {
       const items = await database.listDocuments(
         DATABASE_ID,
         EXPENSES_COLLECTION_ID,
-        [
-          Query.orderDesc("$createdAt"),
-          Query.equal('businessId', businessId!)
-        ]
+        queries
       );
 
       return parseStringify(items.documents);

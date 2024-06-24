@@ -476,6 +476,7 @@ declare type InventoryVariant = {
   inventory: Inventory;
   unit: string;
   startingValue: number;
+  actualValue: number;
   actualQuantity: number;
   businessId: string;
   value: number;
@@ -487,6 +488,7 @@ declare type InventoryModification = {
   $id?: string;
   item: InventoryVariant,
   quantity: number,
+  value: number,
   reason: string,
   notes: string,
   $createdAt?: Date;

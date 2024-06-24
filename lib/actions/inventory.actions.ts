@@ -5,7 +5,7 @@ import * as Sentry from "@sentry/nextjs"
 import { ID, Query, AppwriteException } from "node-appwrite";
 import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { Inventory } from "@/types";
+import { Inventory, InventoryModification } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 import { InventoryStatus } from "@/types/data-schemas";
 import { auth } from "@clerk/nextjs/server";
@@ -42,18 +42,22 @@ const checkRequirements = async (collectionId: string | undefined) => {
 
 export const createItem = async (data: Inventory) => {
   const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID)
-  const alarmQuantity = parseInt(ALARM_QUANTITY, 10);
+  const alarmQuantity : number = parseInt(ALARM_QUANTITY);
 
   for ( const variant of data.variants ) {
     //Add business Id to the variant
     variant.businessId = businessId;
 
+    // Ensure quantities and values are parsed correctly and are numbers
+    const startingQuantity = variant.startingQuantity || 0;
+    const startingValue =variant.startingValue || 0;
+
     //Set status
-    if (variant.startingQuantity === 0) {
+    if (startingQuantity === 0) {
       variant.status = InventoryStatus.OUT_OF_STOCK;
-    } else if (variant.startingQuantity <= variant.lowQuantity) {
+    } else if (startingQuantity <= variant.lowQuantity) {
       variant.status = InventoryStatus.LOW_STOCK;
-    } else if (variant.startingQuantity <= variant.lowQuantity + alarmQuantity) {
+    } else if (startingQuantity <= variant.lowQuantity + alarmQuantity) {
       variant.status = InventoryStatus.ALARM;
     } else {
       variant.status = InventoryStatus.IN_STOCK;
@@ -63,13 +67,15 @@ export const createItem = async (data: Inventory) => {
     variant.fullName = capitalizeFirstLetter(`${data.title} ${data.packaging ?? ''} ${variant.name ?? ''}`.trim());
 
     //Set value
-    variant.value = variant.startingValue;
+    variant.value = startingValue;
+    variant.actualValue = startingValue;
 
     //Set quantity
     variant.quantity = variant.startingQuantity;
     variant.actualQuantity = variant.startingQuantity;
   }
 
+  //console.log(data)
   try {
     await database.createDocument(
       DATABASE_ID!,
@@ -221,7 +227,7 @@ export const listVariants = async ( ) => {
       }
   
       if (q) {
-        queries.push(Query.search('name', q));
+        queries.push(Query.search('fullName', q));
       }
   
       if (status) {
@@ -307,76 +313,77 @@ export const deleteItem = async ({ $id }: Inventory) => {
     redirect('/inventory')
   };
 
-export const updateItem = async (id: string, data: Inventory) => {
-  if (!data || !id) return null;
-
+export const updateItem = async (inventoryId: string, data: Inventory) => {
   const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
   const alarmQuantity = parseInt(ALARM_QUANTITY, 10);
-  const variantData = [];
-
-  for (const variant of data.variants) {
-    // Create a new object for the current variant to avoid mutating the original object
-    const currentVariant = { ...variant };
-
-    // Add business ID to the variant
-    currentVariant.businessId = businessId;
-
-    // Set status
-    if (currentVariant.startingQuantity === 0) {
-      currentVariant.status = InventoryStatus.OUT_OF_STOCK;
-    } else if (currentVariant.startingQuantity <= currentVariant.lowQuantity) {
-      currentVariant.status = InventoryStatus.LOW_STOCK;
-    } else if (currentVariant.startingQuantity <= currentVariant.lowQuantity + alarmQuantity) {
-      currentVariant.status = InventoryStatus.ALARM;
-    } else {
-      currentVariant.status = InventoryStatus.IN_STOCK;
-    }
-
-    // Set full name
-    currentVariant.fullName = capitalizeFirstLetter(`${data.title} ${data.packaging ?? ''} ${currentVariant.name ?? ''}`.trim());
-
-    // Set value and quantity
-    if ( !currentVariant.startingQuantity ) currentVariant.startingQuantity = 0
-    if ( !currentVariant.startingValue ) currentVariant.startingValue = 0
-
-    currentVariant.value = currentVariant.startingValue ?? 0;
-    currentVariant.quantity = currentVariant.startingQuantity ?? 0;
-    currentVariant.actualQuantity = currentVariant.startingQuantity ?? 0;
-
-    // Create new variant if it doesn't have an ID, otherwise add to the variantData array
-    if (!currentVariant.$id) {
-      //set inventory ID
-      currentVariant.inventory = data
-      
-      await database.createDocument(
-        DATABASE_ID!,
-        INVENTORY_VARIANTS_COLLECTION_ID!,
-        ID.unique(),
-        currentVariant,
-      );
-    } else {
-      variantData.push(currentVariant);
-    }
-  }
-
-  // Mutate variant object
-  data.variants = variantData;
 
   try {
+    for (const variant of data.variants) {
+      // Modify full name for the variants assuming name has changed
+      variant.fullName = capitalizeFirstLetter(`${data.title} ${data.packaging ?? ''} ${variant.name ?? ''}`.trim());
+
+      if (variant.$id) {
+        //Variant exists so we are just updating
+
+        // Modify status incase low quantity value changed
+        if (variant.quantity === 0) {
+          variant.status = InventoryStatus.OUT_OF_STOCK;
+        } else if (variant.quantity <= variant.lowQuantity) {
+          variant.status = InventoryStatus.LOW_STOCK;
+        } else if (variant.quantity <= variant.lowQuantity + alarmQuantity) {
+          variant.status = InventoryStatus.ALARM;
+        } else {
+          variant.status = InventoryStatus.IN_STOCK;
+        }
+
+      }else{
+        //New variant added
+
+        // Set new ID
+        variant.$id = ID.unique();
+
+        // Set business ID
+        variant.businessId = businessId
+
+        // Ensure quantities and values are parsed correctly and are numbers
+        variant.startingQuantity = variant.startingQuantity || 0;
+        variant.startingValue = variant.startingValue || 0;
+
+        variant.quantity = variant.startingQuantity
+        variant.actualQuantity = variant.startingQuantity
+
+        variant.value = variant.startingValue
+        variant.actualValue = variant.startingValue
+
+        if (variant.startingQuantity === 0) {
+          variant.status = InventoryStatus.OUT_OF_STOCK;
+        } else if (variant.startingQuantity <= variant.lowQuantity) {
+          variant.status = InventoryStatus.LOW_STOCK;
+        } else if (variant.startingQuantity <= variant.lowQuantity + alarmQuantity) {
+          variant.status = InventoryStatus.ALARM;
+        } else {
+          variant.status = InventoryStatus.IN_STOCK;
+        }
+
+      }
+
+    }
+
     await database.updateDocument(
       DATABASE_ID!,
       INVENTORY_COLLECTION_ID!,
-      id,
+      inventoryId,
       data
     );
+
+
   } catch (error: any) {
-    console.log(error);
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
 
-    if (env == "development") {
+    if (process.env.NODE_ENV === "development") {
       console.error(error);
     }
 
@@ -387,8 +394,6 @@ export const updateItem = async (id: string, data: Inventory) => {
   revalidatePath('/inventory');
   redirect('/inventory');
 };
-
-
 
 export const modifyStockItem = async (data: InventoryModification) => {
     if (!data) return null;
@@ -409,6 +414,10 @@ export const modifyStockItem = async (data: InventoryModification) => {
       )
 
       //modify item quantity
+      data.item.actualValue = data.value;
+      data.item.value = data.value;
+
+      //modify item value
       data.item.actualQuantity = data.quantity;
       data.item.quantity = data.quantity;
 
@@ -423,13 +432,10 @@ export const modifyStockItem = async (data: InventoryModification) => {
         data.item.status = InventoryStatus.IN_STOCK;
       }
 
-      const itemId = data.item.$id
-      const item = data.item
-
       await database.updateDocument(
         DATABASE_ID!,
         INVENTORY_VARIANTS_COLLECTION_ID!,
-        data.item.$id,
+        data.item.$id!,
         data.item);
   
     } catch (error: any) {

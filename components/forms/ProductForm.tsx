@@ -206,23 +206,6 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                   />
                   <FormField
                     control={control}
-                    name="sku"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Product SKU *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Product sku ( Auto-generated )"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={control}
                     name="category"
                     render={({ field }) => (
                       <FormItem>
@@ -234,16 +217,33 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={control}
+                    name="sku"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product SKU </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Product sku ( Auto-generated )"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                 </div>
                 <FormField
                   control={control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description *</FormLabel>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Enter service description"
+                          placeholder="Enter product description"
                           className="resize-none"
                           {...field}
                         />
@@ -269,7 +269,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                       <div className="flex justify-between items-center">
                         {variants.length > 1 && (
                           <Button type="button" onClick={() => handleRemoveVariant(variantIndex)} variant="link" className="ml-auto">
-                            <Cross2Icon className="mr-2 h-4 w-4" /> Delete variant
+                            <Cross2Icon className="mr-2 h-4 w-4" /> Archive variant
                           </Button>
                         )}
                       </div>

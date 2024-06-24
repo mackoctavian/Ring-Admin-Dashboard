@@ -120,7 +120,7 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
               name={`items.${index}.item`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Item</FormLabel>
+                  <FormLabel>Item *</FormLabel>
                   <FormControl>
                     <InventorySelector
                        value={field.value}
@@ -138,7 +138,7 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
               name={`items.${index}.quantity`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Quantity</FormLabel>
+                  <FormLabel>Quantity *</FormLabel>
                   <FormControl>
                     <Input type="number" min="1" placeholder="Quantity" {...field} />
                   </FormControl>
@@ -152,7 +152,7 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
               name={`items.${index}.value`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Value</FormLabel>
+                  <FormLabel>Value *</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="Value" {...field} />
                   </FormControl>
@@ -166,7 +166,7 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
               name={`items.${index}.staff`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Staff</FormLabel>
+                  <FormLabel>Received by *</FormLabel>
                   <FormControl>
                     <StaffSelector
                       value={field.value}
@@ -181,48 +181,16 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
 
             <FormField
               control={form.control}
-              name={`items.${index}.department`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Department</FormLabel>
-                  <FormControl>
-                    <DepartmentSelector
-                      value={field.value}
-                      departments={departments}
-                      onChange={(department) => field.onChange(department)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name={`items.${index}.supplier`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Supplier</FormLabel>
+                  <FormLabel>Supplier *</FormLabel>
                   <FormControl>
                     <SupplierSelector
                       value={field.value}
                       suppliers={suppliers}
                       onChange={(supplier) => field.onChange(supplier)}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name={`items.${index}.orderNumber`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Order Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Order number" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -295,12 +263,44 @@ const StockForm = ({ item, staff, suppliers, departments }: { item: InventoryVar
                 )}
             />
 
+            <FormField
+              control={form.control}
+              name={`items.${index}.orderNumber`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Order Number</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Order number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name={`items.${index}.department`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Department</FormLabel>
+                  <FormControl>
+                    <DepartmentSelector
+                      value={field.value}
+                      departments={departments}
+                      onChange={(department) => field.onChange(department)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
               <FormField
                 control={form.control}
                 name={`items.${index}.accurate`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Order items were accurate ? *</FormLabel>
+                    <FormLabel>Were order items accurate ? *</FormLabel>
                     <Select onValueChange={(value) => field.onChange(value === 'true')} value={field.value.toString()}>
                       <FormControl>
                         <SelectTrigger>

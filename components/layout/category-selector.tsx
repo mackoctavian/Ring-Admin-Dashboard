@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Select,
@@ -7,44 +6,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getItems } from "@/lib/actions/category.actions"
+import { list } from "@/lib/actions/category.actions"
 import { Category } from "@/types";
-import { CategoryType } from '@/types/data-schemas';
 
 interface Props {
-  value?: Category;
-  type?: CategoryType;
-  onChange: (value: Category) => void;
+  value?: Category | null;
+  onChange: (value: Category | null) => void;
+  type: string;
 }
 
-const CategorySelector: React.FC<Props> = ({ value, type, onChange }) => {
-  const [categories, setCategory] = useState<Category[]>([]);
+const CategorySelector: React.FC<Props> = ({ value, onChange, type }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
-    async function fetchCategory() {
+    async function fetchCategories() {
       try {
-        const categoriesData = await getItems( '', 'IS_CHILD', type, true, null, 1 );
-        setCategory(categoriesData);
+        const categoriesData = await list();
+        setCategories(categoriesData);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
     }
-    fetchCategory();
+    fetchCategories();
   }, []);
 
   const handleSelectChange = (value: string) => {
-    const selectedCategory = categories.find(cat => cat.$id === value);
-    if (selectedCategory) {
-      onChange(selectedCategory);
-    }
+    const selectedCategory = categories.find(category => category.$id === value);
+    onChange(selectedCategory || null);
   };
 
   return (
-    <Select value={value ? value.$id : 'Select category'} onValueChange={handleSelectChange}>
+    <Select value={value ? value.$id : 'null'} onValueChange={handleSelectChange}>
       <SelectTrigger>
-        <SelectValue>
-          {value ? value.name : 'Select category'}
-        </SelectValue>
+        <SelectValue>{value ? value.name : 'Select category'}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {categories.map((category) => (

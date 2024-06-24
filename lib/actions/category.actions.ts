@@ -8,7 +8,10 @@ import { parseStringify } from "../utils";
 import { Category } from "@/types";
 import { CategoryType } from "@/types/data-schemas";
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
+import { auth } from "@clerk/nextjs/server";
 import { getBusinessId } from "./business.actions";
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation'
 
 const {
     APPWRITE_DATABASE: DATABASE_ID,
@@ -20,59 +23,71 @@ const {
     return cleanedItem;
   };
 
+const checkRequirements = async (collectionId: string | undefined) => {
+  if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
 
-  export const createItem = async (item: Category) => {
-    try {
-      if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
-        throw Error('Database ID or Collection ID is missing');
-      }
+  const { database } = await createAdminClient();
+  if (!database) throw new Error('Database client could not be initiated');
 
-      const { database } = await createAdminClient();
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
-
-      const newItem = await database.createDocument(
-        DATABASE_ID!,
-        CATEGORY_COLLECTION_ID!,
-        ID.unique(),
-        {
-          ...item,
-          businessId: businessId,
-          childrenCount: 0,
-        }
-      )
-
-      //increment parent child count
-      if ( item.parent ) {
-        const parent : Category = await getItem(item.parent);
-        parent.childrenCount = (parent.childrenCount || 0) + 1;
-        await updateItem(item.parent, cleanCategoryData(parent));
-      }
-  
-      return parseStringify(newItem);
-    } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
-    }
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error('You must be signed in to use this feature');
   }
 
-export const list = async ( ) => {
+  const businessId = await getBusinessId();
+  if( !businessId ) throw new Error('Business ID could not be initiated');
+
+  return { database, userId, businessId };
+};
+
+
+export const createItem = async (item: Category) => {
+  const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
+
+  const itemSlug = item.name.toLowerCase().replace(/\s+/g, '-');
+
+  item.slug = item?.parent?.slug ? `${item.parent.slug}.${itemSlug}` : itemSlug;
+  item.parentName = item?.parent?.name ? item.parent.name : '';
+  item.parent = item?.parent?.$id ? item.parent.$id : null;
+
   try {
-    if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
+    await database.createDocument(
+      DATABASE_ID!,
+      CATEGORY_COLLECTION_ID!,
+      ID.unique(),
+      {
+        ...item,
+        businessId: businessId,
+        childrenCount: 0,
+      }
+    )
+
+    //increment parent child count
+    if ( item.parent ) {
+      const parent : Category = await getItem(item.parent);
+      parent.childrenCount = (parent.childrenCount || 0) + 1;
+      await updateItem(item.parent, cleanCategoryData(parent));
+    }
+  } catch (error: any) {
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+    if (error instanceof AppwriteException) {
+      errorMessage = getStatusMessage(error.code as HttpStatusCode);
     }
 
-    const { database } = await createAdminClient();
-    const businessId = await getBusinessId();
-    if( !businessId ) throw new Error('Business ID could not be initiated');
+    if(env == "development"){ console.error(error); }
 
+    Sentry.captureException(error);
+    throw Error(errorMessage);
+  }
+
+  revalidatePath('/categories')
+  redirect('/categories')
+}
+
+export const list = async ( ) => {
+  const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
+
+  try {
     const items = await database.listDocuments(
       DATABASE_ID,
       CATEGORY_COLLECTION_ID,
@@ -81,8 +96,16 @@ export const list = async ( ) => {
 
     return parseStringify(items.documents);
 
-  }catch (error: any){
-    console.error(error);
+  } catch (error: any) {
+    let errorMessage = 'Something went wrong with your request, please try again later.';
+    if (error instanceof AppwriteException) {
+      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+    }
+
+    if(env == "development"){ console.error(error); }
+
+    Sentry.captureException(error);
+    throw Error(errorMessage);
   }
 };
 
@@ -94,17 +117,10 @@ export const list = async ( ) => {
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-  
-    try {
-      const { database } = await createAdminClient();
-  
-      const queries = [];
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
+    const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
 
+    try {
+      const queries = [];
       queries.push(Query.equal('businessId', businessId));
       queries.push(Query.orderDesc("$createdAt"));
       queries.push(Query.orderAsc("name"));
@@ -159,22 +175,20 @@ export const list = async ( ) => {
 }
 
 export const getItem = async (id: string) => {
+  if (!id) return null;
+  const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
-    if (!id) {
-      throw new Error('Document ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
     const item = await database.listDocuments(
       DATABASE_ID!,
       CATEGORY_COLLECTION_ID!,
-      [Query.equal('$id', id)]
+      [
+        Query.equal('$id', id),
+        Query.equal('businessId', businessId),
+      ]
     )
+
+    if ( item.total < 1 ) return null;
 
     return parseStringify(item.documents[0]);
   } catch (error: any) {
@@ -191,14 +205,11 @@ export const getItem = async (id: string) => {
 }
 
 export const deleteItem = async ({ $id }: Category) => {
+  if (!$id) return null;
+  const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
-    const item = await database.deleteDocument(
+    await database.deleteDocument(
       DATABASE_ID!,
       CATEGORY_COLLECTION_ID!,
       $id);
@@ -215,23 +226,28 @@ export const deleteItem = async ({ $id }: Category) => {
     Sentry.captureException(error);
     throw Error(errorMessage);
   }
-}
 
-export const updateItem = async (id: string, data: Category ) => {  
+  revalidatePath('/categories')
+  redirect('/categories')
+};
+
+export const updateItem = async (id: string, data: Category ) => {
+  if (!id || !data) return null;
+  const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
+
+  const itemSlug = data.name.toLowerCase().replace(/\s+/g, '-');
+
+  data.slug = data?.parent?.slug ? `${data.parent.slug}.${itemSlug}` : itemSlug;
+  data.parentName = data?.parent?.name ? data.parent.name : '';
+  data.parent = data?.parent?.$id ? data.parent.$id : null;
+
   try {
-    if (!DATABASE_ID || !CATEGORY_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
-    const item = await database.updateDocument(
+    await database.updateDocument(
       DATABASE_ID!,
       CATEGORY_COLLECTION_ID!,
       id,
       data);
 
-    return parseStringify(item);
   } catch (error: any) {
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
@@ -243,4 +259,6 @@ export const updateItem = async (id: string, data: Category ) => {
     Sentry.captureException(error);
     throw Error(errorMessage);
   }
-}
+  revalidatePath('/categories')
+  redirect('/categories')
+};
