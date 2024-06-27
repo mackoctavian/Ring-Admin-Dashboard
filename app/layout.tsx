@@ -8,6 +8,8 @@ import "./globals.css";
 import Providers from "@/components/layout/providers";
 import { Toaster } from "@/components/ui/toaster";
 import { siteConfig } from "@/config/site"
+import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const ibmPlexSerif = IBM_Plex_Serif({
@@ -25,7 +27,7 @@ export const metadata: Metadata = {
   title: siteConfig.name,
   description: siteConfig.description,
   icons: {
-    icon: siteConfig.logo
+    icon: siteConfig.icon
   }
 }
 

@@ -34,13 +34,15 @@ export default function MobileSidebar() {
         </SheetTrigger>
         <SheetContent side="left" className="border-none bg-white">
           <Link href="/" className="cursor-pointer flex items-center gap-1 px-4">
-            <Image 
-              src="/icons/logo.svg"
-              width={34}
-              height={34}
-              alt="{siteConfig.name}"
-            />
-            <h1 className="text-26 font-ibm-plex-serif font-bold text-black-1">{siteConfig.name}</h1>
+            <div className="relative w-full max-w-[100px]"> {/* Adjust max-w to your desired maximum width */}
+                <Image 
+                  src={siteConfig.logo}
+                  layout="responsive"
+                  width={961}
+                  height={396}
+                  alt={siteConfig.name}
+                />
+              </div>
           </Link>
           <div className="mobilenav-sheet">
             <SheetClose asChild>

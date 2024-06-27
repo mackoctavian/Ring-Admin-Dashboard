@@ -43,8 +43,14 @@ const SubscriptionNotice = () => {
     <div id="subscriptionBanner" tabIndex="-1" className="fixed z-50 flex flex-col md:flex-row justify-between w-[calc(100%-2rem)] p-4 -translate-x-1/2 bg-destructive text-destructive-foreground border-destructive rounded-lg shadow-sm lg:max-w-7xl left-1/2 top-6 transition-transform duration-700 transition-[opacity,transform] translate-y-0 opacity-100">
       <div className="flex flex-col items-start mb-3 me-4 md:items-center md:flex-row md:mb-0">
         <div className="flex items-center mb-2 border-gray-200 md:pe-4 md:me-4 md:border-e md:mb-0 dark:border-gray-600">
-          <Image src={siteConfig.logo} width={34} height={34} alt={siteConfig.name} className="h-6 me-2" />
-          <span className="self-center text-lg font-semibold whitespace-nowrap dark:text-white">{siteConfig.name}</span>
+          <div className="relative w-full max-w-[80px]">
+              <Image 
+                src={siteConfig.logoLight}
+                width={961}
+                height={396}
+                alt={siteConfig.name}
+              />
+            </div>
         </div>
         <p className="flex items-center text-sm font-normal text-white">
           {message}

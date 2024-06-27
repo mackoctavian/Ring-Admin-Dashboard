@@ -13,14 +13,14 @@ export default function Header() {
       <nav className="h-14 flex items-center justify-between px-4">
         <div className="hidden lg:block">
           <Link href="/" className="cursor-pointer flex items-center gap-2">
-            <Image 
-              src={siteConfig.logo}
-              width={34}
-              height={34}
-              alt={siteConfig.name}
-              className="size-[24px] max-xl:size-14"
-            />
-            <h1 className="sidebar-logo">{siteConfig.name}</h1>
+            <div className="relative w-full max-w-[80px]">
+              <Image 
+                src={siteConfig.logo}
+                width={961}
+                height={396}
+                alt={siteConfig.name}
+              />
+            </div>
           </Link>
         </div>
         <div className={cn("block lg:!hidden")}>
