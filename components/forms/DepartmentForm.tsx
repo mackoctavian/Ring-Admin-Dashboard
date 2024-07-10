@@ -47,29 +47,6 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
         },
     });
 
-<<<<<<< HEAD
-    const onSubmit = async (data: z.infer<typeof formSchema>) => {
-        console.log("FORM"+form)
-      setIsLoading(true);
-  
-      try {
-        console.error("submitting data:", data);
-        if (item) {
-            await updateDepartment(item.$id, data);
-            toast("Department updated succesfully!");
-        } else {
-            await createDepartment(data);
-            toast("Department created succesfully!");
-        }
-        
-        // Redirect to list page after submission
-        router.push("/departments");
-      } catch (error) {
-        console.error("Creating department failed: ", error);
-      }
-  
-      setIsLoading(false);
-=======
     const onInvalid = (errors : any ) => {
         console.error("Creating department failed: ", JSON.stringify(errors));
         toast({
@@ -114,7 +91,6 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
                 setIsLoading(false);
                 }, 1000); 
             }
->>>>>>> dev
     };
 
 return (
