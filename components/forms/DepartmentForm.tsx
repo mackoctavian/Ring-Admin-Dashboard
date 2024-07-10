@@ -83,7 +83,7 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
     
         try {
             if (item) {
-                await updateItem(item!.$id, data);
+                await updateItem(item!.$id!, data);
                 toast({
                     variant: "success",
                     title: "Success", 
