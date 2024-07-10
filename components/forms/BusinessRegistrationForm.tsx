@@ -2,7 +2,7 @@
 import { siteConfig } from "@/config/site"
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/form"
 
 const BusinessRegistrationForm  = () => {
-  const router = useRouter();
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false);
   const [country, setCountry] = useState<string>('Tanzania');
@@ -66,8 +65,6 @@ const BusinessRegistrationForm  = () => {
             title: "Success", 
             description: "You have succesfully created your account, you will be redirected soon!"
         });
-
-        // Redirect to dashboard
     } catch (error) {
       toast({
         variant: "destructive",
