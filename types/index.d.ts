@@ -1,20 +1,31 @@
 /* eslint-disable no-unused-vars */
 import { Icons } from "@/components/icons";
+import * as enums from "./data-schemas";
+import { Option } from "@/components/ui/multiple-selector";
 
 declare type SearchParamProps = {
   params: { [key: string]: string };
   searchParams: { [key: string]: string | string[] | undefined };
 };
-//=======================================
 
-enum CategoryType {
-  SERVICE = "SERVICE",
-  PRODUCT = "PRODUCT",
+declare type MultiSelect = {
+  $id?: string;
+  label: string;
+  value: string;
+  disable?: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
-enum Gender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-  UNDISCLOSED = "UNDISCLOSED",
+
+declare type SubscriptionDetails = {
+  business: string;
+  email: string;
+  name : string;
+  monthlyFee: number;
+  nextDue: Date;
+  status: enums.SubscriptionStatus;
+  phoneNumber: string;
+  owner: string;
 }
 
 declare type Country = {
@@ -25,197 +36,564 @@ declare type Country = {
   phonecode: number;
 }
 
+declare type BusinessType = {
+  $id?: string;
+  name: string;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
 declare type SignUpParams = {
-  email: string;
-  firstName: string;
-  lastName: string;
   name: string;
   phoneNumber: string;
-  city?: string;
+  businessType: BusinessType;
+  size: string;
   country: string;
-  gender: string;
-  dateOfBirth: Date;
+  city?: string;
   email: string;
   password: string;
 };
 
-declare type LoginUser = {
+declare type SignInParams = {
   email: string;
   password: string;
 };
 
 declare type User = {
-  $id: string;
+  $id?: string;
   email: string;
-  userId: string;
-  firstName: string;
-  lastName: string;
   name: string;
-  phoneNumber: string;
+  phoneNumber?: string;
+  image?: string;
   city?: string;
-  country: string;
-  gender: string;
-  dateOfBirth: Date;
+  country?: string;
+  gender?: Gender;
+  dateOfBirth?: Date;
   points: number;
   status: boolean;
-};
-
-declare type NewUserParams = {
   userId: string;
-  email: string;
-  name: string;
-  business: Business;
-  password: string;
+  businesses: Business[];
+  isOwner: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 };
-
-declare type BusinessCategory = {
-  $id: string;
-  name: string;
-}
 
 declare type Business = {
-  $id: string;
+  $id?: string;
   name: string;
-  logo?: string;
-  slug: string;
-  description?: string;
-  emailAddress: string;
+  businessType: BusinessType;
+  size: string;
+  branches: Branch[];
+  registrationNumber?: string;
+  logo?: FileList;
+  email: string;
   phoneNumber: string;
   address?: string;
   city?: string;
-  country: string;
-  businessType: BusinessCategory;
-  user: User;
-  status: boolean;
+  country?: string;
+  owner: string;
+  description?: string;
+  slug: string;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
 
 /* Product Unit Data types */
 
 declare type ProductUnit = {
-  $id: string;
+  $id?: string;
   name: string;
-  shortName: string;
-  business: string;
-  status: boolean;
+  abbreviation: string;
+  isConvertible: boolean;
+  unitConversions: ProductUnitConversion[];
+  $createdAt?: Date;
+  $updatedAt?: Date;
 };
 
-declare type ProductUnitDto = {
-  name: string;
-  shortName: string;
-  business: string;
-  status: boolean;
+declare type ProductUnitConversion = {
+  $id?: string;
+  conversionFactor: number;
+  from: ProductUnit;
+  to: ProductUnit;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
-
 /* End Product Unit Data types */
 
 
 /* Department Data types */
 declare type Department = {
-  $id: string;
+  $id?: string;
+  branch: Branch;
+  branchId: string;
+  businessId: string;
   name: string;
-  shortName?: string;
-  business: string;
+  shortName: string;
   status: boolean;
+  canDelete: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 };
-
-declare type DepartmentDto = {
-  name: string;
-  shortName?: string;
-  business: string;
-  status: boolean;
-}
-
 /* Department Data types */
+
+/* Category */
 
 declare type Category = {
   $id: string;
   name: string;
   slug: string;
-  type: CategoryType;
+  categoryType: CategoryType;
   parent?: string;
   description?: string;
-  business: Business;
+  childrenCount: number;
+  businessId: string;
+  $createdAt: Date;
+  $updatedAt: Date;
   status: boolean;
 };
 
-declare type Product = {
-  $id: string;
+/* Category */
+
+/* Discount */
+declare type Discount = {
+  $id?: string;
   name: string;
-  slug: string;
-  sku: string;
-  quantity: number;
-  quantityAlert?: number;
-  allowDiscount: boolean;
-  expiryDate: Date;
-  price: number;
-  unit: ProductUnit;
-  category: Category;
+  code?: string;
+  type: DiscountType;
+  value: number;
+  redemptionStartDate?: Date;
+  redemptionEndDate?: Date;
+  redemptionLimit?: number;
   description?: string;
-  business: Business;
+  $createdAt?: Date;
+  $updatedAt?: Date;
   status: boolean;
 };
+
+declare type NewDiscount = {
+  $id?: string;
+  type: DiscountType;
+  discountCode?: string;
+  value: number;
+  maximumValue?: number;
+  minimumSpend?: number;
+  startDate?: Date;
+  endDate?: Date;
+  branches: Branch[];
+  applyAfterTax: boolean;
+  status: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+};
+
+declare type DiscountDto = {
+  name: string;
+  code?: string;
+  type: DiscountType;
+  value: number;
+  redemptionStartDate?: Date;
+  redemptionEndDate?: Date;
+  redemptionLimit?: number;
+  description?: string;
+  status: boolean;
+};
+/* Discount */
+
+
+/* Branches */
+declare type Branch = {
+  $id?: string;
+  business: Business;
+  businessId: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  address?: string;
+  city?: string;
+  staffCount: number;
+  daysOpen: Option[];
+  departments: Department[];
+  openingTime?: string;
+  closingTime?: string;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+  canDelete: boolean;
+  status: boolean;
+  canDelete: boolean;
+}
+/* End Branches */
+
+
+/* Payment Types */
+declare type PaymentType = {
+  $id: string;
+  name: string;
+  status: boolean;
+  $createdAt: Date;
+  $updatedAt: Date;
+}
+
+declare type PaymentTypeDto = {
+  name: string;
+  status: boolean;
+}
+/* End Payment Types */
+
+/* Modifiers */
+declare type Modifier = {
+  $id?: string;
+  name: string;
+  type: ModifierType;
+  allowMultiple: boolean;
+  optional: boolean;
+  businessId: string;
+  image: string;
+  items: ModifierItem[];
+  branches: Branch[];
+  status: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+};
+
+declare type ModifierItem = {
+  $id?: string;
+  name: string;
+  price: number;
+  inventoryItem: InventoryVariant;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+};
+
+/* End modifiers */
+
+/* Product */
+declare type Product = {
+  $id?: string;
+  name: string;
+  sku: string;
+  category: Category[];
+  description: string;
+  status: string;
+  branch: Branch[];
+  department: Department[];
+  modifier: Modifier[]
+  image?: string;
+  variants: ProductVariant[];
+  $createdAt?: Date;
+  $updatedAt?: Date;
+};
+
+declare type ProductVariant = {
+  $id?: string;
+  name: string;
+  price: number;
+  tax: number;
+  barcode?: string;
+  status: boolean;
+  inventoryItems: ProductInventoryItemUsage[];
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
+declare type ProductInventoryItemUsage = {
+  $id?: string;
+  item: InventoryVariant;
+  amountUsed: number;
+  unit: ProductUnit;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+/* End Product */
+
+
+/* Service */
 
 declare type Service = {
-  $id: string;
+  $id?: string;
   name: string;
-  slug: string;
+  discount?: Discount;
   allowDiscount: boolean;
-  duration?: string;
+  allowWalkin: boolean;
+  duration?: number;
   price: number;
-  startTime?: string;
-  endTime?: string;
+  offeringStartTime?: string;
+  offeringEndTime?: string;
   category: Category;
   description?: string;
-  business: Business;
+  inventoryItems?: InventoryItemUsage[];
+  concurrentCustomers: number;
+  status: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+};
+
+declare type ServiceDto = {
+  name: string;
+  discount?: Discount;
+  allowDiscount: boolean;
+  allowWalkin: boolean;
+  duration?: number;
+  price: number;
+  offeringStartTime?: string;
+  offeringEndTime?: string;
+  category: Category;
+  description?: string;
   status: boolean;
 };
 
-declare type Vendor = {
-  $id: string;
+
+/* End Service */
+
+/* Inventory Usage */
+declare type ServiceInventoryItemUsage = {
+  $id?: string | undefined;
+  item: InventoryVariant | null;
+  service: Service | null;
+  amountUsed: number;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+/* End Inventory Usage */
+
+
+/* Supplier */
+
+declare type Supplier = {
+  $id?: string | undefined;
   name: string;
   phoneNumber: string;
-  emailAddress?: string;
+  email?: string;
   address?: string;
   description?: string;
-  contactPerson: string;
-  contactPersonEmail: string;
-  contactPersonPhone: string;
-  business: Business;
+  contactPersonName: string;
+  branch: Branch[];
+  businessId: string; 
   status: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
-// ========================================
+/* End Supplier */
 
-declare interface NavItem {
+
+
+/* Staff */
+
+declare type Staff = {
+  $id?: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  code?:code;
+  gender: Gender;
+  dateOfBirth?: Date;
+  nationality?: string;
+  joiningDate: Date;
+  jobTitle: string;
+  emergencyNumber?: string;
+  emergencyName?: string;
+  emergencyRelationship?: string;
+  address?: string;
+  notes?: string;
+  department?: Department[];
+  branch?: Branch[];
+  image?: string;
+  businessId: string;
+  status: boolean;
+  posAccess: boolean;
+  dashboardAccess: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+/* End Staff */
+
+
+
+/* Customer */
+
+declare type Customer = {
+  $id?: string;
+  name: string;
+  email?: string;
+  phoneNumber?: string;
+  gender: Gender;
+  dateOfBirth?: Date;
+  nationality?: string;
+  lastVisitDate: Date;
+  registrationBranch?: Branch;
+  address?: string;
+  notes?: string;
+  allowNotifications: boolean;
+  points: number;
+  totalSpend: number;
+  totalVisits: number;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
+/* End Customer */
+
+/* Campaign */
+
+declare type Campaign = {
+  $id: string;
   title: string;
-  href?: string;
-  disabled?: boolean;
-  external?: boolean;
-  icon?: keyof typeof Icons;
-  label?: string;
+  audience: CampaignAudience;
+  message: string;
+  businessId: string;
+  scheduleDate: Date;
+  status: boolean;
+  $createdAt: Date;
+  $updatedAt: Date;
+}
+
+/* End campaign */
+
+/* Stock */
+
+declare type Inventory = {
+  $id?: string;
+  title: string,
+  packaging: string,
+  businessId: string,
+  variants: InventoryVariant[],
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
+
+declare type InventoryVariant = {
+  $id?: string;
+  name: string,
+  quantity: number,
+  startingQuantity: number;
+  lowQuantity: number,
+  barcodeId?: string,
+  status: InventoryStatus,
+  image?: string,
+  fullName: string,
+  itemsPerPackage: number,
+  volume?: number,
+  inventory: Inventory;
+  unit: string;
+  startingValue: number;
+  actualValue: number;
+  actualQuantity: number;
+  businessId: string;
+  value: number;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
+declare type InventoryModification = {
+  $id?: string;
+  item: InventoryVariant,
+  quantity: number,
+  value: number,
+  reason: string,
+  notes: string,
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
+declare type Stock = {
+  $id?: string;
+  item: InvenvtoryVariant;
+  quantity: number;
+  actualQuantity: number;
+  staff?: Staff;
+  department?: Department;
+  supplier: Supplier;
+  orderNumber: string;
+  orderDate: Date;
+  deliveryDate: Date;
+  accurate: boolean;
+  value?: number;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+/* End Stock */
+
+
+/* Expense */
+declare type Expense = {
+  $id?: string;
+  name: string;
+  category: string;
+  currency: string;
+  tax: number;
+  amount: number;
+  staff?: Staff;
+  vendor?: Supplier;
+  department?: Department;
+  expenseDate: Date;
+  dueDate: Date;
+  document?: string;
+  description: string;
+  balance: number;
+  status: ExpenseStatus;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+
+declare type ExpensePayment = {
+  $id?: string;
+  expense: Expense;
+  paymentDate: Date;
+  receipt?: string;
+  amount: number;
+  paymentMethod: PaymentMethod; 
   description?: string;
+  $createdAt?: Date;
+  $updatedAt?: Date;
+}
+/* End Expense */
+
+
+
+/* Section */
+declare type Section = {
+  $id?: string;
+  name: string;
+  type: SectionType;
+  branch: Branch;
+  branchId: string;
+  businessId: string;
+  description: string;
+  noOfCustomers: number;
+  status: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
 
-declare interface NavItemWithChildren extends NavItem {
-  items: NavItemWithChildren[];
+/* End Section */
+
+
+/* Device */
+declare type Device = {
+  $id?: string;
+  imei?: string;
+  name: string;
+  branchId: string;
+  businessId: string;
+  code: number;
+  status: boolean;
+  lastSync: Date;
+  forceSync: boolean;
+  $createdAt?: Date;
+  $updatedAt?: Date;
 }
+/* End Device */
 
-declare interface NavItemWithOptionalChildren extends NavItem {
-  items?: NavItemWithChildren[];
-}
 
-declare interface FooterItem {
-  title: string;
-  items: {
-    title: string;
-    href: string;
-    external?: boolean;
-  }[];
-}
 
-declare type MainNavItem = NavItemWithOptionalChildren;
 
-declare type SidebarNavItem = NavItemWithChildren;
 
+
+
+
+
+
+// ========================================
 
 
 declare type Account = {
@@ -251,35 +629,7 @@ declare type Transaction = {
   receiverBankId: string;
 };
 
-declare type Bank = {
-  $id: string;
-  accountId: string;
-  bankId: string;
-  accessToken: string;
-  fundingSourceUrl: string;
-  userId: string;
-  shareableId: string;
-};
 
-declare type AccountTypes =
-  | "depository"
-  | "credit"
-  | "loan "
-  | "investment"
-  | "other";
-
-declare type Category = "Food and Drink" | "Travel" | "Transfer";
-
-declare type CategoryCount = {
-  name: string;
-  count: number;
-  totalCount: number;
-};
-
-declare type Receiver = {
-  firstName: string;
-  lastName: string;
-};
 
 declare type TransferParams = {
   sourceFundingSourceUrl: string;
@@ -350,17 +700,7 @@ declare interface PaginationProps {
 declare interface PlaidLinkProps {
   user: User;
   variant?: "primary" | "ghost";
-  dwollaCustomerId?: string;
 }
-
-// declare type User = sdk.Models.Document & {
-//   accountId: string;
-//   email: string;
-//   name: string;
-//   items: string[];
-//   accessToken: string;
-//   image: string;
-// };
 
 declare interface AuthFormProps {
   type: "sign-in" | "sign-up";
@@ -384,121 +724,5 @@ declare interface TotalBalanceBoxProps {
 }
 
 declare interface FooterProps {
-  user: User;
   type?: 'mobile' | 'desktop'
-}
-
-declare interface RightSidebarProps {
-  user: User;
-  transactions: Transaction[];
-  banks: Bank[] & Account[];
-}
-
-declare interface SiderbarProps {
-  user: User;
-}
-
-declare interface RecentTransactionsProps {
-  accounts: Account[];
-  transactions: Transaction[];
-  appwriteItemId: string;
-  page: number;
-}
-
-declare interface TransactionHistoryTableProps {
-  transactions: Transaction[];
-  page: number;
-}
-
-declare interface CategoryBadgeProps {
-  category: string;
-}
-
-declare interface TransactionTableProps {
-  transactions: Transaction[];
-}
-
-declare interface CategoryProps {
-  category: CategoryCount;
-}
-
-declare interface DoughnutChartProps {
-  accounts: Account[];
-}
-
-declare interface PaymentTransferFormProps {
-  accounts: Account[];
-}
-
-// Actions
-declare interface getAccountsProps {
-  userId: string;
-}
-
-declare interface getAccountProps {
-  appwriteItemId: string;
-}
-
-declare interface getInstitutionProps {
-  institutionId: string;
-}
-
-declare interface getTransactionsProps {
-  accessToken: string;
-}
-
-declare interface CreateFundingSourceOptions {
-  customerId: string; // Dwolla Customer ID
-  fundingSourceName: string; // Dwolla Funding Source Name
-  plaidToken: string; // Plaid Account Processor Token
-  _links: object; // Dwolla On Demand Authorization Link
-}
-
-declare interface CreateTransactionProps {
-  name: string;
-  amount: string;
-  senderId: string;
-  senderBankId: string;
-  receiverId: string;
-  receiverBankId: string;
-  email: string;
-}
-
-declare interface getTransactionsByBankIdProps {
-  bankId: string;
-}
-
-declare interface signInProps {
-  email: string;
-  password: string;
-}
-
-declare interface getUserInfoProps {
-  userId: string;
-}
-
-declare interface exchangePublicTokenProps {
-  publicToken: string;
-  user: User;
-}
-
-declare interface createBankAccountProps {
-  accessToken: string;
-  userId: string;
-  accountId: string;
-  bankId: string;
-  fundingSourceUrl: string;
-  shareableId: string;
-}
-
-declare interface getBanksProps {
-  userId: string;
-}
-
-declare interface getBankProps {
-  documentId: string;
-}
-
-declare interface getBankByAccountIdProps {
-  accountId: string;
 }

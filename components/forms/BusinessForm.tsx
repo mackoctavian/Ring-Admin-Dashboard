@@ -1,20 +1,9 @@
-"use client";
-import CountrySelect from  "@/components/ui/country-picker"
-import TimezonePicker from  "@/components/ui/timezone-picker"
-import SlugGenerator from  "@/components/ui/slug-generator"
-import { Button } from "@/components/ui/button";
-import { UploadButton } from "@/components/ui/file-upload";
-import { Textarea } from "@/components/ui/textarea"
-import { Heading } from "@/components/ui/heading";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Trash } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { useToast } from "@/components/ui/use-toast";
+'use client'
+
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form'
+import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -22,165 +11,107 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form"
+import { ReloadIcon } from "@radix-ui/react-icons"
+import { Input } from "@/components/ui/input"
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod'
+import { useToast } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation"
+import CountrySelector from "../layout/country-selector"
+import { Textarea } from "@/components/ui/textarea"
+import BusinessSizeSelector from "../layout/business-size-selector"
+import BusinessTypeSelector from "../layout/business-type-selector"
+import { BusinessType, Business } from "@/types"
+import { BusinessSchema } from '@/types/data-schemas'
+import CancelButton from "../layout/cancel-button"
+import { updateItem } from "@/lib/actions/business.actions"
+import { SubmitButton } from "@/components/ui/submit-button"
 
-const ImgSchema = z.object({
-  fileName: z.string(),
-  name: z.string(),
-  fileSize: z.number(),
-  size: z.number(),
-  fileKey: z.string(),
-  key: z.string(),
-  fileUrl: z.string(),
-  url: z.string(),
-});
-
-export const IMG_MAX_LIMIT = 1;
-
-const formSchema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "Business name must be at least 3 characters" }),
-  imgUrl: z
-    .array(ImgSchema)
-    .max(IMG_MAX_LIMIT, { message: "You can only add one image" })
-    .min(1, { message: "Pleaser upload business logo." }),
-  slug: z
-    .string()
-    .min(1,  { message: "Business must have a slug" }),
-  description: z
-    .string()
-    .min(3, { message: "Product description must be at least 3 characters" }),
-  price: z.coerce.number(),
-  category: z.string().min(1, { message: "Please select a category" }),
-});
-
-type BusinessFormValues = z.infer<typeof formSchema>;
-
-interface BusinessFormProps {
-  initialData: any | null;
-  categories: any;
-}
-
-export const BusinessForm: React.FC<BusinessFormProps> = ({
-  initialData,
-  categories,
-}) => {
-  const params = useParams();
+const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const title = initialData ? "Edit business" : "Edit business";
-  const description = initialData ? "Edit your business details." : "Edit your business details";
-  const toastMessage = initialData ? "Business details updated." : "Business details updated.";
-  const action = initialData ? "Save changes" : "Save changes";
+  const [country, setCountry] = useState<string>('Tanzania'); // Default country set
+  const [selectedBusinessType, setSelectedBusinessType] = useState<BusinessType | undefined>(
+    item ? item.businessType : undefined
+  );
 
-  //TODO: Default timezone set
-  //const [timezone, setTimezone] = useState<string>('eat');
-  const [timezone, setTimezone] = useState<string | undefined>();
-  const handleTimezoneChange = (value: string) => {
-    setTimezone(value);
-  };
-
-  //const [branchTimezone, setBranchTimezone] = useState<string>('eat');
-  const [branchTimezone, setBranchTimezone] = useState<string | undefined>();
-  const handleBranchTimezoneChange = (value: string) => {
-    setBranchTimezone(value);
-  };
-
-
-  //TODO: Default country set
-  //const [country, setCountry] = useState<string>('TZ');
-  const [country, setCountry] = useState<string | undefined>();
-  const handleCountryChange = (value: string) => {
-    setCountry(value);
-  };
-
-
-  const defaultValues = initialData
-    ? initialData
-    : {
-        businessName: "",
-        logo: "",
-        slug: "",
-        description: "",
-        emailAddress: "",
-        mobileNumber: "",
-        phoneNumber: "",
-        address: "",
-        city: "",
-        country: "",
-        timeZone: "",
-        currencies: [],
-        businessCategories: [],
-      };
-
-  const form = useForm<BusinessFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues,
+  const form = useForm<z.infer<typeof BusinessSchema>>({
+    resolver: zodResolver(BusinessSchema),
+    defaultValues: item ? item : {},
   });
 
-  const onSubmit = async (data: BusinessFormValues) => {
+  const { control, setValue } = form;
+
+  useEffect(() => {
+    if (item) {
+      //setValue('businessType', item.businessType);
+      setSelectedBusinessType(item.businessType);
+      setCountry(item.country || 'Tanzania');
+    }
+  }, [item, setValue]);
+
+  const handleBusinessTypeChange = (businessType: BusinessType) => {
+    setSelectedBusinessType(businessType);
+    setValue('businessType', businessType);
+  };
+
+  const handleCountryChange = (value: string) => {
+    setCountry(value);
+    setValue('country', value);
+  };
+
+  const onInvalid = (errors: any) => {
+    console.error('Error saving business settings: ', JSON.stringify(errors, null, 2));
+    toast({
+      variant: 'warning',
+      title: 'Data validation failed!',
+      description: 'Please make sure all the fields marked with * are filled correctly.',
+    });
+  };
+
+  const onSubmit = async (data: z.infer<typeof BusinessSchema>) => {
+    setIsLoading(true);
+
     try {
-      setLoading(true);
-      if (initialData) {
-        // await axios.post(`/api/products/edit-product/${initialData._id}`, data);
-      } else {
-        // const res = await axios.post(`/api/products/create-product`, data);
-        // console.log("product", res);
-      }
-      router.refresh();
-      router.push(`/dashboard`);
+      await updateItem(item!.$id, data);
+
       toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: "There was a problem with your request.",
+        variant: 'success',
+        title: 'Successfully updated.',
+        description: 'You have successfully updated your business information.',
       });
+
+      router.push('/business');
+      router.refresh();
     } catch (error: any) {
       toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: "There was a problem with your request.",
+        variant: 'destructive',
+        title: 'Uh oh! Something went wrong.',
+        description:'There was an issue submitting your form, please try later',
       });
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
     }
   };
 
-  const triggerImgUrlValidation = () => form.trigger("imgUrl");
-
   return (
-    <>
-      <div className="flex items-center justify-between">
-        <Heading title={title} description={description} />
-        {initialData && (
-          <Button
-            disabled={loading}
-            variant="destructive"
-            size="sm"
-            onClick={() => setOpen(true)}
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-      <Separator />
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 w-full"
-        >
-
-          <div className="md:grid md:grid-cols-3 gap-8">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold">Main Business Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField
-              control={form.control}
+              control={control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Business name</FormLabel>
+                  <FormLabel>Business name *</FormLabel>
                   <FormControl>
-                    <SlugGenerator loading={loading} placeholder="Business name" field={field}/>
+                    <Input placeholder="Business full name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -188,17 +119,27 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({
             />
 
             <FormField
-              control={form.control}
+              control={control}
+              name="slug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Slug ( Auto-generated ) *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Slug" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
               name="logo"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Logo</FormLabel>
                   <FormControl>
-                    <Input
-                      type="file"
-                      onChange={field.onChange}
-                      value={field.value}
-                    />
+                    <Input type="file" placeholder="Business logo" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -206,13 +147,13 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({
             />
 
             <FormField
-              control={form.control}
-              name="emailAddress"
+              control={control}
+              name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Address</FormLabel>
+                  <FormLabel>Email address *</FormLabel>
                   <FormControl>
-                    <Input disabled={loading} placeholder="Email Address" {...field} />
+                    <Input type="email" placeholder="Email address" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -220,13 +161,13 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({
             />
 
             <FormField
-              control={form.control}
-              name="mobileNumber"
+              control={control}
+              name="registrationNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number</FormLabel>
+                  <FormLabel>Registration number *</FormLabel>
                   <FormControl>
-                    <Input disabled={loading} placeholder="Mobile Number" {...field} />
+                    <Input placeholder="Enter registration number" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -234,17 +175,41 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({
             />
 
             <FormField
-              control={form.control}
+              control={control}
+              name="businessType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business type *</FormLabel>
+                  <FormControl>
+                    <BusinessTypeSelector value={selectedBusinessType} onChange={handleBusinessTypeChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
+              name="size"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business size *</FormLabel>
+                  <FormControl>
+                    <BusinessSizeSelector {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
               name="phoneNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel>Phone number *</FormLabel>
                   <FormControl>
-                    <Input
-                      disabled={loading}
-                      placeholder="Phone Number"
-                      {...field}
-                    />
+                    <Input type="tel" placeholder="Enter phone number" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -252,260 +217,70 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({
             />
 
             <FormField
-              control={form.control}
+              control={control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country *</FormLabel>
+                  <FormControl>
+                    <CountrySelector value={country} onChange={handleCountryChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter city / region name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
               name="address"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Input
-                      disabled={loading}
-                      placeholder="Address"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City</FormLabel>
-                  <FormControl>
-                    <Input
-                      disabled={loading}
-                      placeholder="City"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="country"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <FormControl>
-                    <CountrySelect value={country} onChange={handleCountryChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="timeZone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Time Zone</FormLabel>
-                  <FormControl>
-                    <TimezonePicker value={timezone} onChange={handleTimezoneChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="currencies"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Currency</FormLabel>
-                  <FormControl>
-                    <Input
-                      disabled={loading}
-                      placeholder="Currency"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="businessCategories"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Business Categories</FormLabel>
-                  <FormControl>
-                    <Input
-                      disabled={loading}
-                      placeholder="Business Categories"
-                      {...field}
-                    />
+                    <Input placeholder="Enter address" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-          <div className="md:grid md:grid-cols-1 gap-8">
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Business Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      disabled={loading}
-                      placeholder="Business description"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Short description of your business" className="resize-none" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-
-            <div className="flex items-center justify-between">
-              <Heading title="Main Branch" description="Edit main branch details" />
-              {initialData && (
-                <Button
-                  disabled={loading}
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setOpen(true)}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            <Separator />
-          </div>
-
-          <div className="md:grid md:grid-cols-3 gap-8">
-            <FormField
-              control={form.control}
-              name="branchName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Branch name</FormLabel>
-                  <FormControl>
-                    <SlugGenerator loading={loading} placeholder="Branch name" field={field}/>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="branchEmailAddress"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Address</FormLabel>
-                  <FormControl>
-                    <Input disabled={loading} placeholder="Email Address" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="branchPhoneNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input disabled={loading} placeholder="Phone Number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="branchAddress"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl>
-                    <Input disabled={loading} placeholder="Address" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="branchCity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City</FormLabel>
-                  <FormControl>
-                    <Input disabled={loading} placeholder="City" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="openingTime"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Opening Time</FormLabel>
-                  <FormControl>
-                    <Input disabled={loading} placeholder="Opening Time" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="closingTime"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Closing Time</FormLabel>
-                  <FormControl>
-                    <Input disabled={loading} placeholder="Closing Time" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="branchTimeZone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Time Zone</FormLabel>
-                  <FormControl>
-                    <TimezonePicker value={branchTimezone} onChange={handleBranchTimezoneChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <Button disabled={loading} className="ml-auto" type="submit">
-            {action}
-          </Button>
-        </form>
-      </Form>
-    </>
+        <div className="flex h-5 items-center space-x-4">
+          <CancelButton />
+          <Separator orientation="vertical" />
+          <SubmitButton loading={isLoading} label={item ? 'Update business details' : 'Save business details'} />
+        </div>
+      </form>
+    </Form>
   );
 };
+
+export default BusinessSettingsForm;

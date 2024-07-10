@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ProductUnit } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
+import { StateColumn } from "../state-column";
 
 export const columns: ColumnDef<ProductUnit>[] = [
   {
@@ -21,7 +22,7 @@ export const columns: ColumnDef<ProductUnit>[] = [
         aria-label="Select row"
       />
     ),
-    enableSorting: false,
+    enableSorting: true,
     enableHiding: false,
   },
   {
@@ -31,6 +32,11 @@ export const columns: ColumnDef<ProductUnit>[] = [
   {
     accessorKey: "shortName",
     header: "SHORT NAME",
+  },
+  {
+    header: "STATUS",
+    id: "status",
+    cell: ({ row }) => <StateColumn state={row.original.status} />,
   },
   {
     id: "actions",

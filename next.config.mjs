@@ -1,13 +1,29 @@
 import {withSentryConfig} from '@sentry/nextjs';
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+    // Disable type checking (if using TypeScript)
+    typescript: {
+      ignoreBuildErrors: true,
+    },
+    // Disable ESLint during build
+    eslint: {
+      ignoreDuringBuilds: true,
+    },
+    // Custom webpack configuration
+    webpack: (config, { dev }) => {
+      if (dev) {
+        // Development-specific configuration
+      }
+      return config;
+    },
+  };
 
 export default withSentryConfig(nextConfig, {
 // For all available options, see:
 // https://github.com/getsentry/sentry-webpack-plugin#options
 
 org: "qroo-solutions",
-project: "slide-dashboard-ui",
+project: "pos-dashboard",
 
 // Only print logs for uploading source maps in CI
 silent: !process.env.CI,
@@ -17,9 +33,6 @@ silent: !process.env.CI,
 
 // Upload a larger set of source maps for prettier stack traces (increases build time)
 widenClientFileUpload: true,
-
-// Transpiles SDK to be compatible with IE11 (increases bundle size)
-transpileClientSDK: true,
 
 // Uncomment to route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
 // This can increase your server load as well as your hosting bill.

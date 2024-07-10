@@ -88,11 +88,16 @@ const config = {
           600: "#98846C",
           700: "#68533E",
           900: "#432E1C"
-        },        
+        },
+        darkgray: {
+          25: "#141417"
+        },
         gray: {
-          25: "#FCFCFD",
-          200: "#EAECF0",
-          300: "#D0D5DD",
+          25: "#FDFDFD",
+          100: "#FCFCFC",
+          300: "#FBFBFB",
+          300: "#EAECF0",
+          400: "#D0D5DD",
           500: "#667085",
           600: "#475467",
           700: "#101616",
@@ -112,8 +117,8 @@ const config = {
           foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
+          foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -139,8 +144,9 @@ const config = {
           "linear-gradient(90deg, #01797A 0%, #489399 100%)",
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
+        xl: `calc(var(--radius) + 4px)`,
+        lg: `var(--radius)`,
+        md: `calc(var(--radius) - 2px)`,
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
@@ -167,10 +173,15 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "caret-blink": {
+          "0%,70%,100%": { opacity: "1" },
+          "20%,50%": { opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "caret-blink": "caret-blink 1.25s ease-out infinite",
       },
     },
   },

@@ -1,5 +1,6 @@
 import AnimatedCounter from "@/components/AnimatedCounter";
 import { CalendarDateRangePicker } from "@/components/date-range-picker";
+import Greetings from "@/components/layout/greeting";
 import { Overview } from "@/components/overview";
 import { RecentSales } from "@/components/recent-sales";
 import { Button } from "@/components/ui/button";
@@ -14,13 +15,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function page() {
+  
+
   return (
     <ScrollArea className="h-full">
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight text-green-main">
-            Hi, Welcome back 👋
-          </h2>
+          <h2 className="text-3xl font-bold tracking-tight text-green-main"><Greetings /></h2>
           <div className="hidden md:flex items-center space-x-2">
             <CalendarDateRangePicker />
             <Button>Download</Button>

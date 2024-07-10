@@ -1,39 +1,42 @@
-// import { logoutAccount } from '@/lib/actions/user.actions'
+import { useUser, useClerk } from "@clerk/nextjs";
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import React from 'react'
+import { FooterProps } from "@/types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const Footer = ({ user, type = 'desktop' }: FooterProps) => {
-  const router = useRouter();
 
-  const handleLogOut = async () => {
-    // const loggedOut = await logoutAccount();
+const Footer = ({ type = 'desktop' }: FooterProps) => {
+  const { isSignedIn, user } = useUser();
+  const { signOut } = useClerk();
 
-    // if(loggedOut) router.push('/sign-in')
+  if (isSignedIn) {
+    return (
+      <footer className="footer">
+        <div className={type === 'mobile' ? 'footer_name-mobile' : 'footer_name'}>
+          <Avatar className="h-8 w-8">
+              <AvatarImage
+                src={user.imageUrl}
+                alt={user.firstName!}
+              />
+              <AvatarFallback>{user.fullName}</AvatarFallback>
+          </Avatar>
+        </div>
+
+        <div className={type === 'mobile' ? 'footer_email-mobile' : 'footer_email'}>
+            <h1 className="text-14 truncate text-gray-700 font-semibold">
+              {user.fullName!}
+            </h1>
+            <p className="text-14 truncate font-normal text-gray-600">
+            {user.primaryEmailAddress?.emailAddress}
+            </p>
+        </div>
+
+        <div className="footer_image" onClick={() => signOut({ redirectUrl: '/sign-in' })}>
+          <Image src="icons/logout.svg" fill alt="jsm" />
+        </div>
+      </footer>
+    )
   }
-
-  return (
-    <footer className="footer">
-      <div className={type === 'mobile' ? 'footer_name-mobile' : 'footer_name'}>
-        <p className="text-xl font-bold text-gray-700">
-          {user?.firstName[0]}
-        </p>
-      </div>
-
-      <div className={type === 'mobile' ? 'footer_email-mobile' : 'footer_email'}>
-          <h1 className="text-14 truncate text-gray-700 font-semibold">
-            {user?.firstName}
-          </h1>
-          <p className="text-14 truncate font-normal text-gray-600">
-            {user?.email}
-          </p>
-      </div>
-
-      <div className="footer_image" onClick={handleLogOut}>
-        <Image src="icons/logout.svg" fill alt="jsm" />
-      </div>
-    </footer>
-  )
 }
 
 export default Footer

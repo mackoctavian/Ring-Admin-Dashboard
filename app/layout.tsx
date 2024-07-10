@@ -7,7 +7,9 @@ import { Inter, IBM_Plex_Serif, Open_Sans } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/layout/providers";
 import { Toaster } from "@/components/ui/toaster";
-import { cookies } from "next/headers";
+import { siteConfig } from "@/config/site"
+import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const ibmPlexSerif = IBM_Plex_Serif({
@@ -22,26 +24,26 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Slide POS",
-  description: "Modern business solutions for small scale enterprises.",
+  title: siteConfig.name,
+  description: siteConfig.description,
   icons: {
-    icon: '/icons/logo.svg'
+    icon: siteConfig.icon
   }
-};
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = cookies().get("qroo-pos-session");
-
   return (
     <html lang="en">
       <body className={`${inter.variable} ${ibmPlexSerif.variable} ${openSans.variable}`}>
-        <Providers>
-          <Toaster />
-          {children}
+        <SpeedInsights/>
+        <Analytics />
+        <Providers> 
+            <Toaster />
+            {children}
         </Providers>
       </body>
     </html>

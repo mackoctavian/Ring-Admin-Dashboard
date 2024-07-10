@@ -1,6 +1,4 @@
 import BreadCrumb from "@/components/layout/breadcrumb";
-import { columns } from "@/components/layout/tables/units-table/columns";
-import { UnitsTable } from "@/components/layout/tables/units-table/units-table";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
@@ -9,7 +7,9 @@ import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
-import { getDepartments } from "@/lib/actions/department.actions";
+import { columns } from "@/components/layout/tables/departments-table/columns";
+import { getItems } from "@/lib/actions/department.actions";
+import { DepartmentsTable } from "@/components/layout/tables/departments-table/departments-table";
 
 const breadcrumbItems = [{ title: "Departments", link: "/departments" }];
 
@@ -25,10 +25,9 @@ export default async function Page({ searchParams }: ParamsProps) {
   const q = searchParams.search || null;
   const offset = (page - 1) * pageLimit;
 
-  const data : Department[] = await getDepartments();
+  const data : Department[] = await getItems(q?.toString(), null, pageLimit, offset);
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
-
 
   return (
     <>
@@ -36,19 +35,19 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
 
         <div className="flex items-start justify-between">
-            <Heading title={`Departments (${total})`} description="Manage departments" />
+            <Heading title={`Departments`} total={total.toString()} description="Manage departments" />
 
             <Link href={"/departments/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add New
+                <Plus className="mr-2 h-4 w-4" /> Add Department
             </Link>
         </div>
         <Separator />
 
-        <UnitsTable
+        <DepartmentsTable
           searchKey="name"
           pageNo={page}
           columns={columns}
-          totalUsers={total}
+          total={total}
           data={data}
           pageCount={pageCount}
         />
