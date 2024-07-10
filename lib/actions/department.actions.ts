@@ -76,7 +76,7 @@ export const createItem = async (item: Department) => {
     let errorMessage = 'Something went wrong with your request, please try again later.';
     if (error instanceof AppwriteException) {
       errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
+  }
 
     if(env == "development"){ console.error(error); }
 
