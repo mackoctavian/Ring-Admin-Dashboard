@@ -54,8 +54,8 @@ export const createItem = async (item: Product) => {
       //Create variants
       for (const variant of variants) {
         await database.createDocument(
-          DATABASE_ID,
-          PRODUCTS_VARIANTS_COLLECTION_ID,
+          DATABASE_ID!,
+          PRODUCTS_VARIANTS_COLLECTION_ID!,
           ID.unique(),
           {
             ...variant,
@@ -85,8 +85,8 @@ export const list = async ( ) => {
 
     try {
       const items = await database.listDocuments(
-        DATABASE_ID,
-        PRODUCTS_COLLECTION_ID,
+        DATABASE_ID!,
+        PRODUCTS_COLLECTION_ID!,
         [Query.equal('businessId', businessId)]
       );
 
@@ -134,8 +134,8 @@ export const getItems = async (
       }
   
       const items = await database.listDocuments(
-        DATABASE_ID,
-        PRODUCTS_COLLECTION_ID,
+        DATABASE_ID!,
+        PRODUCTS_COLLECTION_ID!,
         queries
       );
   
@@ -185,7 +185,7 @@ export const getItem = async (id: string) => {
 };
 
 export const deleteItem = async ({ $id }: Product) => {
-  if (!id) return null;
+  if (!$id) return null;
   const { database, businessId } = await checkRequirements(PRODUCTS_COLLECTION_ID);
     try {
       await database.deleteDocument(

@@ -39,6 +39,8 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${ibmPlexSerif.variable} ${openSans.variable}`}>
+        <SpeedInsights/>
+        <Analytics />
         <Providers> 
             <Toaster />
             {children}
