@@ -73,8 +73,8 @@ export const list = async ( ) => {
 
     try {
       const items = await database.listDocuments(
-        DATABASE_ID,
-        CUSTOMER_COLLECTION_ID,
+        DATABASE_ID!,
+        CUSTOMER_COLLECTION_ID!,
         [Query.equal('businessId', businessId!)]
       );
 
@@ -119,8 +119,8 @@ export const list = async ( ) => {
       }
   
       const items = await database.listDocuments(
-        DATABASE_ID,
-        CUSTOMER_COLLECTION_ID,
+        DATABASE_ID!,
+        CUSTOMER_COLLECTION_ID!,
         queries
       );
   
@@ -170,7 +170,7 @@ export const getItem = async (id: string) => {
   }
 
 export const deleteItem = async ({ $id }: Customer) => {
-  if (!id) return null;
+  if (!$id) return null;
   const { database, businessId } = await checkRequirements(CUSTOMER_COLLECTION_ID);
 
     try {
@@ -178,8 +178,6 @@ export const deleteItem = async ({ $id }: Customer) => {
         DATABASE_ID!,
         CUSTOMER_COLLECTION_ID!,
         $id);
-  
-      return parseStringify(item);
     } catch (error: any) {
       let errorMessage = 'Something went wrong with your request, please try again later.';
       if (error instanceof AppwriteException) {
@@ -196,7 +194,7 @@ export const deleteItem = async ({ $id }: Customer) => {
     redirect('/customers')
   }
 
-export const updateItem = async (id: string, data: CustomerDto) => {
+export const updateItem = async (id: string, data: Customer) => {
   if (!id) return null;
   const { database, businessId } = await checkRequirements(CUSTOMER_COLLECTION_ID);
 

@@ -40,7 +40,7 @@ const SubscriptionNotice = () => {
   const message = statusMessages[subscriptionStatus];
 
   return (
-    <div id="subscriptionBanner" tabIndex="-1" className="fixed z-50 flex flex-col md:flex-row justify-between w-[calc(100%-2rem)] p-4 -translate-x-1/2 bg-destructive text-destructive-foreground border-destructive rounded-lg shadow-sm lg:max-w-7xl left-1/2 top-6 transition-transform duration-700 transition-[opacity,transform] translate-y-0 opacity-100">
+    <div id="subscriptionBanner" className="fixed z-50 flex flex-col md:flex-row justify-between w-[calc(100%-2rem)] p-4 -translate-x-1/2 bg-destructive text-destructive-foreground border-destructive rounded-lg shadow-sm lg:max-w-7xl left-1/2 top-6 transition-transform duration-700 transition-[opacity,transform] translate-y-0 opacity-100">
       <div className="flex flex-col items-start mb-3 me-4 md:items-center md:flex-row md:mb-0">
         <div className="flex items-center mb-2 border-gray-200 md:pe-4 md:me-4 md:border-e md:mb-0 dark:border-gray-600">
           <div className="relative w-full max-w-[80px]">
@@ -57,7 +57,7 @@ const SubscriptionNotice = () => {
         </p>
       </div>
       <div className="flex items-center flex-shrink-0">
-        <a href="mailto: subscriptions@slide.co.tz" className="px-5 py-2 me-2 text-xs font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Renew subscription</a>
+        <a href="mailto: subscriptions@ring.co.tz" className="px-5 py-2 me-2 text-xs font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Renew subscription</a>
       </div>
     </div>
   );

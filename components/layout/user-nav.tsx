@@ -46,21 +46,21 @@ export function UserNav() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => router.push("/settings/profile") }>
+            <DropdownMenuItem onClick={() => router.push("/dashboard/settings/profile") }>
               Profile
               <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/settings/business") }>
+            <DropdownMenuItem onClick={() => router.push("/dashboard/settings/business") }>
               Business settings
               <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => signOut({ redirectUrl: '/settings/account' })}>
+            <DropdownMenuItem onClick={() => signOut({ redirectUrl: '/dashboard/settings/account' })}>
               Account Settings
               <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut({ redirectUrl: '/sign-in' })}>
+          <DropdownMenuItem onClick={() => signOut({ redirectUrl: '/' })}>
             Log out
             <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
           </DropdownMenuItem>
