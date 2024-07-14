@@ -7,7 +7,7 @@ export default function Sidebar() {
     <section className="sidebar bg-gray-100 dark:bg-darkgray-25">
       <ScrollArea>
       <nav className={cn(`relative hidden h-screen pt-16 lg:block w-72`)}>
-        <DashboardNav setOpen='open'  />
+        <DashboardNav />
       </nav>
       </ScrollArea>
     </section>

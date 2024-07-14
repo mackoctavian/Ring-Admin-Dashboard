@@ -199,6 +199,7 @@ export const getItem = async (id: string) => {
 }
 
 export const deleteItem = async ({ $id }: Department) => {
+  if (!$id) return null;
   try {
     if (!DATABASE_ID || !DEPARTMENT_COLLECTION_ID) {
       throw new Error('Database ID or Collection ID is missing');

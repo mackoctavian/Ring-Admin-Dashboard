@@ -39,7 +39,7 @@ const sidebarNavItems = [
   {
     title: 'Profile',
     icon: <IconUser size={18} />,
-    href: '/settings/user-profile',
+    href: '/dashboard/settings/user-profile',
   },
 //  {
 //    title: 'Account',
@@ -49,21 +49,21 @@ const sidebarNavItems = [
   {
     title: 'Business',
     icon: <IconTool size={18} />,
-    href: '/settings/business',
+    href: '/dashboard/settings/business',
   },
   {
     title: 'Devices',
     icon: <IconBrowserCheck size={18} />,
-    href: '/settings/devices',
+    href: '/dashboard/settings/devices',
   },
   {
     title: 'Appearance',
     icon: <IconPalette size={18} />,
-    href: '/settings/appearance',
+    href: '/dashboard/settings/appearance',
   },
   {
     title: 'Notifications',
     icon: <IconNotification size={18} />,
-    href: '/settings/notifications',
+    href: '/dashboard/settings/notifications',
   },
 ]

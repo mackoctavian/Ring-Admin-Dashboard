@@ -8,7 +8,7 @@ export interface NavItem {
 export const mainMenu = [
     {
       icon: '/icons/icons/dashboard.svg',
-      route: "/",
+      route: "/dashboard/overview",
       label: "Dashboard",
     },
   
@@ -17,21 +17,21 @@ export const mainMenu = [
       label: 'Reports',
     },
     { type: 'separator' },
+    // {
+    //   route: "/#",
+    //   icon: "/icons/icons/sales-report.svg",
+    //   label: "Sales Reports",
+    // },
     {
-      route: "/#",
-      icon: "/icons/icons/sales-report.svg",
-      label: "Sales Reports",
-    },
-    {
-      route: "/inventory-report",
+      route: "/dashboard/inventory-report",
       icon: "/icons/icons/inventory-report.svg",
       label: "Inventory Reports",
     },
-    {
-      route: "/#",
-      icon: "/icons/icons/invoices.svg",
-      label: "Profit & Loss Report",
-    },
+    // {
+    //   route: "/#",
+    //   icon: "/icons/icons/invoices.svg",
+    //   label: "Profit & Loss Report",
+    // },
     
   
   
@@ -42,18 +42,18 @@ export const mainMenu = [
     { type: 'separator' },
     {
       icon: "/icons/icons/stock-management.svg",
-      route: "/inventory",
+      route: "/dashboard/inventory",
       label: "Stock",
     },
     {
       icon: "/icons/icons/stock-management.svg",
-      route: "/stock",
+      route: "/dashboard/stock",
       label: "Stock Intake",
     },
     
     {
       icon: "/icons/icons/suppliers.svg",
-      route: "/suppliers",
+      route: "/dashboard/suppliers",
       label: "Suppliers",
     },
     // {
@@ -75,29 +75,29 @@ export const mainMenu = [
     { type: 'separator' },
     {
       icon: "/icons/icons/categories.svg",
-      route: "/categories",
+      route: "/dashboard/categories",
       label: "Categories",
     },
     {
       icon: "/icons/icons/units.svg",
-      route: "/modifiers",
+      route: "/dashboard/modifiers",
       label: "Modifiers",
     },
     {
       icon: "/icons/icons/products.svg",
-      route: "/products",
+      route: "/dashboard/products",
       label: "Products",
     },
-    {
-      icon: "/icons/icons/services.svg",
-      route: "/services",
-      label: "Services",
-    },
-    {
-      icon: "/icons/icons/packages.svg",
-      route: "/#",
-      label: "Packages",
-    },
+    // {
+    //   icon: "/icons/icons/services.svg",
+    //   route: "/services",
+    //   label: "Services",
+    // },
+    // {
+    //   icon: "/icons/icons/packages.svg",
+    //   route: "/#",
+    //   label: "Packages",
+    // },
     
     {
       type: 'title',
@@ -106,22 +106,22 @@ export const mainMenu = [
     { type: 'separator' },
     {
       icon: "/icons/icons/customers.svg",
-      route: "/customers",
+      route: "/dashboard/customers",
       label: "Customers",
     },
     {
       icon: "/icons/icons/discounts.svg",
-      route: "/discounts",
+      route: "/dashboard/discounts",
       label: "Discounts",
     },
     {
       icon: "/icons/icons/invoices.svg",
-      route: "/expenses",
+      route: "/dashboard/expenses",
       label: "Expenses",
     },
     {
       icon: "/icons/icons/campaigns.svg",
-      route: "/campaigns",
+      route: "/dashboard/campaigns",
       label: "Campaigns",
     },
     
@@ -130,23 +130,23 @@ export const mainMenu = [
   
     {
       icon: "/icons/icons/branches.svg",
-      route: "/branches",
+      route: "/dashboard/branches",
       label: "Branches",
     },
   
     {
       icon: "/icons/icons/departments.svg",
-      route: "/departments",
+      route: "/dashboard/departments",
       label: "Departments",
     },
     {
       icon: "/icons/icons/departments.svg",
-      route: "/sections",
+      route: "/dashboard/sections",
       label: "Spaces & sections",
     },
     {
       icon: "/icons/icons/staff.svg",
-      route: "/staff",
+      route: "/dashboard/staff",
       label: "Staff",
     },
     
@@ -161,7 +161,7 @@ export const mainMenu = [
     
     {
       icon: "/icons/icons/settings.svg",
-      route: "/settings/user-profile",
+      route: "/dashboard/settings/user-profile",
       label: "System Settings",
     },
     

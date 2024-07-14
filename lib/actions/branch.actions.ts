@@ -122,6 +122,7 @@ export const createItem = async (item: Branch) => {
         ...option
       }));
 
+      // @ts-ignore
       item.daysOpen = JSON.stringify(daysOpen)
 
       //create branch
@@ -287,7 +288,8 @@ export const updateItem = async (id: string, data: Branch) => {
     branchId:id,
   }));
 
-  data.daysOpen = JSON.stringify(daysOpen)
+  // @ts-ignore
+    data.daysOpen = JSON.stringify(daysOpen)
   
   try {
     await database.updateDocument(

@@ -129,6 +129,7 @@ export const getBusinessId = async () => {
       throw Error(errorMessage);
     }
 }
+
 export const getBusiness = async () => {
   const { database, businessId, userId } = await checkRequirements(BUSINESS_COLLECTION_ID);
 
@@ -322,9 +323,9 @@ export const registerBusiness = async (data: Business) => {
 
       const newBranch = await createDefaultBranch(parseStringify(newBusiness));
      
-      createDefaultDepartment(newBranch);
+      await createDefaultDepartment(newBranch);
 
-      initTrial(newBusiness.$id, parseStringify(newBusinessOwner));
+      await initTrial(newBusiness.$id, parseStringify(newBusinessOwner));
 
       await clerkClient.users.updateUser(user.id, {
         publicMetadata: {
@@ -357,8 +358,8 @@ export const registerBusiness = async (data: Business) => {
   }finally {
     //redirect same path, if succesfull then path will take you home
     console.log("Redirect to homepage")
-    revalidatePath("/")
-    redirect('/')
+    revalidatePath("/business-registration")
+    redirect('/dashboard')
   }
 }
 

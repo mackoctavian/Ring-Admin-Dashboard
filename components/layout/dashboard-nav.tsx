@@ -8,11 +8,7 @@ import { mainMenu } from "@/types/nav";
 import { Separator } from "@/components/ui/separator"
 import Footer from "@/components/layout/footer"
 
-interface Props {
-  setOpen: (value: string) => void;
-}
-
-export default function DashboardNav({ setOpen }: Props) {
+export default function DashboardNav() {
   const pathname = usePathname();
 
   return (
