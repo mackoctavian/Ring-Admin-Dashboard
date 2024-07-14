@@ -24,8 +24,19 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
+  applicationName: siteConfig.shortName,
   title: siteConfig.name,
   description: siteConfig.description,
+  themeColor: "#0468F1",
+  generator: "Qroo Solutions",
+  openGraph: {
+    type: "website",
+    url: "https://www.ring.co.tz",
+    title: siteConfig.name,
+    description: siteConfig.description,
+    siteName: siteConfig.name,
+    images: [{ url: siteConfig.logo }],
+  },
   icons: {
     icon: siteConfig.icon
   }

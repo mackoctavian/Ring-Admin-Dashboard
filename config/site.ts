@@ -1,6 +1,7 @@
 export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
+  shortName: "Ring",
   name: "Ring | Business Management Software",
   description: "Ring gives you all the technology that helps you run your business effortlessly.",
   logo: '/images/logo-color.png',
