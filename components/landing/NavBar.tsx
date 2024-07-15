@@ -12,7 +12,7 @@ export default function NavBar() {
             <nav className="h-14 flex items-center justify-between px-4 lg:px-10">
                 <div className="flex items-center">
                     <Link href="/sign-in" className="cursor-pointer flex items-center gap-2">
-                        <div className="relative w-[100px] lg:w-[120px]">
+                        <div className="relative w-[100px] lg:w-[100px]">
                             <Image
                                 src={siteConfig.logo}
                                 layout="responsive"
