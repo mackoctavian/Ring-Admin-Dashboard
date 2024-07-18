@@ -15,10 +15,10 @@ export default function NavBar() {
                         <div className="relative w-[100px] lg:w-[100px]">
                             <Image
                                 src={siteConfig.logo}
-                                layout="responsive"
                                 width={961}
                                 height={396}
                                 alt={siteConfig.name}
+                                style={{ width: '100%', height: 'auto' }}
                             />
                         </div>
                     </Link>

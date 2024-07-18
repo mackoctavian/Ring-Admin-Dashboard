@@ -14,11 +14,12 @@ export default function Header() {
         <div className="hidden lg:block">
           <Link href="/" className="cursor-pointer flex items-center gap-2">
             <div className="relative w-full max-w-[80px]">
-              <Image 
-                src={siteConfig.logo}
-                width={961}
-                height={396}
-                alt={siteConfig.name}
+              <Image
+                  src={siteConfig.logo}
+                  width={961}
+                  height={396}
+                  alt={siteConfig.name}
+                  style={{ width: '100%', height: 'auto' }}
               />
             </div>
           </Link>

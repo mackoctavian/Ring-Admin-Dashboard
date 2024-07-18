@@ -9,6 +9,8 @@ export const siteConfig = {
   logoLight: '/images/logo.png',
   iconLight: '/images/icon.png',
   links: {
+    baseUrl: 'https://www.ring.co.tz',
+    dashboardUrl: 'https://www.ring.co.tz/dashboard',
     twitter: "https://x.com/ring",
     github: "https://github.com/ring",
     docs: "https://ring.io",

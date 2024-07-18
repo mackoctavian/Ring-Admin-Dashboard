@@ -36,7 +36,7 @@ const checkRequirements = async (collectionId: string | undefined) => {
   return { database, userId, businessId };
 };
 
-const updateExpenseStatus = (balance, amount) => {
+const updateExpenseStatus = (balance: number, amount: number) => {
   if (balance === 0) {
     return ExpenseStatus.PAID;
   } else if (balance < amount) {
@@ -95,8 +95,8 @@ export const list = async ( status?: string ) => {
 
     try {
       const items = await database.listDocuments(
-        DATABASE_ID,
-        EXPENSES_COLLECTION_ID,
+        DATABASE_ID!,
+        EXPENSES_COLLECTION_ID!,
         queries
       );
 
@@ -143,8 +143,8 @@ export const getItems = async (
       }
   
       const items = await database.listDocuments(
-        DATABASE_ID,
-        EXPENSES_COLLECTION_ID,
+        DATABASE_ID!,
+        EXPENSES_COLLECTION_ID!,
         queries
       );
   
@@ -199,7 +199,7 @@ export const getItem = async (id: string) => {
 
 
 export const deleteItem = async ({ $id }: Expense) => {
-  if (!id) return null;
+  if (!$id) return null;
   const { database, businessId } = await checkRequirements(EXPENSES_COLLECTION_ID);
 
     try {
@@ -235,11 +235,11 @@ export const updateItem = async (id: string, data: Expense) => {
   const paidAmount = parseInt(itemBeforeUpdate.amount, 10) - parseInt(itemBeforeUpdate.balance, 10)
 
   // Update the expense balance
-  data.balance = parseInt(data.amount, 10) - paidAmount;
+  data.balance = data.amount - paidAmount;
   if( data.balance < 0 ) data.balance = 0
 
   // Update the expense status
-  data.status = updateExpenseStatus(data.balance, parseInt(data.amount, 10));
+  data.status = updateExpenseStatus(data.balance, data.amount);
 
     try {
       await database.updateDocument(
@@ -268,10 +268,10 @@ export const recordPayment = async (data: ExpensePayment) => {
   const { database, businessId } = await checkRequirements(EXPENSE_PAYMENTS_COLLECTION_ID);
 
   // Update the expense balance
-  data.expense.balance = parseInt(data.expense.balance, 10) - parseInt(data.amount, 10);
+  data.expense.balance = data.expense.balance - data.amount;
 
   // Update the expense status
-  data.expense.status = updateExpenseStatus(data.expense.balance, parseInt(data.expense.amount, 10));
+  data.expense.status = updateExpenseStatus(data.expense.balance, data.expense.amount);
 
   try {
       await database.createDocument(

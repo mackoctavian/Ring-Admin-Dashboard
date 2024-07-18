@@ -27,7 +27,6 @@ export const metadata: Metadata = {
   applicationName: siteConfig.shortName,
   title: siteConfig.name,
   description: siteConfig.description,
-  themeColor: "#0468F1",
   generator: "Qroo Solutions",
   openGraph: {
     type: "website",
@@ -35,7 +34,7 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     siteName: siteConfig.name,
-    images: [{ url: siteConfig.logo }],
+    images: [{ url: siteConfig.links.baseUrl+siteConfig.logo }],
   },
   icons: {
     icon: siteConfig.icon

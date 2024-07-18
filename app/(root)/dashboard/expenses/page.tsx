@@ -2,14 +2,19 @@ import BreadCrumb from "@/components/layout/breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { Expense } from "@/types";
+import {Expense, ExpensePayment} from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus, ReceiptText } from "lucide-react";
 import Link from "next/link";
 
-import { columns } from "@/components/layout/tables/expenses-table/columns";
-import { getItems } from "@/lib/actions/expense.actions";
+import { columns as expensesColumn } from "@/components/layout/tables/expenses-table/columns";
+import { columns as paymentsColumn } from "@/components/layout/tables/payments-table/columns";
+import { getItems as getExpenseItems } from "@/lib/actions/expense.actions";
+import { getItems as getPaymentItems } from "@/lib/actions/payments.actions";
 import { ExpensesTable } from "@/components/layout/tables/expenses-table/expenses-table";
+import {Tabs, TabsContent, TabsTrigger} from "@/components/ui/tabs";
+import {TabsList} from "@mui/base";
+import {PaymentsTable} from "@/components/layout/tables/payments-table/payments-table";
 
 const breadcrumbItems = [{ title: "Expenses", link: "/expenses" }];
 
@@ -25,39 +30,75 @@ export default async function Page({ searchParams }: ParamsProps) {
   const q = searchParams.search || null;  
   const offset = (page - 1) * pageLimit;
 
-  const data : Expense[] = await getItems(q?.toString(), null, null, offset);
-  const total = data? data.length : 0;
-  const pageCount = Math.ceil(total / pageLimit);
+  const expenseData : Expense[] = await getExpenseItems(q?.toString(), null, null, offset);
+  const totalExpenses = expenseData? expenseData.length : 0;
+  const expensesPageCount = Math.ceil(totalExpenses / pageLimit);
+
+
+  const paymentData : ExpensePayment[] = await getPaymentItems(q?.toString(), null, null, offset);
+  const totalPayments = paymentData? paymentData.length : 0;
+  const paymentPageCount = Math.ceil(totalPayments / pageLimit);
 
   return (
-    <>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <BreadCrumb items={breadcrumbItems} />
-
-        <div className="flex items-start justify-between">
-          <Heading title={`Expenses`} total={total.toString()} description="Manage expenses" />
-
-          <div className="ml-auto flex space-x-4">
-            <Link href="/expenses/new" className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Record expense
-            </Link>
-
-            <Link href="/expenses/repayment" className={cn(buttonVariants({ variant: "outline" }))} >
-                <ReceiptText className="mr-2 h-4 w-4" /> Record payment
-            </Link>
+      <>
+        <Tabs defaultValue="all">
+          <div className="flex items-center">
+            <TabsList>
+              <TabsTrigger value="expenses">Expenses</TabsTrigger>
+              <TabsTrigger value="payments">Payments</TabsTrigger>
+            </TabsList>
           </div>
-        </div>
-        <Separator />
+          <TabsContent value="expenses">
+            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+              <BreadCrumb items={breadcrumbItems}/>
 
-        <ExpensesTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
-      </div>
-    </>
+              <div className="flex items-start justify-between">
+                <Heading title={`Expenses`} total={totalExpenses.toString()} description="Manage expenses"/>
+
+                <div className="ml-auto flex space-x-4">
+                  <Link href="/expenses/new" className={cn(buttonVariants({variant: "default"}))}>
+                    <Plus className="mr-2 h-4 w-4"/> Record expense
+                  </Link>
+                </div>
+              </div>
+              <Separator/>
+
+              <ExpensesTable
+                  searchKey="name"
+                  pageNo={page}
+                  columns={expensesColumn}
+                  total={totalExpenses}
+                  data={expenseData}
+                  pageCount={expensesPageCount}
+              />
+            </div>
+          </TabsContent>
+          <TabsContent value="payments">
+            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+              <BreadCrumb items={breadcrumbItems}/>
+
+              <div className="flex items-start justify-between">
+                <Heading title={`Payments`} total={totalPayments.toString()} description="Manage payments"/>
+
+                <div className="ml-auto flex space-x-4">
+                  <Link href="/expenses/repayment" className={cn(buttonVariants({variant: "outline"}))}>
+                    <ReceiptText className="mr-2 h-4 w-4"/> Record payment
+                  </Link>
+                </div>
+              </div>
+              <Separator/>
+
+              <PaymentsTable
+                  searchKey="name"
+                  pageNo={page}
+                  columns={paymentsColumn}
+                  total={totalPayments}
+                  data={paymentData}
+                  pageCount={paymentPageCount}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </>
   );
 }
