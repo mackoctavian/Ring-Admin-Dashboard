@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form'
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -12,7 +11,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { ReloadIcon } from "@radix-ui/react-icons"
 import { Input } from "@/components/ui/input"
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod'
@@ -27,6 +25,7 @@ import { BusinessSchema } from '@/types/data-schemas'
 import CancelButton from "../layout/cancel-button"
 import { updateItem } from "@/lib/actions/business.actions"
 import { SubmitButton } from "@/components/ui/submit-button"
+import {flatten} from "@sentry/utils";
 
 const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
   const router = useRouter();
@@ -63,7 +62,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
   };
 
   const onInvalid = (errors: any) => {
-    console.error('Error saving business settings: ', JSON.stringify(errors, null, 2));
+    console.error('Error saving business settings: ', flatten(errors));
     toast({
       variant: 'warning',
       title: 'Data validation failed!',

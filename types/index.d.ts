@@ -37,10 +37,10 @@ declare type Country = {
 }
 
 declare type BusinessType = {
-  $id?: string;
+  $id: string;
   name: string;
-  $createdAt?: Date;
-  $updatedAt?: Date;
+  $createdAt: Date;
+  $updatedAt: Date;
 }
 
 declare type SignUpParams = {
@@ -81,23 +81,41 @@ declare type User = {
 declare type Business = {
   $id?: string;
   name: string;
+  currency: string;
+  logo: FormData | undefined;
   businessType: BusinessType;
   size: string;
-  branches: Branch[];
+  branches?: Branch[];
   registrationNumber?: string;
-  logo?: FileList;
   email: string;
   phoneNumber: string;
   address?: string;
   city?: string;
   country?: string;
-  owner: string;
+  owner?: string;
   description?: string;
-  slug: string;
+  slug?: string;
   $createdAt?: Date;
   $updatedAt?: Date;
 }
 
+declare interface RegisterBusinessParams {
+  name: string;
+  firstName: string;
+  lastName: string;
+  businessType: BusinessType;
+  size: string;
+  currency: string;
+  registrationNumber: string | undefined;
+  logo: FormData | undefined;
+  email: string;
+  phoneNumber: string;
+  address: string | undefined;
+  city: string | undefined;
+  country: string;
+  description: string | undefined;
+  termsConsent: boolean;
+}
 /* Product Unit Data types */
 
 declare type ProductUnit = {

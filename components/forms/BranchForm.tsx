@@ -2,13 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
-import { ReloadIcon } from "@radix-ui/react-icons"
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -25,32 +22,33 @@ import CancelButton from "../layout/cancel-button";
 import TimeSelector from "../layout/time-selector";
 import DaysSelector from "../layout/days-selector";
 import { BranchSchema } from "@/types/data-schemas";
+import {SubmitButton} from "@/components/ui/submit-button";
 
 const BranchForm = ({ item }: { item?: Branch | null }) => {
-
-    const router = useRouter()
-    const [isLoading, setIsLoading] = useState(false)
-    const { toast } = useToast()
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
 
     const form = useForm<z.infer<typeof BranchSchema>>({
         resolver: zodResolver(BranchSchema),
-        defaultValues: item ? {
+        defaultValues: item
+            ? {
                 ...item,
-                daysOpen: item.daysOpen ? JSON.parse(item.daysOpen) : [] 
-              } : {
+                daysOpen: item.daysOpen ? JSON.parse(item.daysOpen) : [],
+            }
+            : {
                 status: false,
                 daysOpen: [],
-              },
-          });
+            },
+    });
 
-    const onInvalid = (errors : any ) => {
+    const onInvalid = (errors: any) => {
         console.error("Creating branch failed: ", JSON.stringify(errors));
         toast({
             variant: "warning",
-            title: "Data validation failed!", 
-            description: "Please make sure all the fields marked with * are filled correctly."
+            title: "Data validation failed!",
+            description: "Please make sure all the fields marked with * are filled correctly.",
         });
-    }
+    };
 
     const onSubmit = async (data: z.infer<typeof BranchSchema>) => {
         setIsLoading(true);
@@ -59,27 +57,26 @@ const BranchForm = ({ item }: { item?: Branch | null }) => {
                 await updateItem(item.$id!, data);
                 toast({
                     variant: "success",
-                    title: "Success", 
-                    description: "Branch details have been updated succesfully!"
+                    title: "Success",
+                    description: "Branch details have been updated successfully!",
                 });
             } else {
                 await createItem(data);
                 toast({
                     variant: "success",
-                    title: "Success", 
-                    description: "Branch has been created succesfully!"
+                    title: "Success",
+                    description: "Branch has been created successfully!",
                 });
             }
         } catch (error: any) {
             toast({
                 variant: "destructive",
-                title: "Uh oh! Something went wrong.", 
-                description: error.message || "There was an issue submitting your form, please try later"
+                title: "Uh oh! Something went wrong.",
+                description: error.message || "There was an issue submitting your form, please try later",
             });
         } finally {
-        //delay loading
-        setTimeout(() => {
-            setIsLoading(false);
+            setTimeout(() => {
+                setIsLoading(false);
             }, 1000);
         }
     };
@@ -87,22 +84,21 @@ const BranchForm = ({ item }: { item?: Branch | null }) => {
 return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-
             <div className="grid grid-cols-3 gap-4">
                 <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Branch name</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder="Branch full name (eg. Nairobi Branch)"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Branch name</FormLabel>
+                            <FormControl>
+                                <Input
+                                    placeholder="Branch full name (eg. Nairobi Branch)"
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
                     )}
                 />
 
@@ -241,44 +237,34 @@ return (
                             )}
                     />
 
-                    <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Status *</FormLabel>
-                                <FormControl>
-                                    <div className="mt-2">
-                                        <Switch
-                                            id="status"
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    </div>
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
-                </div>
+                <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Status *</FormLabel>
+                            <FormControl>
+                                <div className="mt-2">
+                                    <Switch
+                                        id="status"
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                </div>
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+            </div>
 
             <div className="flex h-5 items-center space-x-4">
                 <CancelButton />
-            
                 <Separator orientation="vertical" />
-
-                <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                        <>
-                            <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-                        </>
-                        ) : (
-                        item ? "Update branch details" : "Create branch"
-                    )}
-                </Button> 
+                <SubmitButton label={item ? "Update branch details" : "Create branch"} loading={isLoading} />
             </div>
         </form>
     </Form>
-    );
+);
 };
-  
+
 export default BranchForm;

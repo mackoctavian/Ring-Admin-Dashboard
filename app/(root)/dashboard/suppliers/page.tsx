@@ -10,6 +10,8 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/suppliers-table/columns";
 import { getItems } from "@/lib/actions/supplier.actions";
 import { SuppliersTable } from "@/components/layout/tables/suppliers-table/suppliers-table";
+import {StockTable} from "@/components/layout/tables/stock-table/stock-table";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Vendors", link: "/vendors" }];
 
@@ -37,20 +39,25 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Suppliers`} total={total.toString()} description="Manage suppliers" />
 
-            <Link href={"/suppliers/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/suppliers/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add Supplier
             </Link>
         </div>
         <Separator />
 
-        <SuppliersTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+          {total > 0 || q != null ? (
+              <SuppliersTable
+                  searchKey="name"
+                  pageNo={page}
+                  columns={columns}
+                  total={total}
+                  data={data}
+                  pageCount={pageCount}
+              />
+          ) : (
+              <NoItems newItemUrl={`/dashboard/suppliers/new`} itemName={`supplier`} />
+          )}
+
       </div>
     </>
   );

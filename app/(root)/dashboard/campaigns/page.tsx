@@ -10,6 +10,7 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/campaigns-table/columns";
 import { getItems } from "@/lib/actions/campaign.actions";
 import { CampaignsTable } from "@/components/layout/tables/campaigns-table/campaigns-table";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Campaigns", link: "/campaigns" }];
 
@@ -38,20 +39,24 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Campaigns`} total={total.toString()} description="Manage campaigns" />
 
-            <Link href={"/campaigns/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/campaigns/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Create new campaign
             </Link>
         </div>
         <Separator />
 
-        <CampaignsTable
-          searchKey="title"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+          {total > 0 || q != null ? (
+              <CampaignsTable
+                  searchKey="title"
+                  pageNo={page}
+                  columns={columns}
+                  total={total}
+                  data={data}
+                  pageCount={pageCount}
+              />
+          ) : (
+              <NoItems newItemUrl={`/dashboard/campaigns/new`} itemName={`campaign`} />
+          )}
       </div>
     </>
   );

@@ -1,10 +1,6 @@
-import { CalendarDateRangePicker } from "@/components/date-range-picker";
 import Greetings from "@/components/layout/greeting"
-import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Image from "next/image";
-import {cn} from "@/lib/utils";
 
 export default function OverviewPage() {
     return (

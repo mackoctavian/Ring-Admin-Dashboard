@@ -1,20 +1,25 @@
-import BreadCrumb from "@/components/layout/breadcrumb";
-import { buttonVariants } from "@/components/ui/button";
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
-import {Expense, ExpensePayment} from "@/types";
-import { cn } from "@/lib/utils";
-import { Plus, ReceiptText } from "lucide-react";
-import Link from "next/link";
+import BreadCrumb from "@/components/layout/breadcrumb"
+import { buttonVariants } from "@/components/ui/button"
+import { Heading } from "@/components/ui/heading"
+import { Separator } from "@/components/ui/separator"
+import {Expense, ExpensePayment} from "@/types"
+import { cn } from "@/lib/utils"
+import { Plus, ReceiptText } from "lucide-react"
+import Link from "next/link"
 
-import { columns as expensesColumn } from "@/components/layout/tables/expenses-table/columns";
-import { columns as paymentsColumn } from "@/components/layout/tables/payments-table/columns";
-import { getItems as getExpenseItems } from "@/lib/actions/expense.actions";
-import { getItems as getPaymentItems } from "@/lib/actions/payments.actions";
-import { ExpensesTable } from "@/components/layout/tables/expenses-table/expenses-table";
-import {Tabs, TabsContent, TabsTrigger} from "@/components/ui/tabs";
-import {TabsList} from "@mui/base";
-import {PaymentsTable} from "@/components/layout/tables/payments-table/payments-table";
+import { columns as expensesColumn } from "@/components/layout/tables/expenses-table/columns"
+import { columns as paymentsColumn } from "@/components/layout/tables/payments-table/columns"
+import { getItems as getExpenseItems } from "@/lib/actions/expense.actions"
+import { getItems as getPaymentItems } from "@/lib/actions/payments.actions"
+import { ExpensesTable } from "@/components/layout/tables/expenses-table/expenses-table"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+import {PaymentsTable} from "@/components/layout/tables/payments-table/payments-table"
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Expenses", link: "/expenses" }];
 
@@ -41,13 +46,7 @@ export default async function Page({ searchParams }: ParamsProps) {
 
   return (
       <>
-        <Tabs defaultValue="all">
-          <div className="flex items-center">
-            <TabsList>
-              <TabsTrigger value="expenses">Expenses</TabsTrigger>
-              <TabsTrigger value="payments">Payments</TabsTrigger>
-            </TabsList>
-          </div>
+        <Tabs defaultValue="expenses">
           <TabsContent value="expenses">
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
               <BreadCrumb items={breadcrumbItems}/>
@@ -56,21 +55,33 @@ export default async function Page({ searchParams }: ParamsProps) {
                 <Heading title={`Expenses`} total={totalExpenses.toString()} description="Manage expenses"/>
 
                 <div className="ml-auto flex space-x-4">
-                  <Link href="/expenses/new" className={cn(buttonVariants({variant: "default"}))}>
+                  <Link href="/dashboard/expenses/new" className={cn(buttonVariants({variant: "outline"}))}>
                     <Plus className="mr-2 h-4 w-4"/> Record expense
                   </Link>
                 </div>
               </div>
-              <Separator/>
 
-              <ExpensesTable
-                  searchKey="name"
-                  pageNo={page}
-                  columns={expensesColumn}
-                  total={totalExpenses}
-                  data={expenseData}
-                  pageCount={expensesPageCount}
-              />
+              <div className="flex items-center">
+                <TabsList>
+                  <TabsTrigger value="expenses">Expenses</TabsTrigger>
+                  <TabsTrigger value="payments">Payments</TabsTrigger>
+                </TabsList>
+              </div>
+
+              <Separator/>
+              {totalExpenses > 0 || q != null ? (
+                  <ExpensesTable
+                      searchKey="name"
+                      pageNo={page}
+                      columns={expensesColumn}
+                      total={totalExpenses}
+                      data={expenseData}
+                      pageCount={expensesPageCount}
+                  />
+              ) : (
+                  <NoItems newItemUrl={`/dashboard/expenses/new`} itemName={`expense`} />
+              )}
+
             </div>
           </TabsContent>
           <TabsContent value="payments">
@@ -81,21 +92,33 @@ export default async function Page({ searchParams }: ParamsProps) {
                 <Heading title={`Payments`} total={totalPayments.toString()} description="Manage payments"/>
 
                 <div className="ml-auto flex space-x-4">
-                  <Link href="/expenses/repayment" className={cn(buttonVariants({variant: "outline"}))}>
+                  <Link href="/dashboard/expenses/repayment" className={cn(buttonVariants({variant: "outline"}))}>
                     <ReceiptText className="mr-2 h-4 w-4"/> Record payment
                   </Link>
                 </div>
               </div>
+
+              <div className="flex items-center">
+                <TabsList>
+                  <TabsTrigger value="expenses">Expenses</TabsTrigger>
+                  <TabsTrigger value="payments">Payments</TabsTrigger>
+                </TabsList>
+              </div>
+
               <Separator/>
 
-              <PaymentsTable
-                  searchKey="name"
-                  pageNo={page}
-                  columns={paymentsColumn}
-                  total={totalPayments}
-                  data={paymentData}
-                  pageCount={paymentPageCount}
-              />
+              {totalPayments > 0 || q != null ? (
+                <PaymentsTable
+                    searchKey="name"
+                    pageNo={page}
+                    columns={paymentsColumn}
+                    total={totalPayments}
+                    data={paymentData}
+                    pageCount={paymentPageCount}
+                />
+              ) : (
+                  <NoItems newItemUrl={`/dashboard/expenses/repayment`} itemName={`payment`} />
+              )}
             </div>
           </TabsContent>
         </Tabs>

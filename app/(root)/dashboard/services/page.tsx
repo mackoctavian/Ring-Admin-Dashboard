@@ -10,6 +10,7 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/services-table/columns";
 import { getItems } from "@/lib/actions/service.actions";
 import { ServicesTable } from "@/components/layout/tables/services-table/services-table";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Services", link: "/services" }];
 
@@ -38,20 +39,26 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Services`} total={total.toString()} description="Manage services" />
 
-            <Link href={"/services/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/services/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add Service
             </Link>
         </div>
         <Separator />
 
-        <ServicesTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+      {total > 0 || q != null ? (
+          <ServicesTable
+              searchKey="name"
+              pageNo={page}
+              columns={columns}
+              total={total}
+              data={data}
+              pageCount={pageCount}
+          />
+      ) : (
+          <NoItems newItemUrl={`/dashboard/services/new`} itemName={`service`} />
+      )}
+
+
       </div>
     </>
   );

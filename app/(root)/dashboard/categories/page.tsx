@@ -10,6 +10,7 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/categories-table/columns";
 import { getItems } from "@/lib/actions/category.actions";
 import { CategoriesTable } from "@/components/layout/tables/categories-table/categories-table";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Categories", link: "/categories" }];
 
@@ -37,20 +38,23 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Categories`} total={total.toString()} description="Manage categories" />
 
-            <Link href={"/categories/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/categories/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add Category
             </Link>
         </div>
         <Separator />
-
-        <CategoriesTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+          {total > 0 || q != null ? (
+              <CategoriesTable
+                  searchKey="name"
+                  pageNo={page}
+                  columns={columns}
+                  total={total}
+                  data={data}
+                  pageCount={pageCount}
+              />
+          ) : (
+              <NoItems newItemUrl={`/dashboard/categories/new`} itemName={`category`} />
+          )}
       </div>
     </>
   );

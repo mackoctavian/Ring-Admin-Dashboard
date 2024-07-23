@@ -10,6 +10,7 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/discounts-table/columns";
 import { getItems } from "@/lib/actions/discount.actions";
 import { DiscountsTable } from "@/components/layout/tables/discounts-table/discounts-table";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Discounts", link: "/discounts" }];
 
@@ -37,20 +38,26 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Discounts`} total={total.toString()} description="Manage discounts" />
 
-            <Link href={"/discounts/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/discounts/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add Discount
             </Link>
         </div>
         <Separator />
 
-        <DiscountsTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+          {total > 0 || q != null ? (
+              <DiscountsTable
+                  searchKey="name"
+                  pageNo={page}
+                  columns={columns}
+                  total={total}
+                  data={data}
+                  pageCount={pageCount}
+              />
+          ) : (
+              <NoItems newItemUrl={`/dashboard/discounts/new`} itemName={`discount`} />
+          )}
+
+
       </div>
     </>
   );

@@ -10,6 +10,7 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/staff-table/columns";
 import { getItems } from "@/lib/actions/staff.actions";
 import { StaffTable } from "@/components/layout/tables/staff-table/staff-table";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Staff", link: "/staff" }];
 
@@ -38,20 +39,25 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Staff`} total={total.toString()} description="Manage staff" />
 
-            <Link href={"/staff/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add Employee
+            <Link href={"/dashboard/staff/new"} className={cn(buttonVariants({ variant: "default" }))} >
+                <Plus className="mr-2 h-4 w-4" /> Add Staff
             </Link>
         </div>
         <Separator />
 
-        <StaffTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+      {total > 0 || q != null ? (
+              <StaffTable
+                  searchKey="name"
+                  pageNo={page}
+                  columns={columns}
+                  total={total}
+                  data={data}
+                  pageCount={pageCount}
+              />
+          ) : (
+              <NoItems newItemUrl={`/dashboard/staff/new`} itemName={`staff`} />
+          )}
+
       </div>
     </>
   );

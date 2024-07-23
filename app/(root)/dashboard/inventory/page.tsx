@@ -9,6 +9,7 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/inventory-table/columns";
 import { getVariantItems } from "@/lib/actions/inventory.actions";
 import { InventoryTable } from "@/components/layout/tables/inventory-table/inventory-table";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Stock", link: "/inventory" }];
 
@@ -37,25 +38,29 @@ export default async function Page({ searchParams }: ParamsProps) {
           <Heading title="Stock" total={total.toString()} description="Manage stock" />
 
           <div className="ml-auto flex space-x-4">
-            <Link href="/inventory/new" className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href="/dashboard/inventory/new" className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add stock item
             </Link>
 
-            <Link href="/inventory/modify" className={cn(buttonVariants({ variant: "outline" }))} >
+            <Link href="/dashboard/inventory/modify" className={cn(buttonVariants({ variant: "outline" }))} >
                 <Pencil className="mr-2 h-4 w-4" /> Modify stock values
             </Link>
           </div>
         </div>
         <Separator />
 
-        <InventoryTable
-          searchKey="fullName"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+        {total > 0 || q != null ? (
+            <InventoryTable
+                searchKey="fullName"
+                pageNo={page}
+                columns={columns}
+                total={total}
+                data={data}
+                pageCount={pageCount}
+            />
+        ) : (
+            <NoItems newItemUrl={`/dashboard/inventory/new`} itemName={`stock item`} />
+        )}
       </div>
     </>
   );

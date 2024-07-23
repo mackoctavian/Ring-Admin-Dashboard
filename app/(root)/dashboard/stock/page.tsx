@@ -10,6 +10,8 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/stock-table/columns";
 import { getItems } from "@/lib/actions/stock.actions";
 import { StockTable } from "@/components/layout/tables/stock-table/stock-table";
+import {StaffTable} from "@/components/layout/tables/staff-table/staff-table";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Stock", link: "/stock" }];
 
@@ -37,20 +39,25 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Stock intake`} description="Manage stock intake" />
 
-            <Link href={"/stock/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/stock/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Record stock intake
             </Link>
         </div>
         <Separator />
 
-        <StockTable
-          searchKey="item"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+      {total > 0 || q != null ? (
+          <StockTable
+              searchKey="item"
+              pageNo={page}
+              columns={columns}
+              total={total}
+              data={data}
+              pageCount={pageCount}
+          />
+      ) : (
+          <NoItems newItemUrl={`/dashboard/stock/new`} itemName={`stock`} />
+      )}
+
       </div>
     </>
   );

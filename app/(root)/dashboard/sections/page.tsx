@@ -10,6 +10,8 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/sections-table/columns";
 import { getItems } from "@/lib/actions/section.actions";
 import { SectionsTable } from "@/components/layout/tables/sections-table/sections-table";
+import {ProductsTable} from "@/components/layout/tables/products-table/products-table";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Spaces & Sections", link: "/sections" }];
 
@@ -38,20 +40,25 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Spaces & sections`} total={total.toString()} description="Manage rooms, spaces and sections" />
 
-            <Link href={"/sections/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/sections/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add Space / Section
             </Link>
         </div>
         <Separator />
 
-        <SectionsTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+      {total > 0 || q != null ? (
+          <SectionsTable
+              searchKey="name"
+              pageNo={page}
+              columns={columns}
+              total={total}
+              data={data}
+              pageCount={pageCount}
+          />
+      ) : (
+          <NoItems newItemUrl={`/dashboard/sections/new`} itemName={`section`} />
+      )}
+
       </div>
     </>
   );

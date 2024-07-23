@@ -10,6 +10,7 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/products-table/columns";
 import { getItems } from "@/lib/actions/product.actions";
 import { ProductsTable } from "@/components/layout/tables/products-table/products-table";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Products", link: "/products" }];
 
@@ -38,20 +39,26 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Products`} total={total.toString()} description="Manage products" />
 
-            <Link href={"/products/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/products/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add Product
             </Link>
         </div>
         <Separator />
 
-        <ProductsTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+          {total > 0 || q != null ? (
+              <ProductsTable
+                  searchKey="name"
+                  pageNo={page}
+                  columns={columns}
+                  total={total}
+                  data={data}
+                  pageCount={pageCount}
+              />
+          ) : (
+              <NoItems newItemUrl={`/dashboard/products/new`} itemName={`product`} />
+          )}
+
+
       </div>
     </>
   );

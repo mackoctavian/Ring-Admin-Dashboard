@@ -1,261 +1,220 @@
 'use client';
-import { siteConfig } from "@/config/site"
-import Image from 'next/image'
-import Link from 'next/link'
-import React, { useState } from 'react'
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input"
-import { useToast } from "@/components/ui/use-toast"
-import { BusinessRegistrationSchema } from "@/types/data-schemas"
-import { Textarea } from "@/components/ui/textarea"
-import { ReloadIcon } from "@radix-ui/react-icons"
-import BusinessSizeSelector from "../layout/business-size-selector"
-import BusinessTypeSelector from "../layout/business-type-selector"
-import CountrySelector from "../layout/country-selector"
-import { BusinessType } from "@/types";
-import { registerBusiness } from "@/lib/actions/business.actions"
+
+import React, { useState } from 'react';
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { useToast } from "@/components/ui/use-toast";
+import { BusinessRegistrationSchema } from "@/types/data-schemas";
+import BusinessSizeSelector from "../layout/business-size-selector";
+import BusinessTypeSelector from "../layout/business-type-selector";
+import CountrySelector from "../layout/country-selector";
+import { registerBusiness } from "@/lib/actions/business.actions";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+    Form,
+    FormControl
+} from "@/components/ui/form";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { zodResolver } from "@hookform/resolvers/zod";
+import CustomFormField, {FormFieldType} from '../ui/custom-input';
+import CurrencySelector from "@/components/layout/currency-selector";
+import {FileUploader} from "@/components/ui/custom-file-uploader";
+import {useUser} from "@clerk/nextjs";
 
-const BusinessRegistrationForm  = () => {
-  const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false);
-  const [country, setCountry] = useState<string>('Tanzania');
-  const [selectedBusinessType, setSelectedBusinessType] = useState<BusinessType | undefined>(undefined);
-  const form = useForm<z.infer<typeof BusinessRegistrationSchema>>({
-    resolver: zodResolver(BusinessRegistrationSchema),
-    defaultValues: {
-      country: country,
-    },
-  });
-  const { control, setValue } = form;
-  const handleBusinessTypeChange = (businessType: BusinessType) => {
-    setSelectedBusinessType(businessType);
-    setValue('businessType', businessType);
-  };
+const BusinessRegistrationForm = () => {
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+    const { user } = useUser();
 
-  const handleCountryChange = (value: string) => {
-    setCountry(value);
-  };
-  
-  const onInvalid = (errors : any ) => {
-    console.error("Business registration error: ", JSON.stringify(errors));
-    toast({
-        variant: "warning",
-        title: "Data validation failed!", 
-        description: "Please make sure all the fields marked with * are filled correctly."
+    const form = useForm<z.infer<typeof BusinessRegistrationSchema>>({
+        resolver: zodResolver(BusinessRegistrationSchema),
+        defaultValues: {
+            firstName: user?.firstName || '',
+            lastName: user?.lastName || '',
+        },
     });
-  }
-  const onSubmit = async (data: z.infer<typeof BusinessRegistrationSchema>) => {
-    setIsLoading(true);
-    try {
-        await registerBusiness(data);
-        toast({
-            variant: "success",
-            title: "Success", 
-            description: "You have succesfully created your account, you will be redirected soon!"
-        });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error creating account.", 
-        description: "Error: " + error
-       });
-      console.error("Error registering business: ", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
-  const logoRef = form.register("logo");
+    const onSubmit = async (values: z.infer<typeof BusinessRegistrationSchema>) => {
+        setIsLoading(true);
 
-  return (
-    <section className="auth-form">
-      <header className='flex flex-col gap-5 md:gap-8'>
-        <Link href="/" className="cursor-pointer flex items-center gap-1">
-          <Image
-            src="/icons/logo.svg"
-            width={34}
-            height={34}
-            alt={siteConfig.name}
-          />
-          <h1 className="text-26 font-ibm-plex-serif font-bold text-black-1">{siteConfig.name}</h1>
-        </Link>
-        <div className="flex flex-col gap-1 md:gap-3">
-          <h1 className="text-24 lg:text-36 font-semibold text-gray-900">
-            Business registration
-            <p className="text-16 font-normal text-gray-600">Complete registration by filling in your business details</p>
-          </h1>
-        </div>
-      </header>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Business name</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder="Enter your business name"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="phoneNumber"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Phone number</FormLabel>
-                        <FormControl>
-                            <Input
-                            type="tel"
-                            placeholder="Business phone number"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                
-                
-                <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Email address</FormLabel>
-                        <FormControl>
-                            <Input
-                            type="email"
+        // Store file info in form data as
+        let formData;
+
+        //Check if logo exists
+        if (values.logo && values.logo?.length > 0) {
+            const blobFile = new Blob([values.logo[0]], {
+                type: values.logo[0].type,
+            });
+
+            formData = new FormData();
+            formData.append("blobFile", blobFile);
+            formData.append("fileName", values.logo[0].name);
+        }
+
+        try {
+            const business = {
+                name: values.name,
+                firstName: values.firstName,
+                lastName: values.lastName,
+                email: values.email,
+                phoneNumber: values.phoneNumber,
+                address: values.address,
+                size: values.size,
+                city: values.city,
+                country: values.country,
+                businessType: values.businessType,
+                currency: values.currency,
+                registrationNumber: values.registrationNumber,
+                description: values.description,
+                logo: values.logo
+                    ? formData
+                    : undefined,
+                termsConsent: values.termsConsent,
+            };
+
+            await registerBusiness(business);
+
+            toast({
+                variant: "success",
+                title: "Success",
+                description: "Your business has been registered successfully. You will be redirected to your dashboard.",
+            });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Error registering business",
+                description: error instanceof Error ? error.message : "An unexpected error occurred",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <section className="auth-form mt-10">
+            <header className="flex flex-col gap-5 md:gap-8 mb-4">
+                <div className="flex flex-col gap-1 md:gap-3">
+                    <h1 className="text-24 lg:text-36 font-semibold">
+                        Business registration
+                    </h1>
+                    <p className="text-16 font-normal">
+                        Complete registration by filling in your business details
+                    </p>
+                </div>
+            </header>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-0">
+                        <CustomFormField
+                            fieldType={FormFieldType.INPUT}
+                            control={form.control}
+                            name="firstName"
+                            label={`First name`}
+                            placeholder="First name"
+                        />
+                        <CustomFormField
+                            fieldType={FormFieldType.INPUT}
+                            control={form.control}
+                            name="lastName"
+                            label={`Last name`}
+                            placeholder="Last name"
+                        />
+                        <CustomFormField
+                            fieldType={FormFieldType.INPUT}
+                            control={form.control}
+                            name="name"
+                            label={`Business name`}
+                            placeholder="Business name"
+                        />
+                        <CustomFormField
+                            fieldType={FormFieldType.INPUT}
+                            control={form.control}
+                            name="email"
+                            label="Email address"
                             placeholder="Business email address"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="registrationNumber"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Registration number</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder="Registration number"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+                        />
+                        <CustomFormField
+                            fieldType={FormFieldType.PHONE_INPUT}
+                            control={form.control}
+                            name="phoneNumber"
+                            label="Phone number"
+                            placeholder="Business phone number"
+                        />
+                        <CustomFormField
+                            fieldType={FormFieldType.INPUT}
+                            control={form.control}
+                            name="registrationNumber"
+                            label="Registration number"
+                            placeholder="Business registration number"
+                        />
+                        <CustomFormField
+                            fieldType={FormFieldType.CUSTOM_SELECTOR}
+                            control={form.control}
+                            name="country"
+                            label="Country"
+                            renderSkeleton={(field) => (
+                                <CountrySelector value={field.value} onChange={field.onChange}/>
+                            )}
+                        />
+                        <CustomFormField
+                            fieldType={FormFieldType.CUSTOM_SELECTOR}
+                            control={form.control}
+                            name="currency"
+                            label="Operating currency"
+                            renderSkeleton={(field) => (
+                                <CurrencySelector value={field.value} onChange={field.onChange}/>
+                            )}
+                        />
+                        <CustomFormField
+                            fieldType={FormFieldType.CUSTOM_SELECTOR}
+                            control={form.control}
+                            name="size"
+                            label="Business size"
+                            renderSkeleton={(field) => (
+                                <BusinessSizeSelector value={field.value} onChange={field.onChange}/>
+                            )}
+                        />
+                        <CustomFormField
+                            fieldType={FormFieldType.CUSTOM_SELECTOR}
+                            control={form.control}
+                            name="businessType"
+                            label="Business type"
+                            renderSkeleton={(field) => (
+                                <BusinessTypeSelector value={field.value} onChange={field.onChange}/>
+                            )}
+                        />
+                    </div>
+                    <div className="space-y-5">
+                        <CustomFormField
+                            fieldType={FormFieldType.SKELETON}
+                            control={form.control}
+                            name="logo"
+                            label="Logo"
+                            renderSkeleton={(field) => (
+                                <FormControl>
+                                    <FileUploader files={field.value} onChange={field.onChange} />
+                                </FormControl>
+                            )}
+                        />
+                        <CustomFormField
+                            fieldType={FormFieldType.TEXTAREA}
+                            control={form.control}
+                            name="description"
+                            label="Business description"
+                            placeholder="Short description of your business"
+                        />
+                        <CustomFormField
+                            fieldType={FormFieldType.CHECKBOX}
+                            control={form.control}
+                            name="termsConsent"
+                            label="I acknowledge that I have reviewed and agree to the terms & conditions"
+                        />
+                    </div>
 
-                <FormField
-                    control={form.control}
-                    name="logo"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Logo</FormLabel>
-                        <FormControl>
-                          <Input type="file" placeholder="Business logo" {...logoRef} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                
-                <FormField
-                  control={control}
-                  name="businessType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Business type *</FormLabel>
-                      <FormControl>
-                        <BusinessTypeSelector value={selectedBusinessType} onChange={handleBusinessTypeChange} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="size"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Business size</FormLabel>
-                      <FormControl>
-                        <BusinessSizeSelector {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              <FormField
-                  control={form.control}
-                  name="country"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Country</FormLabel>
-                      <FormControl>
-                        <CountrySelector value={country} onChange={handleCountryChange} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-          </div>
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Business description</FormLabel>
-                <FormControl>
-                    <Textarea
-                        placeholder="Short description of your business"
-                        className="resize-none"
-                        {...field}
-                    />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-          />
-          <div className="flex flex-col gap-4">
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> Processing...
-                </>
-              ): 'Complete registration'
-              }
-            </Button>
-          </div>
-          </>
-          </form>
-        </Form>
-    </section>
-  )
-}
+                    <SubmitButton label={`Complete registration`} loading={isLoading}/>
+                </form>
+            </Form>
+        </section>
+    );
+};
+
 export default BusinessRegistrationForm;

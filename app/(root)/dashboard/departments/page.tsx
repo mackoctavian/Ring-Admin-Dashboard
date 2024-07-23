@@ -10,6 +10,7 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/departments-table/columns";
 import { getItems } from "@/lib/actions/department.actions";
 import { DepartmentsTable } from "@/components/layout/tables/departments-table/departments-table";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Departments", link: "/departments" }];
 
@@ -37,20 +38,24 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Departments`} total={total.toString()} description="Manage departments" />
 
-            <Link href={"/departments/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/departments/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add Department
             </Link>
         </div>
         <Separator />
+          {total > 0 || q != null ? (
+              <DepartmentsTable
+                  searchKey="name"
+                  pageNo={page}
+                  columns={columns}
+                  total={total}
+                  data={data}
+                  pageCount={pageCount}
+              />
+          ) : (
+              <NoItems newItemUrl={`/dashboard/departments/new`} itemName={`department`} />
+          )}
 
-        <DepartmentsTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
       </div>
     </>
   );

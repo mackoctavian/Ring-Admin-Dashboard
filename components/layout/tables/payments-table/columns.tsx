@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { NumberColumn } from "../number-column";
 import { DateTimeColumn } from "../date-colum";
 
+
 export const columns: ColumnDef<ExpensePayment>[] = [
   {
     id: "select",
@@ -41,7 +42,8 @@ export const columns: ColumnDef<ExpensePayment>[] = [
   {
     id: "paymentDate",
     header: "PAYMENT DATE",
-    cell: ({ row }) => <DateTimeColumn value={row.original.paymentDate.toDateString()}  />,
+    // @ts-ignore
+    cell: ({ row }) => <DateTimeColumn value={row.original.paymentDate}  />,
   },
   {
     accessorKey: "description",

@@ -1,12 +1,12 @@
-import { count } from "console";
 import * as z from "zod";
 
-const phoneNumberRegex = /^[0-9]{10,15}$/;
+//const phoneNumberRegex = /^[0-9]{10,15}$/;
+const phoneNumberRegex = /^\+\d{10,15}$/;
 
 //Image validation
 const MAX_MB = 5; // Max size in MB
 const MAX_UPLOAD_SIZE = MAX_MB * 1024 * 1024; // Convert MB to bytes
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+const ACCEPTED_IMAGE_TYPES = ["jpeg", "jpg", "png", "webp"];
 
 export enum CategoryType{
     SERVICE = "SERVICE",
@@ -115,25 +115,26 @@ export const SignUpSchema = z.object({
 
 
 export const BusinessRegistrationSchema = z.object({
-    name: z.string().min(3),
-    // logo: z
-    // .custom<FileList>()
-    // .transform((file) => file.length > 0 && file.item(0))
-    // .refine((file) => !file || (!!file && file.size <= MAX_UPLOAD_SIZE ), {
-    //   message: `Max image size is ${MAX_MB}MB`,
-    // })
-    // .refine((file) => !file || (!!file && file.type?.startsWith("image")), {
-    //   message: "Only .jpg .jpeg and .png formats are supported",
-    // }),
-    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-    businessType: BusinessTypeSchema,
+    firstName: z.string(),
+    lastName: z.string(),
+    name: z.string(),
+    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number"),
+    logo: z.custom<File[]>().optional(),
     size: z.string(),
+    currency: z.string(),
     city: z.string().optional(),
     country: z.string(),
     email: z.string().email(),
     address: z.string().optional(),
+    businessType: BusinessTypeSchema,
     description: z.string().optional(),
     registrationNumber: z.string().optional(),
+    termsConsent: z
+        .boolean()
+        .default(false)
+        .refine((value) => value === true, {
+            message: "You must consent to the terms & conditions before you proceed",
+        }),
 })
 
 

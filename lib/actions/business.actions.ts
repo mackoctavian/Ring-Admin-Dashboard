@@ -1,389 +1,408 @@
 'use server';
 
-const env = process.env.NODE_ENV
+const env = process.env.NODE_ENV;
+
 import * as Sentry from "@sentry/nextjs";
-import { ID, Query, AppwriteException } from "node-appwrite";
-import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
-import { createAdminClient, createSaaSAdminClient } from "../appwrite";
-import { parseStringify } from "../utils";
-import { Business, User, SubscriptionDetails } from "@/types";
-import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
-import { Gender, SubscriptionStatus } from "@/types/data-schemas";
-import { addDays } from 'date-fns';
-import { createDefaultBranch } from "@/lib/actions/branch.actions"
-import { createDefaultDepartment } from "@/lib/actions/department.actions" 
+import {AppwriteException, ID, InputFile, Query} from "node-appwrite";
+import {getStatusMessage, HttpStatusCode} from '../status-handler';
+import {createAdminClient, createSaaSAdminClient, createStorageClient} from "../appwrite";
+import {parseStringify} from "../utils";
+import {Business, RegisterBusinessParams, SubscriptionDetails, User} from "@/types";
+import {auth, clerkClient, currentUser} from "@clerk/nextjs/server";
+import {Gender, SubscriptionStatus} from "@/types/data-schemas";
+import {addDays} from 'date-fns';
+import {createDefaultBranch} from "@/lib/actions/branch.actions"
+import {createDefaultDepartment} from "@/lib/actions/department.actions"
+import {revalidatePath} from 'next/cache';
+import {redirect} from 'next/navigation'
 
-import { BusinessRegistrationSchema } from "@/types/data-schemas";
-import { useClerk } from "@clerk/nextjs";
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation'
+const {
+    APPWRITE_ENDPOINT,
+    APPWRITE_PROJECT,
+    APPWRITE_DATABASE: DATABASE_ID,
+    BUSINESS_COLLECTION: BUSINESS_COLLECTION_ID,
+    BUSINESS_CATEGORY_COLLECTION: BUSINESS_CATEGORY_COLLECTION_ID,
+    USER_COLLECTION: USER_COLLECTION_ID,
+    APPWRITE_SAAS_DATABASE: SAAS_DATABASE_ID,
+    SUBSRIBERS_COLLECTION: SUBSCRIBERS_COLLECTION_ID,
+    APPWRITE_BUCKET: APPWRITE_BUCKET,
+    TRIAL_DAYS,
+    SUBSCRIPTION_COST
+} = process.env;
 
-const { 
-  APPWRITE_DATABASE: DATABASE_ID, 
-  BUSINESS_COLLECTION: BUSINESS_COLLECTION_ID,
-  BUSINESS_CATEGORY_COLLECTION: BUSINESS_CATEGORY_COLLECTION_ID,
+const handleError = (error: any) => {
+    let errorMessage = 'Something went wrong with your request, please try again later.'
+    if (error instanceof AppwriteException) { errorMessage = getStatusMessage(error.code as HttpStatusCode) }
 
-  //USER COLLECTION
-  USER_COLLECTION: USER_COLLECTION_ID,
+    if (env === "development") { console.error(error) } else { Sentry.captureException(error) }
 
-  //SAAS Settings
-  APPWRITE_SAAS_DATABASE: SAAS_DATABASE_ID,
-  SUBSRIBERS_COLLECTION: SUBSCRIBERS_COLLECTION_ID,
-  TRIAL_DAYS: TRIAL_DAYS,
-  SUBSCRIPTION_COST: SUBSCRIPTION_COST
- } = process.env;
-
- const checkRequirements = async (collectionId: string | undefined) => {
-  if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
-
-  const { database } = await createAdminClient();
-  if (!database) throw new Error('Database client could not be initiated');
-
-  const { userId } = auth();
-  if (!userId) {
-    throw new Error('You must be signed in to use this feature');
-  }
-
-  const businessId = await getBusinessId();
-  if( !businessId ) throw new Error('Business ID could not be initiated');
-
-  return { database, userId, businessId };
-};
-
-export const getCurrentBusiness = async () => {
-  const { database, businessId } = await checkRequirements(BUSINESS_COLLECTION_ID);
-  try {
-      const response = await database.listDocuments(
-        DATABASE_ID!,
-        BUSINESS_COLLECTION_ID!,
-        [Query.equal('$id', [businessId!])]
-      );
-      return parseStringify(response.documents[0]);
-  } catch (error) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
-  }
+    throw Error(errorMessage);
 }
 
+const checkRequirements = async () => {
+    if (!DATABASE_ID || !BUSINESS_COLLECTION_ID) {
+        throw new Error('Database ID or Collection ID is missing');
+    }
+
+    const { database } = await createAdminClient();
+    if (!database) throw new Error('Database client could not be initiated');
+
+    const { userId } = auth();
+    if (!userId) {
+        throw new Error('You must be signed in to use this feature');
+    }
+
+    // const businessId = await getBusinessId();
+    // if (!businessId) throw new Error('Business ID could not be initiated');
+
+    return { database, userId };
+}
+
+export const getCurrentBusiness = async () => {
+    try {
+        const businessId = await getBusinessId();
+        const { database } = await checkRequirements();
+        const response = await database.getDocument(
+            DATABASE_ID!,
+            BUSINESS_COLLECTION_ID!,
+            businessId!
+        );
+        return parseStringify(response);
+    } catch (error) {
+        handleError(error);
+    }
+};
+
 export const getBusinessId = async () => {
-    try{
-      let { orgId, userId, sessionClaims } = auth();
-      if (!userId) { throw Error("User not found") }
+    try {
+        let { orgId, userId, sessionClaims } = auth();
+        if (!userId) { throw Error("User not found") }
 
-      //If business Id is available on session data, use that
-      if ( sessionClaims?.metadata?.businessId ) return sessionClaims.metadata.businessId as string;
+        if (sessionClaims?.metadata?.businessId) return sessionClaims.metadata.businessId as string;
 
-      //If org Id is available on session data, use that to fetch business id
-      if (!orgId && sessionClaims?.membership) orgId = Object.keys(sessionClaims.membership)[0]
+        if (!orgId && sessionClaims?.membership) orgId = Object.keys(sessionClaims.membership)[0];
+        if (!orgId) return null;
 
-      // TODO: Log out user and redirect to sign in page instead of returning null
-      if ( !orgId ) return null;
+        const { database } = await createAdminClient();
+        const item = await database.listDocuments(
+            DATABASE_ID!,
+            BUSINESS_COLLECTION_ID!,
+            [Query.equal('orgId', [orgId!])]
+        );
 
-      //Create connection directly, redirect loop when using checkRequirements
-      if (!DATABASE_ID || !BUSINESS_COLLECTION_ID) {  throw Error('Fetch business id failed: Database ID or Collection ID is missing') }
+        if (item.total < 1) return null;
 
-      const { database } = await createAdminClient();
-      if (!database) throw new Error('Database client could not be initiated');
+        const business: Business = parseStringify(item.documents[0]);
+        const businessId = business.$id;
 
-      const item = await database.listDocuments(
-        DATABASE_ID!,
-        BUSINESS_COLLECTION_ID!,
-        [Query.equal('orgId', [orgId!])]
-      );
+        await clerkClient.users.updateUser(userId, {
+            publicMetadata: { businessId },
+            privateMetadata: { businessId },
+        });
 
-      // TODO: Log out user and redirect to sign in page instead of returning null
-      if ( item.total < 1 ) return null;
-
-      const business: Business = parseStringify(item.documents[0]);
-      const businessId = business.$id;
-
-      //Update session metadata since you reached here means its missing
-      await clerkClient.users.updateUser(userId, {
-        publicMetadata: {
-          businessId: businessId,
-        },
-        privateMetadata: {
-          businessId: businessId,
-        },
-      });
-
-      return businessId
-    } catch (error: any) {
-      console.error(error)
-
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+        return businessId;
+    } catch (error) {
+        handleError(error);
     }
 }
 
 export const getBusiness = async () => {
-  const { database, businessId, userId } = await checkRequirements(BUSINESS_COLLECTION_ID);
+    try {
+        const { database, userId } = await checkRequirements();
+        const business = await database.listDocuments(
+            DATABASE_ID!,
+            BUSINESS_COLLECTION_ID!,
+            [Query.equal('authId', [userId])]
+        );
 
-  try {
-    const user = await database.listDocuments(
-      DATABASE_ID!,
-      BUSINESS_COLLECTION_ID!,
-      [Query.equal('owner', [userId])]
-    );
-    return parseStringify(user.documents[0]);
-  } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
+        if ( business.total < 1 ) return null;
 
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+        return parseStringify(business.documents[0]);
+    } catch (error) {
+        handleError(error);
     }
 }
 
- export const getSubscriptionStatus = async () => {
+export const getSubscription = async () => {
+    try {
+        const businessId = await getBusinessId();
+        if (!SAAS_DATABASE_ID || !SUBSCRIBERS_COLLECTION_ID) {
+            throw new Error('SaaS Database ID or Subscribers Collection ID is missing');
+        }
 
-  try {
-    //default to expired status
-    let status = SubscriptionStatus.EXPIRED;
-    const businessId = await getBusinessId();
+        const { database } = await createSaaSAdminClient();
+        const item = await database.listDocuments(
+            SAAS_DATABASE_ID,
+            SUBSCRIBERS_COLLECTION_ID,
+            [Query.equal('businessId', businessId as string)]
+        );
 
-     if (!DATABASE_ID || !SUBSCRIBERS_COLLECTION_ID) {
-       throw new Error('Database ID or Collection ID is missing');
-     }
+        if (item.total < 1) return null
 
-     const { database } = await createSaaSAdminClient();
-
-     const item = await database.listDocuments(
-       SAAS_DATABASE_ID!,
-       SUBSCRIBERS_COLLECTION_ID!,
-       [Query.equal('businessId', businessId as string)]
-     )
-
-     if ( item.total < 1 ) return status;
-
-     const subscription = parseStringify(item.documents[0]) as SubscriptionDetails;
-     status = subscription.status
-
-     return status;
-  } catch (error: any) {
-   let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+        return parseStringify(item.documents[0]) as SubscriptionDetails;
+    } catch (error) {
+        handleError(error);
     }
-
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
-  }
 }
 
-export const getBusinessInfo = async ({ user }) => {
-  try {
-    const { database } = await createAdminClient();
-    const business = await database.listDocuments(
-      DATABASE_ID!,
-      BUSINESS_COLLECTION_ID!,
-      [Query.equal('userId', [user])]
-    );
-    return parseStringify(business.documents[0]);
-  } catch (error) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+export const getBusinessInfo = async ({ user }: { user: string }) => {
+    try {
+        const { database } = await createAdminClient();
+        const business = await database.listDocuments(
+            DATABASE_ID!,
+            BUSINESS_COLLECTION_ID!,
+            [Query.equal('userId', [user])]
+        );
+        return parseStringify(business.documents[0]);
+    } catch (error) {
+        handleError(error);
     }
-    Sentry.captureException(error);
-    throw new Error(errorMessage);
-  }
-};
-
+}
 
 export const getBusinessTypes = async () => {
-  try {
-    const { database } = await createAdminClient();
-    const data = await database.listDocuments(
-      DATABASE_ID!,
-      BUSINESS_CATEGORY_COLLECTION_ID!
-    );
-    return parseStringify(data.documents);
-  } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+    try {
+        const { database } = await createAdminClient();
+        const data = await database.listDocuments(
+            DATABASE_ID!,
+            BUSINESS_CATEGORY_COLLECTION_ID!,
+    [ Query.orderAsc("name") ]
+        );
+        return parseStringify(data.documents);
+    } catch (error) {
+        handleError(error);
     }
-    Sentry.captureException(error);
-    throw Error(errorMessage);
-  }
 }
 
-export const initTrial = async (businessId: string, data : User) => {
-  try{
-    const { database } = await createSaaSAdminClient();
+export const uploadFile = async (file: FormData) => {
+    const { storage } = await createStorageClient();
+    let uploadedFile;
 
-    const trialEndDate = addDays(new Date(), parseInt(TRIAL_DAYS!, 10));
-    const subscriptionCost = parseFloat(SUBSCRIPTION_COST!);
+    try{
+        const inputFile =
+            file &&
+            await InputFile.fromBlob(
+                file?.get("blobFile") as Blob,
+                file?.get("fileName") as string
+            );
 
-   await database.createDocument(
-      SAAS_DATABASE_ID!,
-      SUBSCRIBERS_COLLECTION_ID!,
-      ID.unique(),
-      {
-        businessId: businessId,
-        email: data.email,
-        name: data.name,
-        phoneNumber: data.phoneNumber,
-        nextDue: trialEndDate,
-        monthlyFee: subscriptionCost,
-        status: SubscriptionStatus.TRIAL,
-        owner: data.userId,
-      }
-    );
-  } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+        uploadedFile = await storage.createFile(
+            APPWRITE_BUCKET!,
+            ID.unique(),
+            inputFile
+        );
+
+        return uploadedFile?.$id ? `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET}/files/${uploadedFile.$id}/view??project=${APPWRITE_PROJECT}` : null;
+    } catch (error) {
+        handleError(error)
     }
-
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
-  }
 }
 
-export const registerBusiness = async (data: Business) => {
-  let redirectPath: string | null = null
+export const initTrial = async (businessId: string, data: User) => {
+    try {
+        const { database } = await createSaaSAdminClient();
+        const trialEndDate = addDays(new Date(), parseInt(TRIAL_DAYS!, 10));
+        const subscriptionCost = parseFloat(SUBSCRIPTION_COST!);
 
-  //Validate
-  const validate = BusinessRegistrationSchema.omit({logo: true}).safeParse(data);
-  if (!validate.success) {
-    console.error("Validation eror", validate.error.flatten());
-    return { error: "Data validation failed" }
-  }
+        await database.createDocument(
+            SAAS_DATABASE_ID!,
+            SUBSCRIBERS_COLLECTION_ID!,
+            ID.unique(),
+            {
+                businessId,
+                email: data.email,
+                name: data.name,
+                phoneNumber: data.phoneNumber,
+                nextDue: trialEndDate,
+                monthlyFee: subscriptionCost,
+                status: SubscriptionStatus.TRIAL,
+                owner: data.userId,
+            }
+        );
+    } catch (error) {
+        handleError(error);
+    }
+}
 
-  const item = validate.data as Business;
+export const registerBusiness = async ({ logo, ...business }: RegisterBusinessParams)=> {
+    let logoUrl;
 
-  const businessName = data.name;
-  const generatedSlug = businessName.toLowerCase().replace(/\s+/g, '-');
+    try {
+        const generatedSlug = business.name.toLowerCase().replace(/\s+/g, '-');
 
-  try{
-    const { database } = await createAdminClient();
+        const { database } = await createAdminClient();
+        const user = await currentUser();
+        if (!user) { return { error: "User data could not be loaded" }; }
 
-    const user = await currentUser();
-    if (!user) { return { error: "User data could not be loaded" } }
-
-    //Create organization on Clerk
-    const clerkOrganization = await clerkClient.organizations.createOrganization({
-      name: item.name,
-      createdBy: user.id
-     })
-
-    const newBusinessOwner = await database.createDocument(
-      DATABASE_ID!,
-      USER_COLLECTION_ID!,
-      ID.unique(),
-      {
-        email: user.primaryEmailAddress?.emailAddress,
-        name: user.fullName,
-        phoneNumber: user.phoneNumbers.length > 0 ? user.phoneNumbers[0].phoneNumber : item.phoneNumber,
-        image: user.imageUrl,
-        gender: Gender.UNDISCLOSED,
-        points: 0,
-        status: true,
-        userId: user.id,
-        orgId: clerkOrganization.id,
-        isOwner: true,
-      });
-
-      const newBusiness = await database.createDocument(
-        DATABASE_ID!,
-        BUSINESS_COLLECTION_ID!,
-        ID.unique(),
-        {
-          ...item,
-          slug: generatedSlug,
-          branches: [],
-          authId: user.id,
-          orgId: clerkOrganization.id,
-          users: [newBusinessOwner],
+        const clerkOrganization = await clerkClient.organizations.createOrganization({
+            name: business.name,
+            createdBy: user.id,
         });
 
-      const newBranch = await createDefaultBranch(parseStringify(newBusiness));
-     
-      await createDefaultDepartment(newBranch);
+        // Persist business owner details
+        const newBusinessOwner = await database.createDocument(
+            DATABASE_ID!,
+            USER_COLLECTION_ID!,
+            ID.unique(),
+            {
+                email: user.primaryEmailAddress?.emailAddress.trim(),
+                name: business.firstName.trim() + business.lastName.trim(),
+                firstName: business.firstName.trim(),
+                lastName: business.lastName.trim(),
+                phoneNumber: user.phoneNumbers.length > 0 ? user.phoneNumbers[0].phoneNumber : business.phoneNumber,
+                image: user.imageUrl,
+                gender: Gender.UNDISCLOSED,
+                points: 0,
+                status: true,
+                userId: user.id,
+                orgId: clerkOrganization.id,
+                isOwner: true,
+                termsConsent: business.termsConsent,
+            }
+        )
 
-      await initTrial(newBusiness.$id, parseStringify(newBusinessOwner));
+        // Upload logo if present
+        if ( logo ) {
+            logoUrl = await uploadFile(logo)
 
-      await clerkClient.users.updateUser(user.id, {
-        publicMetadata: {
-          onboardingComplete: true,
-          businessId: newBusiness.$id,
-          invite: false,
-          organizationId: clerkOrganization.id,
-        },
-      })
+            //Prepare image for clerk organization
+            const logoBlob = logo?.get("blobFile") as Blob;
 
+            //Prepare image for clerk organization, do not await for this
+            clerkClient.organizations.updateOrganizationLogo(
+                clerkOrganization.id,
+                {
+                    uploaderUserId: user.id,
+                    file: logoBlob
+                }
+            );
+        }
 
+        // Persist business details
+        const { firstName, lastName, termsConsent, ...createBusinessObj } = business;
+        const newBusiness = await database.createDocument(
+            DATABASE_ID!,
+            BUSINESS_COLLECTION_ID!,
+            ID.unique(),
+            {
+                ...createBusinessObj,
+                logo: logoUrl,
+                slug: generatedSlug,
+                branches: [],
+                authId: user.id,
+                orgId: clerkOrganization.id,
+                users: [newBusinessOwner],
+            }
+        )
 
-      //const organizationLogo = { file: item.logo as File, uploaderUserId: user.id, };
-      //clerkClient.organizations.updateOrganizationLogo( organization.id, organizationLogo );
+        initTrial(newBusiness.$id, parseStringify(newBusinessOwner));
 
-    //return parseStringify(newBusinessOwner);
-    //Dont revalidate, as its a new user
-    //revalidatePath('/');
-    redirectPath = `/`
-  } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+        await clerkClient.users.updateUser(user.id, {
+            firstName: business.firstName,
+            lastName: business.lastName,
+            publicMetadata: {
+                fullName: business.firstName.trim() + business.lastName.trim(),
+                firstName: business.firstName.trim(),
+                lastName: business.lastName.trim(),
+                onboardingComplete: true,
+                businessId: newBusiness.$id,
+                invite: false,
+                organizationId: clerkOrganization.id,
+            },
+        })
+
+        const newBranch = await createDefaultBranch(parseStringify(newBusiness))
+        createDefaultDepartment(newBranch)
+    } catch (error) {
+        handleError(error);
     }
 
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
-  }finally {
-    //redirect same path, if succesfull then path will take you home
-    console.log("Redirect to homepage")
     revalidatePath("/business-registration")
     redirect('/dashboard')
-  }
 }
 
-export const updateItem = async (id: string, data: Business ) => {  
-  try {
-    if (!DATABASE_ID || !BUSINESS_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
+// export const registerBusiness = async (data: Business) => {
+//     const validate = BusinessRegistrationSchema.omit({ logo: true }).safeParse(data);
+//     if (!validate.success) {
+//         console.error("Validation error", validate.error.flatten());
+//         return { error: "Data validation failed" };
+//     }
+//
+//     const item = validate.data as Business;
+//     const generatedSlug = item.name.toLowerCase().replace(/\s+/g, '-');
+//
+//     try {
+//         const { database } = await createAdminClient();
+//         const user = await currentUser();
+//         if (!user) { return { error: "User data could not be loaded" }; }
+//
+//         const clerkOrganization = await clerkClient.organizations.createOrganization({
+//             name: item.name,
+//             createdBy: user.id
+//         });
+//
+//         const newBusinessOwner = await database.createDocument(
+//             DATABASE_ID!,
+//             USER_COLLECTION_ID!,
+//             ID.unique(),
+//             {
+//                 email: user.primaryEmailAddress?.emailAddress,
+//                 name: user.fullName,
+//                 phoneNumber: user.phoneNumbers.length > 0 ? user.phoneNumbers[0].phoneNumber : item.phoneNumber,
+//                 image: user.imageUrl,
+//                 gender: Gender.UNDISCLOSED,
+//                 points: 0,
+//                 status: true,
+//                 userId: user.id,
+//                 orgId: clerkOrganization.id,
+//                 isOwner: true,
+//             }
+//         );
+//
+//         const newBusiness = await database.createDocument(
+//             DATABASE_ID!,
+//             BUSINESS_COLLECTION_ID!,
+//             ID.unique(),
+//             {
+//                 ...item,
+//                 slug: generatedSlug,
+//                 branches: [],
+//                 authId: user.id,
+//                 orgId: clerkOrganization.id,
+//                 users: [newBusinessOwner],
+//             }
+//         );
+//
+//         const newBranch = await createDefaultBranch(parseStringify(newBusiness));
+//         await createDefaultDepartment(newBranch);
+//         await initTrial(newBusiness.$id, parseStringify(newBusinessOwner));
+//
+//         await clerkClient.users.updateUser(user.id, {
+//             publicMetadata: {
+//                 onboardingComplete: true,
+//                 businessId: newBusiness.$id,
+//                 invite: false,
+//                 organizationId: clerkOrganization.id,
+//             },
+//         });
+//
+//         revalidatePath("/business-registration");
+//         redirect('/dashboard');
+//     } catch (error) {
+//         handleError(error);
+//     }
+// };
+
+export const updateItem = async (id: string, data: Business) => {
+    try {
+        const { database } = await createAdminClient();
+        const item = await database.updateDocument(
+            DATABASE_ID!,
+            BUSINESS_COLLECTION_ID!,
+            id,
+            data
+        );
+        return parseStringify(item);
+    } catch (error) {
+        handleError(error);
     }
-
-    const { database } = await createAdminClient();
-
-    const item = await database.updateDocument(
-      DATABASE_ID!,
-      BUSINESS_COLLECTION_ID!,
-      id,
-      data);
-
-    return parseStringify(item);
-  } catch (error) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-    Sentry.captureException(error);
-    throw new Error(errorMessage);
-  }
-}
+};

@@ -10,6 +10,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 
 import { getItems } from "@/lib/actions/modifier.actions";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Modifiers", link: "/modifiers" }];
 
@@ -26,7 +27,7 @@ export default async function Page({ searchParams }: ParamsProps) {
   const offset = (page - 1) * pageLimit;
 
 
-  const data : Modifier[] = await getItems(q, null, pageLimit, offset);
+  const data : Modifier[] = await getItems(q?.toString(), null, pageLimit, offset);
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
 
@@ -39,20 +40,24 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Modifiers`} total={total.toString()} description="Manage modifiers" />
 
-            <Link href={"/modifiers/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/modifiers/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add Modifier
             </Link>
         </div>
         <Separator />
 
-        <ModifiersTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+          {total > 0 || q != null ? (
+              <ModifiersTable
+                  searchKey="name"
+                  pageNo={page}
+                  columns={columns}
+                  total={total}
+                  data={data}
+                  pageCount={pageCount}
+              />
+          ) : (
+              <NoItems newItemUrl={`/dashboard/modifiers/new`} itemName={`modifier`} />
+          )}
       </div>
     </>
   );

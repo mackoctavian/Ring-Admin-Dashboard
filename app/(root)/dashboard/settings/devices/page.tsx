@@ -34,7 +34,7 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Devices`} total={total.toString()} description="Manage devices" />
 
-            <Link href={"/settings/devices/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/settings/devices/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Register new device
             </Link>
         </div>

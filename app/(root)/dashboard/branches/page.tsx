@@ -10,6 +10,9 @@ import Link from "next/link";
 import { columns } from "@/components/layout/tables/branches-table/columns";
 import { getItems } from "@/lib/actions/branch.actions";
 import { BranchesTable } from "@/components/layout/tables/branches-table/branches-table";
+import {PaymentsTable} from "@/components/layout/tables/payments-table/payments-table";
+import {columns as paymentsColumn} from "@/components/layout/tables/payments-table/columns";
+import NoItems from "@/components/layout/no-items";
 
 const breadcrumbItems = [{ title: "Branches", link: "/branches" }];
 
@@ -38,20 +41,26 @@ export default async function Page({ searchParams }: ParamsProps) {
         <div className="flex items-start justify-between">
             <Heading title={`Branches`} total={total.toString()} description="Manage branches" />
 
-            <Link href={"/branches/new"} className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={"/dashboard/branches/new"} className={cn(buttonVariants({ variant: "default" }))} >
                 <Plus className="mr-2 h-4 w-4" /> Add Branch / Location
             </Link>
         </div>
         <Separator />
 
-        <BranchesTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
+          {total > 0 || q != null ? (
+              <BranchesTable
+                  searchKey="name"
+                  pageNo={page}
+                  columns={columns}
+                  total={total}
+                  data={data}
+                  pageCount={pageCount}
+              />
+          ) : (
+              <NoItems newItemUrl={`/dashboard/branches/new`} itemName={`branch`} />
+          )}
+
+
       </div>
     </>
   );

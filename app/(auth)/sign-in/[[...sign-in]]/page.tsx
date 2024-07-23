@@ -1,7 +1,4 @@
 import { SignIn } from "@clerk/nextjs";
-import Image from 'next/image'
-import Link from 'next/link'
-import { siteConfig } from "@/config/site"
 import { Suspense } from "react";
 import LoadingWidget from "@/components/layout/loading";
 

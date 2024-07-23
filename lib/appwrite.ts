@@ -29,7 +29,11 @@ export async function createStorageClient(){
     .setEndpoint(process.env.APPWRITE_ENDPOINT!)
     .setProject(process.env.APPWRITE_PROJECT!);
 
-    return new Storage(client);
+  return {
+    get storage() {
+      return new Storage(client);
+    }
+  };
 }
 
 export async function createSaasSessionClient() {
