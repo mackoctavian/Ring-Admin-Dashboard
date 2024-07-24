@@ -1,10 +1,7 @@
 'use server';
 
-import { ID, Query } from "node-appwrite";
-import { createAdminClient, createSessionClient } from "../appwrite";
+import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
-import { revalidatePath } from "next/cache";
-
 
 const {
   APPWRITE_DATABASE: DATABASE_ID,

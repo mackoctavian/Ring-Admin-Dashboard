@@ -4,7 +4,7 @@ const env = process.env.NODE_ENV
 
 import { ID, Query, AppwriteException } from "node-appwrite"
 import * as Sentry from "@sentry/nextjs"
-import { createAdminClient, createSessionClient } from "../appwrite"
+import { createAdminClient } from "../appwrite"
 import { parseStringify } from "../utils"
 import { SignInParams , SignUpParams, User } from "@/types"
 import { auth } from "@clerk/nextjs/server"

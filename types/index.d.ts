@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
-import { Icons } from "@/components/icons";
 import * as enums from "./data-schemas";
 import { Option } from "@/components/ui/multiple-selector";
+import {PaymentMethod} from "./data-schemas";
 
 declare type SearchParamProps = {
   params: { [key: string]: string };
@@ -39,6 +39,17 @@ declare type Country = {
 declare type BusinessType = {
   $id: string;
   name: string;
+  $createdAt: Date;
+  $updatedAt: Date;
+}
+
+declare type SubscriptionPlan = {
+  $id: string;
+  name: string;
+  features: string;
+  monthlyFee: number;
+  biAnnualFee: number;
+  annualFee: number;
   $createdAt: Date;
   $updatedAt: Date;
 }
@@ -603,6 +614,79 @@ declare type Device = {
 /* End Device */
 
 
+/* Subscription Payment */
+declare type SubscriptionPayment = {
+  amount: number;
+  currency: string;
+  network: string;
+  email: string;
+  phoneNumber:string;
+  fullName: string;
+  clientIp: string;
+  deviceFingerprint: string;
+  redirectUrl: string;
+  businessId: string;
+  userId: string;
+  paymentMethod: string;
+  subscriptionPeriod: string;
+  subscriptionPlan: SubscriptionPlan;
+  paymentStatus: enums.PaymentStatus;
+}
+
+declare type SubscriptionPaymentRedirectResponse = {
+  status: string;
+  message: string;
+  meta: SubscriptionPaymentRedirectMeta;
+}
+
+declare type SubscriptionPaymentRedirectMeta = {
+  authorization: SubscriptionPaymentRedirectAuthorization;
+}
+
+declare type SubscriptionPaymentRedirectAuthorization = {
+  redirect: string;
+  mode: string;
+}
+
+declare type SubscriptionPaymentResponse = {
+  status: string;
+  message: string;
+  data: PaymentResponseData;
+}
+
+declare type PaymentResponseData = {
+    id: string;
+    reference: string;
+    externalReference: string;
+    deviceFingerprint: string;
+    amount: number,
+    chargedAmount: number,
+    appFee: number,
+    merchantFee: number,
+    processorResponse: string;
+    authModel: string;
+    currency: string;
+    ip: string;
+    narration: string;
+    status: string;
+    paymentType: string;
+    fraudStatus: string;
+    chargeType: string;
+    createdAt: string;
+    accountId: number;
+    customer: PaymentCustomer;
+}
+
+declare type PaymentCustomer = {
+  id: number;
+  name: string;
+  phoneNumber: string;
+  email: string;
+  created_at: string;
+}
+
+
+/* END Subscription */
 
 
 
@@ -633,7 +717,6 @@ declare type Transaction = {
   $id: string;
   name: string;
   paymentChannel: string;
-  type: string;
   accountId: string;
   amount: number;
   pending: boolean;

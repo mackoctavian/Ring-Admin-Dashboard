@@ -49,9 +49,9 @@ const handleError = (error: any) => {
 };
 
 export const createDefaultBranch = async (business: Business) => {
-    if (!business) return null;
+    if (!business) return null
     try {
-        const { database } = await createAdminClient();
+        const { database } = await createAdminClient()
 
         const newItem = await database.createDocument(
             DATABASE_ID!,

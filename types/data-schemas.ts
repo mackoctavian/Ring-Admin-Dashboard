@@ -73,6 +73,12 @@ export enum SubscriptionStatus {
     TRIAL = 'TRIAL'
 }
 
+export enum PaymentStatus {
+    PENDING = 'PENDING',
+    SUCCESS = 'SUCCESS',
+    FAILED = 'FAILED',
+}
+
 export enum POSItemStatus {
     DRAFT = 'Draft',
     ACTIVE = 'Active',
@@ -835,9 +841,40 @@ export const CustomerSchema = z.object({
     allowNotifications: z.boolean(),
 });
 
+export const SubscriptionPlanSchema = z.object({
+    $id: z.string(),
+    name: z.string(),
+    features: z.string(),
+    monthlyFee: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
+    biAnnualFee: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
+    annualFee: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
+    status: z.boolean(),
+})
 
-
-
+export const SubscriptionPaymentSchema = z.object({
+    paymentMethod: z.string().trim(),
+    fullName: z.string().trim(),
+    email: z.string().email("Invalid email address").trim(),
+    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number"),
+    subscriptionPeriod: z.string().trim(),
+    subscriptionPlan: SubscriptionPlanSchema,
+    network: z.string().trim(),
+})
 
 
 

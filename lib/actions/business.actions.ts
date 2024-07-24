@@ -67,6 +67,7 @@ export const getCurrentBusiness = async () => {
             BUSINESS_COLLECTION_ID!,
             businessId!
         );
+
         return parseStringify(response);
     } catch (error) {
         handleError(error);

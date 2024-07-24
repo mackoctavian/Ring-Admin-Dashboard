@@ -26,6 +26,7 @@ export enum FormFieldType {
     SELECT = "select",
     SKELETON = "skeleton",
     CUSTOM_SELECTOR = "customSelect",
+    EMAIL = "email",
 }
 
 interface CustomProps {
@@ -41,6 +42,7 @@ interface CustomProps {
     children?: React.ReactNode;
     renderSkeleton?: (field: any) => React.ReactNode;
     fieldType: FormFieldType;
+    type?: string;
 }
 
 const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
@@ -58,7 +60,7 @@ const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
                         />
                     )}
                     <FormControl>
-                        <Input placeholder={props.placeholder} {...field} />
+                        <Input type={props.type} placeholder={props.placeholder} {...field} />
                     </FormControl>
                 </>
             );
@@ -82,7 +84,7 @@ const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
                         withCountryCallingCode
                         value={field.value as E164Number | undefined}
                         onChange={field.onChange}
-                        className="input-phone border p-2"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                 </FormControl>
             );

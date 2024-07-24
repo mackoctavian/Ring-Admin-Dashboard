@@ -17,7 +17,7 @@ export default function RootLayout({ children, }: Readonly<{ children: React.Rea
                 <SubscriptionNotice />
                 <div className="flex overflow-x-hidden">
                     <Sidebar />
-                        <main className="w-full pt-16 bg-gray-100 dark:bg-darkgray-25">{children}</main>
+                        <main className="w-full pt-16 bg-gray-100 dark:bg-secondary/50">{children}</main>
                     <Toaster />
                     <CookieConsent demo={false} />
                 </div>
