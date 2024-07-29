@@ -61,14 +61,14 @@ import { SubmitButton } from "../ui/submit-button";
                 toast({
                     variant: "success",
                     title: "Success", 
-                    description: "Category details updated succesfully!"
+                    description: "Category details updated successfully!"
                 });
             } else {
                 await createItem(data);
                 toast({
                     variant: "success",
                     title: "Success", 
-                    description: "Category created succesfully!"
+                    description: "Category created successfully!"
                 });
             }
         } catch (error: any) {
@@ -87,7 +87,7 @@ import { SubmitButton } from "../ui/submit-button";
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                         control={form.control}
                         name="name"

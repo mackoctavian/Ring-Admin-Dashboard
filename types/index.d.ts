@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import * as enums from "./data-schemas";
 import { Option } from "@/components/ui/multiple-selector";
-import {PaymentMethod} from "./data-schemas";
+import {PaymentMethod, POSItemStatus} from "./data-schemas";
 
 declare type SearchParamProps = {
   params: { [key: string]: string };
@@ -130,13 +130,14 @@ declare interface RegisterBusinessParams {
 /* Product Unit Data types */
 
 declare type ProductUnit = {
-  $id?: string;
+  $id: string;
   name: string;
+  type: string;
   abbreviation: string;
   isConvertible: boolean;
   unitConversions: ProductUnitConversion[];
-  $createdAt?: Date;
-  $updatedAt?: Date;
+  $createdAt: Date;
+  $updatedAt: Date;
 };
 
 declare type ProductUnitConversion = {
@@ -173,6 +174,7 @@ declare type Category = {
   slug: string;
   categoryType: CategoryType;
   parent?: string;
+  parentName?: string;
   description?: string;
   childrenCount: number;
   businessId: string;
@@ -275,11 +277,8 @@ declare type Modifier = {
   type: ModifierType;
   allowMultiple: boolean;
   optional: boolean;
-  businessId: string;
-  image: string;
-  items: ModifierItem[];
-  branches: Branch[];
-  status: boolean;
+  modifierItems: ModifierItem[];
+  status: POSItemStatus;
   $createdAt?: Date;
   $updatedAt?: Date;
 };
@@ -288,7 +287,7 @@ declare type ModifierItem = {
   $id?: string;
   name: string;
   price: number;
-  inventoryItem: InventoryVariant;
+  inventoryItem?: string;
   $createdAt?: Date;
   $updatedAt?: Date;
 };
@@ -388,7 +387,7 @@ declare type ServiceInventoryItemUsage = {
 /* Supplier */
 
 declare type Supplier = {
-  $id?: string | undefined;
+  $id: string;
   name: string;
   phoneNumber: string;
   email?: string;
@@ -408,7 +407,7 @@ declare type Supplier = {
 /* Staff */
 
 declare type Staff = {
-  $id?: string;
+  $id: string;
   name: string;
   email: string;
   phoneNumber: string;
@@ -491,7 +490,7 @@ declare type Inventory = {
 
 
 declare type InventoryVariant = {
-  $id?: string;
+  $id: string;
   name: string,
   quantity: number,
   startingQuantity: number;

@@ -1,115 +1,89 @@
 'use server';
 
-const env = process.env.NODE_ENV
-import * as Sentry from "@sentry/nextjs";
-import { ID, Query, AppwriteException } from "node-appwrite";
-import { createAdminClient } from "../appwrite";
+import {databaseCheck, handleError} from "@/lib/utils/actions-service";
+import { ID, Query } from "node-appwrite";
 import { parseStringify } from "../utils";
 import { Category } from "@/types";
 import { CategoryType } from "@/types/data-schemas";
-import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
-import { auth } from "@clerk/nextjs/server";
-import { getBusinessId } from "./business.actions";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
 
 const {
-    APPWRITE_DATABASE: DATABASE_ID,
     CATEGORIES_COLLECTION: CATEGORY_COLLECTION_ID
-  } = process.env;
+} = process.env;
 
-  const cleanCategoryData = (item: any) => {
-    const { $databaseId, $collectionId, $id, $createdAt, $updatedAt, $permissions, ...cleanedItem } = item;
-    return cleanedItem;
-  };
-
-const checkRequirements = async (collectionId: string | undefined) => {
-  if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
-
-  const { database } = await createAdminClient();
-  if (!database) throw new Error('Database client could not be initiated');
-
-  const { userId } = auth();
-  if (!userId) {
-    throw new Error('You must be signed in to use this feature');
-  }
-
-  const businessId = await getBusinessId();
-  if( !businessId ) throw new Error('Business ID could not be initiated');
-
-  return { database, userId, businessId };
-};
-
-
-export const createItem = async (item: Category) => {
-  const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
+export const createItem = async (item: Category): Promise<void> => {
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(CATEGORY_COLLECTION_ID);
 
   const itemSlug = item.name.toLowerCase().replace(/\s+/g, '-');
 
-  item.slug = item?.parent?.slug ? `${item.parent.slug}.${itemSlug}` : itemSlug;
-  item.parentName = item?.parent?.name ? item.parent.name : '';
-  item.parent = item?.parent?.$id ? item.parent.$id : null;
-
   try {
-    await database.createDocument(
-      DATABASE_ID!,
-      CATEGORY_COLLECTION_ID!,
-      ID.unique(),
-      {
-        ...item,
-        businessId: businessId,
-        childrenCount: 0,
+    if (item.parent) {
+      const parent = await getItem(item.parent);
+
+      if (parent) {
+        item.slug = `${parent.slug}.${itemSlug}`;
+        item.parentName = parent.name;
+        item.parent = parent.$id;
+        parent.childrenCount++;
+
+        // Update parent document
+        await database.updateDocument(
+            databaseId,
+            collectionId,
+            parent.$id,
+            { childrenCount: parent.childrenCount }
+        );
+      } else {
+        item.slug = itemSlug;
+        item.parentName = '';
       }
-    )
-
-    //increment parent child count
-    if ( item.parent ) {
-      const parent : Category = await getItem(item.parent);
-      parent.childrenCount = (parent.childrenCount || 0) + 1;
-      await updateItem(item.parent, cleanCategoryData(parent));
-    }
-  } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+    } else {
+      item.slug = itemSlug;
+      item.parentName = '';
     }
 
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+    await database.createDocument(
+        databaseId,
+        collectionId,
+        ID.unique(),
+        {
+          ...item,
+          businessId,
+          childrenCount: 0,
+        }
+    );
+  } catch (error) {
+    handleError(error)
   }
 
-  revalidatePath('/dashboard/categories')
-  redirect('/dashboard/categories')
+  revalidatePath('/dashboard/categories');
+  redirect('/dashboard/categories');
 }
 
-export const list = async ( ) => {
-  const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
+export const list = async () => {
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(CATEGORY_COLLECTION_ID);
 
   try {
     const items = await database.listDocuments(
-      DATABASE_ID!,
-      CATEGORY_COLLECTION_ID!,
-      [Query.equal('businessId', businessId!)]
-    );
+        databaseId,
+        collectionId,
+        [
+            Query.equal('businessId', businessId!),
+            Query.orderAsc("name")
+        ]
+    )
+
+    if (items.documents.length < 0) return null
 
     return parseStringify(items.documents);
 
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+    handleError(error)
   }
-};
+}
 
-  export const getItems = async (
+export const getItems = async (
     q?: string,
     parent?: string | null | 'IS_PARENT' | 'IS_CHILD',
     type?: CategoryType | null,
@@ -117,7 +91,7 @@ export const list = async ( ) => {
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(CATEGORY_COLLECTION_ID);
 
     try {
       const queries = [];
@@ -140,7 +114,6 @@ export const list = async ( ) => {
       if (type) {
         queries.push(Query.search('type', type));
       }
-
  
       if (q) {
         queries.push(Query.search('name', q));
@@ -151,37 +124,27 @@ export const list = async ( ) => {
       }
         
       const items = await database.listDocuments(
-        DATABASE_ID!,
-        CATEGORY_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         queries
       );
 
-      if (items.documents.length === 0) {
-        return [];
-      }
+      if( items.documents.length < 0 ) return null
 
     return parseStringify(items.documents);
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+      handleError(error)
   }
 }
 
 export const getItem = async (id: string) => {
   if (!id) return null;
-  const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(CATEGORY_COLLECTION_ID)
 
   try {
     const item = await database.listDocuments(
-      DATABASE_ID!,
-      CATEGORY_COLLECTION_ID!,
+      databaseId,
+      collectionId,
       [
         Query.equal('$id', id),
         Query.equal('businessId', businessId),
@@ -192,71 +155,89 @@ export const getItem = async (id: string) => {
 
     return parseStringify(item.documents[0]);
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+    handleError(error)
   }
 }
 
 export const deleteItem = async ({ $id }: Category) => {
   if (!$id) return null;
-  const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(CATEGORY_COLLECTION_ID)
 
   try {
     await database.deleteDocument(
-      DATABASE_ID!,
-      CATEGORY_COLLECTION_ID!,
+      databaseId,
+      collectionId,
       $id);
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+    handleError(error)
   }
 
   revalidatePath('/dashboard/categories')
   redirect('/dashboard/categories')
-};
+}
 
-export const updateItem = async (id: string, data: Category ) => {
-  if (!id || !data) return null;
-  const { database, businessId } = await checkRequirements(CATEGORY_COLLECTION_ID);
-
-  const itemSlug = data.name.toLowerCase().replace(/\s+/g, '-');
-
-  data.slug = data?.parent?.slug ? `${data.parent.slug}.${itemSlug}` : itemSlug;
-  data.parentName = data?.parent?.name ? data.parent.name : '';
-  data.parent = data?.parent?.$id ? data.parent.$id : null;
+export const updateItem = async (id: string, data: Category): Promise<void> => {
+  const { database, databaseId, collectionId } = await databaseCheck(CATEGORY_COLLECTION_ID);
 
   try {
-    await database.updateDocument(
-      DATABASE_ID!,
-      CATEGORY_COLLECTION_ID!,
-      id,
-      data);
-
-  } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
+    // Fetch the current item
+    const currentItem = await getItem(id);
+    if (!currentItem) {
+      throw new Error('Item not found');
     }
 
-    if(env == "development"){ console.error(error); }
+    // Update slug if name has changed
+    if (data.name !== currentItem.name) {
+       const newSlug = data.name.toLowerCase().replace(/\s+/g, '-');
+       data.slug = currentItem.parent
+           ? `${(currentItem.slug || '').split('.').slice(0, -1).join('.')}/${newSlug}`
+           : newSlug;
+    }
 
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+    // Handle parent changes
+    if (data.parent !== currentItem.parent) {
+      // Decrement old parent's childrenCount
+      if (currentItem.parent) {
+        const oldParent = await getItem(currentItem.parent);
+        if (oldParent) {
+          await database.updateDocument(
+              databaseId,
+              collectionId,
+              oldParent.$id,
+              { childrenCount: (oldParent.childrenCount || 0) - 1 }
+          );
+        }
+      }
+
+      // Increment new parent's childrenCount and update slug
+      if (data.parent) {
+        const newParent = await getItem(data.parent);
+        if (newParent) {
+          await database.updateDocument(
+              databaseId,
+              collectionId,
+              newParent.$id,
+              { childrenCount: (newParent.childrenCount || 0) + 1 }
+          );
+          data.slug = `${newParent.slug || ''}/${(data.slug || '').split('/').pop() || ''}`.replace(/^\/+|\/+$/g, '');
+          data.parentName = newParent.name || '';
+        }
+      } else {
+        data.parentName = '';
+      }
+    }
+
+    // Update the item
+    await database.updateDocument(
+        databaseId,
+        collectionId,
+        id,
+        data
+    );
+  } catch (error) {
+    handleError(error);
   }
-  revalidatePath('/dashboard/categories')
-  redirect('/dashboard/categories')
-};
+
+  revalidatePath('/dashboard/categories');
+  redirect('/dashboard/categories');
+}

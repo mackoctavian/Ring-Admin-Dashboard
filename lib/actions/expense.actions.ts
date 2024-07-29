@@ -80,9 +80,6 @@ export const createItem = async (item: Expense) => {
 export const list = async ( status?: string ) => {
     const { database, businessId } = await checkRequirements(EXPENSES_COLLECTION_ID);
 
-    console.log("Status received", status)
-
-
     const queries = [];
     queries.push(Query.equal("businessId", businessId));
     queries.push(Query.orderDesc("$createdAt"));

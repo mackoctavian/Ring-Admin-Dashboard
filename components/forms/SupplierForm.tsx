@@ -2,33 +2,27 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
-import { ReloadIcon } from "@radix-ui/react-icons"
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Supplier } from "@/types";
 import { createItem, updateItem } from "@/lib/actions/supplier.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
-import { Textarea } from "@/components/ui/textarea"
 import { SupplierSchema } from "@/types/data-schemas";
 import BranchSelector from "../layout/branch-multiselector";
 import { SubmitButton } from "@/components/ui/submit-button"
+import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 
-const SupplierForm = ({ item }: { item?: Supplier | null }) => {
-    const router = useRouter();
+const SupplierForm = ({ item }: { item?: Supplier }) => {
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast()
 
@@ -36,7 +30,7 @@ const SupplierForm = ({ item }: { item?: Supplier | null }) => {
         resolver: zodResolver(SupplierSchema),
         defaultValues: item ? item : {
             status: false,
-            description: '', //Required to avoid undefined error
+            description: ''
         },
     });
 
@@ -48,142 +42,97 @@ const SupplierForm = ({ item }: { item?: Supplier | null }) => {
         });
     }
 
-    const onSubmit = async (data: z.infer<typeof SupplierSchema>) => {
+    const onSubmit = async (values: z.infer<typeof SupplierSchema>) => {
         setIsLoading(true);
-    
+
         try {
-            if (item) {
-                await updateItem(item.$id!, data);
+            const supplierData = {
+                name: values.name,
+                contactPersonName: values.contactPersonName,
+                phoneNumber: values.phoneNumber,
+                branch: values.branch,
+                email: values.email || undefined,
+                address: values.address || undefined,
+                status: values.status,
+                description: values.description || undefined
+            };
+
+            if (item && item.$id) {
+                await updateItem(item.$id, supplierData);
                 toast({
                     variant: "success",
-                    title: "Success", 
-                    description: "You have succesfully updated the supplier details!"
+                    title: "Success",
+                    description: "Supplier details updated successfully!"
                 });
             } else {
-                await createItem(data);
+                await createItem(supplierData);
                 toast({
                     variant: "success",
-                    title: "Success", 
-                    description: "Supplier created succesfully"
+                    title: "Success",
+                    description: "Supplier created successfully!"
                 });
             }
+            form.reset(supplierData);
         } catch (error: any) {
             toast({
                 variant: "destructive",
-                title: "Uh oh! Something went wrong.", 
+                title: "Uh oh! Something went wrong.",
                 description: error.message || "There was an issue submitting your form, please try later"
             });
         } finally {
-        //delay loading
-        setTimeout(() => {
             setIsLoading(false);
-            }, 1000); 
         }
     };
 
 return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Business name *</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder="Enter business name"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-
-                <FormField
-                control={form.control}
-                name="contactPersonName"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Contact person *</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder="Enter contact person's full name"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                control={form.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Phone number *</FormLabel>
-                        <FormControl>
-                            <Input
-                            type="tel"
-                            placeholder="Enter supplier's phone number"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-
-                <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Email address</FormLabel>
-                        <FormControl>
-                            <Input
-                            type="email"
-                            placeholder="Enter supplier's email address"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
                     control={form.control}
-                    name="branch"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Branch *</FormLabel>
-                            <FormControl>
-                                <BranchSelector {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
+                    name={`name`}
+                    label="Business name *"
+                    placeholder="Enter supplier's business name"
                 />
-
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
                     control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Address</FormLabel>
-                            <FormControl>
-                                <Input
-                                placeholder="Enter supplier's address"
-                                {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
+                    name={`contactPersonName`}
+                    label="Contact person *"
+                    placeholder="Enter contact person's full name"
+                />
+                <CustomFormField
+                    fieldType={FormFieldType.PHONE_INPUT}
+                    control={form.control}
+                    name={`phoneNumber`}
+                    label="Phone number *"
+                    placeholder="Enter supplier's phone number"
+                    type="tel"
+                />
+                <CustomFormField
+                    fieldType={FormFieldType.CUSTOM_SELECTOR}
+                    control={form.control}
+                    name={`branch`}
+                    label="Branch *"
+                    renderSkeleton={(field) => (
+                        <BranchSelector value={field.value} onChange={field.onChange}/>
+                    )}
+                />
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
+                    control={form.control}
+                    name={`email`}
+                    label="Email address"
+                    placeholder="Enter supplier's email address"
+                    type="email"
+                />
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
+                    control={form.control}
+                    name={`address`}
+                    label="Address"
+                    placeholder="Enter supplier's address"
                 />
                 
                 <FormField
@@ -205,23 +154,12 @@ return (
                 )}
             />
             </div>
-            
-            <FormField
+            <CustomFormField
+                fieldType={FormFieldType.TEXTAREA}
                 control={form.control}
-                name="description"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                        <Textarea
-                            placeholder="Short notes about the supplier"
-                            className="resize-none"
-                            {...field}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
+                name={`description`}
+                label="Notes"
+                placeholder="Short notes about the supplier"
             />
     
             <div className="flex h-5 items-center space-x-4">

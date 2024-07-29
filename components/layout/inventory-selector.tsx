@@ -1,9 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -11,12 +12,13 @@ import { listVariants } from "@/lib/actions/inventory.actions"
 import { InventoryVariant } from "@/types";
 
 interface Props {
-  value?: InventoryVariant;
-  onChange: (value: InventoryVariant) => void;
+  value?: string;
+  onChange: (value: string) => void;
 }
 
 const InventorySelector: React.FC<Props> = ({ value, onChange }) => {
   const [inventory, setInventory] = useState<InventoryVariant[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function fetchInventory() {
@@ -25,33 +27,56 @@ const InventorySelector: React.FC<Props> = ({ value, onChange }) => {
         setInventory(inventoryData);
       } catch (error) {
         console.error('Error fetching inventory:', error);
+      } finally {
+        setLoading(false);
       }
     }
     fetchInventory();
   }, []);
 
-  const handleSelectChange = (value: string) => {
-    const selectedInventory = inventory.find(inv => inv.$id === value);
-    if (selectedInventory) {
-      onChange(selectedInventory);
+  const handleSelectChange = (selectedId: string) => {
+    onChange(selectedId);
+  };
+
+  const selectedInventory = inventory.find(inv => inv.$id === value);
+
+  // Group inventory items by a property (e.g., Inventory)
+  const groupedInventory = inventory.reduce((groups, item) => {
+    if (!groups[item.inventory.title]) {
+      groups[item.inventory.title] = [];
     }
+    groups[item.inventory.title].push(item);
+    return groups;
+  }, {} as { [key: string]: InventoryVariant[] });
+
+  // Function to format category names
+  const formatCategory = (category: string) => {
+    return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
   };
 
   return (
-    <Select value={value ? value.$id : 'Select inventory item'} onValueChange={handleSelectChange}>
-      <SelectTrigger>
-        <SelectValue>
-          {value ? value.fullName : 'Select inventory item'}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {inventory.map((inventoryItem) => (
-          <SelectItem key={inventoryItem.$id} value={inventoryItem.$id}>
-            { inventoryItem.fullName }
+      <Select value={value || 'default'} onValueChange={handleSelectChange} disabled={loading}>
+        <SelectTrigger>
+          <SelectValue>
+            {loading ? 'Loading...' : (selectedInventory ? selectedInventory.fullName : 'Select inventory item')}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="default" disabled>
+            Select inventory item
           </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+          {Object.keys(groupedInventory).map(category => (
+              <SelectGroup key={category}>
+                <SelectLabel>{formatCategory(category)}</SelectLabel>
+                {groupedInventory[category].map((item) => (
+                    <SelectItem key={item.$id} value={item.$id}>
+                      {item.fullName}
+                    </SelectItem>
+                ))}
+              </SelectGroup>
+          ))}
+        </SelectContent>
+      </Select>
   );
 };
 

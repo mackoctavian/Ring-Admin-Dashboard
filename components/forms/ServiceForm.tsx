@@ -327,7 +327,7 @@ import {
                         name="allowWalkin"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Allow walk in's *</FormLabel>
+                                <FormLabel>Allow walk in&lsquo;s *</FormLabel>
                                 <Select onValueChange={(value) => field.onChange(value === "true")} defaultValue={String(field.value)}>
                                     <FormControl>
                                         <SelectTrigger>

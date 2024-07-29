@@ -5,7 +5,6 @@ import {SubscriptionStatus} from '@/types/data-schemas';
 import {useEffect, useState} from 'react';
 import Logo from './layout/logo';
 import {SubscriptionDetails} from "@/types";
-import {formatDateTime} from "@/lib/utils";
 
 const SubscriptionNotice = () => {
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>(SubscriptionStatus.OK);

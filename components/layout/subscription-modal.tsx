@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {Button, buttonVariants} from "@/components/ui/button";
 import {Form, FormControl} from "@/components/ui/form";
-import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardContent} from "@/components/ui/card";
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import {Label} from "@/components/ui/label";
@@ -28,7 +28,6 @@ import {useToast} from "@/components/ui/use-toast";
 import {useUser} from "@clerk/nextjs";
 import {cn} from "@/lib/utils";
 import {Plus} from "lucide-react";
-import {SubmitButton} from "@/components/ui/submit-button";
 
 export default function SubscriptionModal() {
     const [isLoading, setIsLoading] = useState(false);
@@ -96,8 +95,7 @@ export default function SubscriptionModal() {
                 </AlertDialogHeader>
                 <Card>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-                            console.error("Form validation errors:", errors);
+                        <form onSubmit={form.handleSubmit(onSubmit, (errors) => {console.error("Form validation errors:", errors);
                         })}>
                             <CardContent className="grid gap-6 pt-4">
                                 <CustomFormField

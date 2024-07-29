@@ -26,7 +26,6 @@ export enum FormFieldType {
     SELECT = "select",
     SKELETON = "skeleton",
     CUSTOM_SELECTOR = "customSelect",
-    EMAIL = "email",
 }
 
 interface CustomProps {

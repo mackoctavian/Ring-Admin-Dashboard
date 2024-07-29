@@ -51,7 +51,7 @@ const sidebarNavItems = [
     href: '/dashboard/settings/business',
   },
   {
-    title: 'Devices',
+    title: 'Manage devices',
     icon: <IconBrowserCheck size={18} />,
     href: '/dashboard/settings/devices',
   },

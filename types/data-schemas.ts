@@ -1,6 +1,4 @@
 import * as z from "zod";
-
-//const phoneNumberRegex = /^[0-9]{10,15}$/;
 const phoneNumberRegex = /^\+\d{10,15}$/;
 
 //Image validation
@@ -472,7 +470,7 @@ export const CategorySchema = z.object({
             required_error: "Product category name is required",
             invalid_type_error: "Product category name must be more than 2 characters long",
         }).min(2),
-        parent: ParentCategorySchema.optional().nullable(),
+        parent: z.string().optional().nullable(),
         description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
         status: z.boolean(),
         $createdAt: z.preprocess((val) => {
@@ -733,7 +731,7 @@ export const ModifierItemSchema = z.object({
         return val;
     }, z.number().optional().nullable()),
     unit: z.string().optional().nullable(),
-    inventoryItem: InventoryVariantSchema.optional().nullable(),
+    inventoryItem: z.string().optional().nullable(),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
@@ -757,7 +755,7 @@ export const ModifierSchema = z.object({
     optional: z.boolean(),
     image: z.string().optional(),
     modifierItems: z.array(ModifierItemSchema).min(1, "At least one item is required"),
-    status: z.boolean(),
+    status: z.nativeEnum(POSItemStatus),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
@@ -826,7 +824,7 @@ export const CustomerSchema = z.object({
     email: z.string().email("Invalid email address").trim().optional(),
     phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits.").optional(),
     code: z.preprocess((val) => val === null ? undefined : val, z.string().optional()),
-    gender: z.enum([Gender.UNDISCLOSED, Gender.MALE, Gender.FEMALE]),
+    gender: z.nativeEnum(Gender),
     dateOfBirth: z.preprocess((val) => {
         if (val === null) return undefined;
         if (typeof val === "string" && val.trim() !== "") {
@@ -1117,10 +1115,7 @@ export const ExpenseSchema = z.object({
     document: z.string().optional().nullable(),
     branch: BranchSchema.omit({business: true}).nullable().optional(),
     description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    status: z.enum([ExpenseStatus.PAID, ExpenseStatus.PARTIAL, ExpenseStatus.UNPAID], {
-        required_error: "Expense status is required",
-        invalid_type_error: "Select a valid expense status",
-    }),
+    status: z.nativeEnum(ExpenseStatus),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
@@ -1174,7 +1169,7 @@ export const SectionSchema = z.object({
         }
         return val;
     }, z.number().nonnegative()),
-    type: z.enum([SectionType.ROOM, SectionType.SEAT, SectionType.TABLE], {
+    type: z.nativeEnum(SectionType,{
         required_error: "Section type is required",
         invalid_type_error: "Select a valid section type",
     }),

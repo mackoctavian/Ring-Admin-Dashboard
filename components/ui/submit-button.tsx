@@ -1,4 +1,3 @@
-import { useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import Image from 'next/image'
 import { cn } from '@/lib/utils';
@@ -9,8 +8,6 @@ type SubmitButtonProps = {
 };
   
 export const SubmitButton = ({ label, loading }: SubmitButtonProps) => {
-    const { pending } = useFormStatus();
-
     return (        
         <Button type="submit" disabled={loading}>
             {loading ? (

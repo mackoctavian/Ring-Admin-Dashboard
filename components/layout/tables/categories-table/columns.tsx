@@ -4,6 +4,7 @@ import { Category } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { StateColumn } from "../state-column";
+import {BadgeColumn} from "@/components/layout/tables/badge-column";
 
 export const columns: ColumnDef<Category>[] = [
   {
@@ -27,22 +28,25 @@ export const columns: ColumnDef<Category>[] = [
   },
   {
     accessorKey: "name",
-    header: "NAME",
+    header: "Name",
+    enableSorting: true,
   },
   {
     accessorKey: "type",
-    header: "TYPE",
+    header: "Category type",
+    // @ts-ignore
+    cell: ({ row }) => <BadgeColumn value={row.original.type } />,
   },
   {
     accessorKey: "parentName",
-    header: "PARENT",
+    header: "Parent category",
   },
   {
     accessorKey: "description",
-    header: "DESCRIPTION",
+    header: "Description",
   },
   {
-    header: "STATUS",
+    header: "Status",
     id: "status",
     cell: ({ row }) => <StateColumn state={row.original.status} />,
   },
