@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import * as enums from "./data-schemas";
 import { Option } from "@/components/ui/multiple-selector";
-import {PaymentMethod, POSItemStatus} from "./data-schemas";
+import {ExpenseStatus, PaymentMethod, POSItemStatus} from "./data-schemas";
 
 declare type SearchParamProps = {
   params: { [key: string]: string };
@@ -153,16 +153,14 @@ declare type ProductUnitConversion = {
 
 /* Department Data types */
 declare type Department = {
-  $id?: string;
-  branch: Branch;
+  $id: string;
+  branch: string;
   branchId: string;
   businessId: string;
   name: string;
   shortName: string;
   status: boolean;
   canDelete: boolean;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 };
 /* Department Data types */
 
@@ -233,7 +231,7 @@ declare type DiscountDto = {
 
 /* Branches */
 declare type Branch = {
-  $id?: string;
+  $id: string;
   business: Business;
   businessId: string;
   name: string;
@@ -524,20 +522,17 @@ declare type InventoryModification = {
 }
 
 declare type Stock = {
-  $id?: string;
-  item: InvenvtoryVariant;
+  $id: string;
+  item: string;
   quantity: number;
   actualQuantity: number;
-  staff?: Staff;
-  department?: Department;
-  supplier: Supplier;
+  staff?: string;
+  supplier: string;
   orderNumber: string;
   orderDate: Date;
   deliveryDate: Date;
-  accurate: boolean;
+  accurate: boolean | string;
   value?: number;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 /* End Stock */
 
@@ -561,6 +556,22 @@ declare type Expense = {
   status: ExpenseStatus;
   $createdAt?: Date;
   $updatedAt?: Date;
+}
+
+declare interface ExpenseDto {
+  name: string;
+  category: string;
+  currency: string;
+  tax: number;
+  amount: number;
+  staff?: string;
+  vendor?: string;
+  department?: string;
+  dueDate: Date;
+  document?: FormData;
+  description?: string;
+  balance?: number;
+  status?: ExpenseStatus;
 }
 
 declare type ExpensePayment = {

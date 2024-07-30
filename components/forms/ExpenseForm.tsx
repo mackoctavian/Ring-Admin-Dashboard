@@ -1,16 +1,13 @@
 'use client'
 
 import * as z from "zod";
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ReloadIcon } from "@radix-ui/react-icons"
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input";
-import { Expense, Staff, Department, Supplier } from "@/types";
+import { Expense } from "@/types";
 import { ExpenseSchema, ExpenseStatus } from "@/types/data-schemas";
 import { createItem, updateItem } from "@/lib/actions/expense.actions"
 import { useToast } from "@/components/ui/use-toast"
@@ -41,31 +38,18 @@ import {
 } from "@/components/ui/popover"
 import SupplierSelector from "../layout/supplier-selector";
 import BranchSelector from "../layout/branch-selector";
+import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 
  const ExpenseForm = ({ item }: { item?: Expense | null }) => {
-    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false)
     const { toast } = useToast()
 
-    const [selectedStaff, setSelectedStaff] = useState<Staff | undefined>(
-        item ? item.staff : undefined
-    );
-    const [selectedDepartment, setSelectedDepartment] = useState<Department | undefined>(
-        item ? item.department : undefined
-    );
-    const [selectedCurrency, setSelectedCurrency] = useState<string | undefined>(
-        item ? item.currency : undefined
-    );
-    const [selectedVendor, setSelectedVendor] = useState<Supplier | undefined>(
-        item ? item.vendor : undefined
-    );
-    
     const form = useForm<z.infer<typeof ExpenseSchema>>({
         resolver: zodResolver(ExpenseSchema),
+        //@ts-ignore
         defaultValues: item ? item : {
             tax: 0,
             status: ExpenseStatus.UNPAID,
-            balance: 0
         },
     });
 
@@ -75,33 +59,57 @@ import BranchSelector from "../layout/branch-selector";
             title: "Uh oh! Something went wrong.", 
             description: "There was an issue submitting your form please try later"
         });
-        console.error(JSON.stringify(errors));
     }
         
     const onSubmit = async (data: z.infer<typeof ExpenseSchema>) => {
         setIsLoading(true);
-    
+
+        // Store file info in form data as
+        let formData;
+
+        //Check if document exists
+        if (data.document && data.document?.length > 0) {
+            const blobFile = new Blob([data.document[0]], {
+                type: data.document[0].type,
+            });
+
+            formData = new FormData();
+            formData.append("blobFile", blobFile);
+            formData.append("fileName", data.document[0].name);
+        }
         try {
+            const expense = {
+                name: data.name,
+                category: data.category,
+                amount: data.amount,
+                status: data.status,
+                tax: data.tax,
+                expenseDate: Date.now(),
+                currency: data.currency,
+                dueDate: data.dueDate,
+                description: data.description,
+                document: data.document
+                    ? formData
+                    : undefined,
+            }
+
             if (item) {
-                await updateItem(item.$id, data);
+                //@ts-ignore
+                await updateItem(item.$id!, expense);
                 toast({
                     variant: "success",
                     title: "Success", 
-                    description: "Expense details updated succesfully!"
+                    description: "Expense details updated successfully!"
                 });
             } else {
-                await createItem(data);
+                //@ts-ignore
+                await createItem(expense);
                 toast({
                     variant: "success",
                     title: "Success", 
-                    description: "Business expense recorded succesfully!"
+                    description: "Business expense recorded successfully!"
                 });
             }
-            
-            // Redirect to the list page after submission
-            router.push("/expenses");
-            router.refresh();
-            setIsLoading(false);
         } catch (error: any) {
             toast({
                 variant: "destructive",
@@ -109,50 +117,20 @@ import BranchSelector from "../layout/branch-selector";
                 description: "There was an issue submitting your form, please try later"
             });
         } finally {
-        //delay loading
-        setTimeout(() => {
             setIsLoading(false);
-            }, 1000); 
         }
-    };
-
-    useEffect(() => {
-        if (item) {
-          setSelectedStaff(item.staff);
-        }
-      }, [item]);
-
-    useEffect(() => {
-        if (item) {
-          setSelectedDepartment(item.department);
-        }
-    }, [item]);
-
-    useEffect(() => {
-        if (item) {
-          setSelectedVendor(item.vendor);
-        }
-    }, [item]);
+    }
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
+                    <CustomFormField
+                        fieldType={FormFieldType.INPUT}
                         control={form.control}
                         name="name"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Expense title *</FormLabel>
-                            <FormControl>
-                                <Input
-                                placeholder="Enter expense title"
-                                {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
+                        label="Expense title *"
+                        placeholder="Enter expense title"
                     />
                 
                     <FormField
@@ -167,190 +145,128 @@ import BranchSelector from "../layout/branch-selector";
                         )}
                     />
 
-                    <FormField
+                    <CustomFormField
+                        fieldType={FormFieldType.INPUT}
                         control={form.control}
                         name="amount"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Amount *</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        placeholder="Amount"
-                                    {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        label="Amount *"
+                        type="number"
+                        placeholder="Enter amount"
                     />
-                    
-                    <FormField
+
+                    <CustomFormField
+                        fieldType={FormFieldType.CUSTOM_SELECTOR}
                         control={form.control}
                         name="currency"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Currency *</FormLabel>
-                                <FormControl>
-                                    <CurrencySelector
-                                        value={selectedCurrency}
-                                        onChange={(curr) => { setSelectedCurrency(curr); field.onChange(curr); }}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
+                        label="Currency *"
+                        renderSkeleton={(field) => (
+                            <CurrencySelector value={field.value} onChange={field.onChange}/>
                         )}
                     />
 
-                    <FormField
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
                         control={form.control}
                         name="dueDate"
-                        render={({ field }) => (
+                        label="Due date *"
+                        renderSkeleton={(field) => (
                             <FormItem className="flex flex-col mt-2">
-                                <FormLabel>Due date *</FormLabel>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
-                                            {field.value ? ( format(field.value, "PPP") ) : (
-                                                <span>Select expense due date</span>
-                                            )}
-                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </FormControl>
+                                        <FormControl>
+                                            <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
+                                                {field.value ? ( format(field.value, "PPP") ) : (
+                                                    <span>Select expense due date</span>
+                                                )}
+                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </FormControl>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        hideNavigation={true}
-                                        captionLayout="dropdown"
-                                        mode="single"
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        disabled={ (date) => date < new Date("1970-01-01") }
-                                    />
+                                        <Calendar
+                                            hideNavigation={true}
+                                            captionLayout="dropdown"
+                                            mode="single"
+                                            selected={field.value}
+                                            onSelect={field.onChange}
+                                            disabled={ (date) => date < new Date("1970-01-01") }
+                                        />
                                     </PopoverContent>
                                 </Popover>
-                                <FormMessage />
                             </FormItem>
                         )}
                     />
 
-                    <FormField
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
                         control={form.control}
                         name="branch"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Branch</FormLabel>
-                                <BranchSelector
-                                    value={field.value}
-                                    {...field}
-                                />
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
+                        label="Branch"
+                        renderSkeleton={(field) => (
+                            <BranchSelector value={field.value} onChange={field.onChange}/>
+                        )}
+                    />
 
-                    <FormField
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
                         control={form.control}
                         name="department"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Department</FormLabel>
-                                <DepartmentSelector
-                                    value={selectedDepartment}
-                                    onChange={(dpt) => { setSelectedDepartment(dpt); field.onChange(dpt); }}
-                                />
-                                <FormMessage />
-                            </FormItem>
-                            )}
+                        label="Department"
+                        renderSkeleton={(field) => (
+                            <DepartmentSelector value={field.value} onChange={field.onChange}/>
+                        )}
                     />
 
-                    <FormField
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
                         control={form.control}
                         name="vendor"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Vendor</FormLabel>
-                                <SupplierSelector
-                                    value={selectedVendor}
-                                    onChange={(suppl) => { setSelectedVendor(suppl); field.onChange(suppl); }}
-                                />
-                                <FormMessage />
-                            </FormItem>
-                            )}
+                        label="Supplier"
+                        renderSkeleton={(field) => (
+                            <SupplierSelector value={field.value} onChange={field.onChange}/>
+                        )}
                     />
 
-                    <FormField
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
                         control={form.control}
                         name="staff"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Staff</FormLabel>
-                                <StaffSelector
-                                    value={selectedStaff}
-                                    onChange={(stff) => { setSelectedStaff(stff); field.onChange(stff); }}
-                                />
-                                <FormMessage />
-                            </FormItem>
-                            )}
+                        label="Staff *"
+                        renderSkeleton={(field) => (
+                            <StaffSelector value={field.value} onChange={field.onChange}/>
+                        )}
                     />
 
-                    <FormField
+                    <CustomFormField
+                        fieldType={FormFieldType.INPUT}
                         control={form.control}
                         name="tax"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Tax amount</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        placeholder="Enter total tax amount"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        label="Tax amount"
+                        placeholder="Enter total tax amount"
+                        type="number"
                     />
 
-                    
-                    <FormField
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
                         control={form.control}
                         name="document"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Document</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="file"
-                                        placeholder="Upload document related to this expense"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                </div>
-                <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Expense description</FormLabel>
+                        label="Document"
+                        placeholder="Upload document related to this expense"
+                        renderSkeleton={(field) => (
                             <FormControl>
-                                <Textarea
-                                    placeholder="Short description of the expense"
-                                    className="resize-none"
-                                    {...field}
-                                />
+                                <Input type="file" value={field.value} onChange={field.onChange} />
                             </FormControl>
-                            <FormMessage />
-                            </FormItem>
                         )}
                     />
-                
+                </div>
+
+                <CustomFormField
+                    fieldType={FormFieldType.TEXTAREA}
+                    control={form.control}
+                    name="description"
+                    label="Expense description"
+                    placeholder="Short description of the expense"
+                />
         
                 <div className="flex h-5 items-center space-x-4">
                     <CancelButton />

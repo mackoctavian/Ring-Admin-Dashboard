@@ -245,20 +245,8 @@ export const DepartmentSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     shortName: z.string(),
-    branch: BranchSchema.omit({business: true, daysOpen: true}),
+    branch: z.string(),
     status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
 });
 
 export const CampaignSchema = z.object({
@@ -772,25 +760,30 @@ export const ModifierSchema = z.object({
 
 export const StockSchema = z.object({
     $id: z.string().optional(),
-    item: InventoryVariantSchema.refine((value) => {
-            return value !== undefined && value !== null && value.$id !== "";
-        }, { message: "Select inventory item" }),
+    item: z.string(),
     quantity: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
         }
         return val;
-    }, z.number().nonnegative()),
-    staff: StaffSchema,
-    department: DepartmentSchema.optional(),
-    supplier: SupplierSchema,
+    }, z.number().nonnegative().gt(0, "Quantity must be greater than zero")), // Ensuring quantity is greater than zero
+    staff: z.string(),
+    supplier: z.string(),
     value: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseFloat(val);
         }
         return val;
-    }, z.number().nonnegative()),
-    accurate: z.boolean(),
+    }, z.number().nonnegative().gt(0, "Value must be greater than zero")), // Ensuring value is greater than zero
+    accurate: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim().toLowerCase() === "true") {
+            return true;
+        }
+        if (typeof val === "string" && val.trim().toLowerCase() === "false") {
+            return false;
+        }
+        return val;
+    }, z.boolean()),
     orderNumber: z.string().trim().optional(),
     orderDate: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -803,19 +796,7 @@ export const StockSchema = z.object({
             return new Date(val);
         }
         return val;
-    }, z.date()),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    }, z.date())
 });
 
 
@@ -1078,19 +1059,12 @@ export const ServiceSchema = z.object({
 });
 
 export const ExpenseSchema = z.object({
-    $id: z.string().optional(),
     name: z.string({
         required_error: "Expense title is required",
         invalid_type_error: "Expense title must be more than 2 characters long",
     }).min(2),
     category: z.string(),
     amount: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return parseFloat(val);
-        }
-        return val;
-    }, z.number().nonnegative()),
-    balance: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseFloat(val);
         }
@@ -1103,31 +1077,19 @@ export const ExpenseSchema = z.object({
         return val;
     }, z.number().nonnegative()),
     currency: z.string(),
-    staff: StaffSchema.nullable().optional(),
-    department: DepartmentSchema.nullable().optional(),
-    vendor: SupplierSchema.nullable().optional(),
+    staff: z.string().nullable().optional(),
+    department: z.string().nullable().optional(),
+    vendor: z.string().nullable().optional(),
     dueDate: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
         }
         return val;
     }, z.date()),
-    document: z.string().optional().nullable(),
-    branch: BranchSchema.omit({business: true}).nullable().optional(),
-    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    status: z.nativeEnum(ExpenseStatus),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    document: z.custom<File[]>().optional().nullable(),
+    branch: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    status: z.nativeEnum(ExpenseStatus)
 });
 
 export const ExpensePaymentSchema = z.object({

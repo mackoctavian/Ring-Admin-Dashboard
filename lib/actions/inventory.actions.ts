@@ -1,5 +1,7 @@
 'use server';
 
+import {databaseCheck, handleError} from "@/lib/utils/actions-service";
+
 const env = process.env.NODE_ENV
 import * as Sentry from "@sentry/nextjs"
 import { ID, Query, AppwriteException } from "node-appwrite";
@@ -286,7 +288,27 @@ export const getItem = async (id: string) => {
       Sentry.captureException(error);
       throw Error(errorMessage);
     }
-  };
+};
+
+export const getInventoryVariant = async (id: string) => {
+  if( !id ) return null
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_VARIANTS_COLLECTION_ID);
+
+  try {
+    const item = await database.listDocuments(
+        databaseId,
+        collectionId,
+        [Query.equal('$id', id)]
+    )
+
+    if ( item.total == 0 ) return null;
+
+    return parseStringify(item.documents[0]);
+
+  } catch (error: any) {
+    handleError(error, "Error getting variant:")
+  }
+}
 
 export const deleteItem = async ({ $id }: Inventory) => {
     if (!$id) return null;

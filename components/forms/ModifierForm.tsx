@@ -33,8 +33,9 @@ import {
 import { SubmitButton } from "../ui/submit-button";
 import {SelectItem,} from "@/components/ui/select"
 import { Button } from "../ui/button";
-import { PlusCircle } from "lucide-react";
+import {PlusCircle, Space} from "lucide-react";
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
+import Spacer from "@/components/ui/Spacer";
 
 const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -126,7 +127,7 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                     <CustomFormField
                                         fieldType={FormFieldType.INPUT}
                                         control={form.control}
@@ -160,7 +161,8 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                             </CardHeader>
                             <CardContent>
                                 {fields.map((field, index) => (
-                                    <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 rounded-md mb-4">
+                                    <div key={field.id}
+                                         className="grid grid-cols-1 lg:grid-cols-3 gap-4 rounded-md mb-4">
                                         <CustomFormField
                                             fieldType={FormFieldType.INPUT}
                                             control={form.control}
@@ -177,7 +179,7 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                             type="number"
                                         />
                                         <CustomFormField
-                                            fieldType={FormFieldType.CUSTOM_SELECTOR}
+                                            fieldType={FormFieldType.SKELETON}
                                             control={form.control}
                                             name={`modifierItems.${index}.inventoryItem`}
                                             label="Stock item"
@@ -194,7 +196,7 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                             placeholder="Quantity of stock item used per sale"
                                         />
                                         <CustomFormField
-                                            fieldType={FormFieldType.CUSTOM_SELECTOR}
+                                            fieldType={FormFieldType.SKELETON}
                                             control={form.control}
                                             name={`modifierItems.${index}.unit`}
                                             label="Stock quantity unit"
@@ -210,22 +212,24 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                             disabled={fields.length === 1}>
                                             Remove Item
                                         </Button>
+
+                                        <Spacer axis='vertical' size={32} />
                                     </div>
                                 ))}
                             </CardContent>
                             <CardFooter className="justify-center border-t p-4">
-                                <Button type="button"  size="sm" variant="ghost" className="gap-1" onClick={() => append({ name: '', quantity:0, price: 0, inventoryItem: undefined})}>
-                                    <PlusCircle className="h-3.5 w-3.5" />
+                                <Button type="button" size="sm" variant="ghost" className="gap-1"
+                                        onClick={() => append({
+                                            name: '',
+                                            quantity: 0,
+                                            price: 0,
+                                            inventoryItem: undefined
+                                        })}>
+                                    <PlusCircle className="h-3.5 w-3.5"/>
                                     Add modifier item
                                 </Button>
                             </CardFooter>
                         </Card>
-
-                        <div className="flex h-5 items-center space-x-4">
-                            <CancelButton/>
-                            <Separator orientation="vertical"/>
-                            <SubmitButton loading={isLoading} label={modifier ? "Update modifier" : "Save modifier"}/>
-                        </div>
                     </div>
                     {/* Right Column */}
                     <div className="space-y-8">
@@ -241,7 +245,8 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                         render={({field}) => (
                                             <FormItem>
                                                 <FormLabel>Allow multiple items? *</FormLabel>
-                                                <FormDescription>Only one item on the modifier can be selected</FormDescription>
+                                                <FormDescription>Only one item on the modifier can be
+                                                    selected</FormDescription>
                                                 <FormControl>
                                                     <div className="mt-2">
                                                         <Switch
@@ -274,7 +279,7 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                                         />
                                                     </div>
                                                 </FormControl>
-                                                <FormMessage />
+                                                <FormMessage/>
 
                                             </FormItem>
                                         )}
@@ -300,6 +305,11 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                             </CardContent>
                         </Card>
                     </div>
+                </div>
+                <div className="flex h-5 items-center space-x-4">
+                    <CancelButton/>
+                    <Separator orientation="vertical"/>
+                    <SubmitButton loading={isLoading} label={modifier ? "Update modifier" : "Save modifier"}/>
                 </div>
             </form>
         </Form>

@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { NumberColumn } from "../number-column";
 import { DateTimeColumn } from "../date-colum";
+import {BadgeColumn} from "@/components/layout/tables/badge-column";
 
 export const columns: ColumnDef<Expense>[] = [
   {
@@ -28,32 +29,33 @@ export const columns: ColumnDef<Expense>[] = [
   },
   {
     accessorKey: "name",
-    header: "TITLE",
+    header: "Title",
   },
   {
     accessorKey: "category",
-    header: "CATEGORY",
+    header: "Category",
   },
   {
-    header: "AMOUNT",
+    header: "Amount",
     id: "amount",
     cell: ({ row }) => <NumberColumn suffix={row.original.currency} value={row.original.amount} />,
   },
   {
-    header: "BALANCE",
+    header: "Balance",
     id: "balance",
     cell: ({ row }) => <NumberColumn suffix={row.original.currency} value={row.original.balance} />,
   },
   {
     id: "dueDate",
-    header: "DUE DATE",
+    header: "Due Date",
+    // @ts-ignore
     cell: ({ row }) => <DateTimeColumn value={row.original.dueDate}  />,
   },
   {
     accessorKey: "status",
-    header: "STATUS",
+    header: "Status",
+    cell: ({ row }) => <BadgeColumn value={row.original.status}  />,
   },
-  
   {
     id: "actions",
     cell: ({ row }) => <CellAction data={row.original} />,

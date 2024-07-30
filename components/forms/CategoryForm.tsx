@@ -57,6 +57,7 @@ import { SubmitButton } from "../ui/submit-button";
     
         try {
             if (item) {
+                //@ts-ignore
                 await updateItem(item.$id, data);
                 toast({
                     variant: "success",
@@ -64,6 +65,7 @@ import { SubmitButton } from "../ui/submit-button";
                     description: "Category details updated successfully!"
                 });
             } else {
+                //@ts-ignore
                 await createItem(data);
                 toast({
                     variant: "success",
@@ -78,12 +80,10 @@ import { SubmitButton } from "../ui/submit-button";
                 description: "There was an issue submitting your form, please try later"
             });
         } finally {
-        //delay loading
-        setTimeout(() => {
             setIsLoading(false);
-            }, 1000); 
         }
-    };
+    }
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">

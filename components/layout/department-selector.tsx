@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Select,
@@ -11,12 +10,13 @@ import { list } from "@/lib/actions/department.actions"
 import { Department } from "@/types";
 
 interface Props {
-  value?: Department;
-  onChange: (value: Department) => void;
+  value?: string;
+  onChange: (value: string) => void;
 }
 
 const DepartmentSelector: React.FC<Props> = ({ value, onChange }) => {
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function fetchDepartments() {
@@ -25,33 +25,37 @@ const DepartmentSelector: React.FC<Props> = ({ value, onChange }) => {
         setDepartments(departmentsData);
       } catch (error) {
         console.error('Error fetching departments:', error);
+      } finally {
+        setLoading(false);
       }
     }
     fetchDepartments();
   }, []);
 
-  const handleSelectChange = (value: string) => {
-    const selectedDepartment = departments.find(dept => dept.$id === value);
-    if (selectedDepartment) {
-      onChange(selectedDepartment);
-    }
+  const handleSelectChange = (selectedId: string) => {
+    onChange(selectedId);
   };
 
+  const selectedDepartment = departments.find(dept => dept.$id === value);
+
   return (
-    <Select value={value ? value.$id : 'Select Department'} onValueChange={handleSelectChange}>
-      <SelectTrigger>
-        <SelectValue>
-          {value ? value.name : 'Select department'}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {departments.map((department) => (
-          <SelectItem key={department.$id} value={department.$id}>
-            {department.name}
+      <Select value={value || 'default'} onValueChange={handleSelectChange} disabled={loading}>
+        <SelectTrigger>
+          <SelectValue>
+            {loading ? 'Loading...' : (selectedDepartment ? selectedDepartment.name : 'Select department')}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="default" disabled>
+            Select department
           </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+          {departments.map((department) => (
+              <SelectItem key={department.$id} value={department.$id}>
+                {department.name}
+              </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
   );
 };
 

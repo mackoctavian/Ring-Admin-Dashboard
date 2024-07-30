@@ -1,11 +1,4 @@
-import Freecurrencyapi from '@everapi/freecurrencyapi-js';
-
-const {
-    CURRENCY_CONVERTER_API: CURRENCY_CONVERTER_API
-} = process.env;
-
 export default async function CurrencyConverter() {
-    const freecurrencyapi = new Freecurrencyapi(CURRENCY_CONVERTER_API)
 
     // await freecurrencyapi.latest({
     //     base_currency: 'USD',

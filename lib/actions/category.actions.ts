@@ -54,7 +54,7 @@ export const createItem = async (item: Category): Promise<void> => {
         }
     );
   } catch (error) {
-    handleError(error)
+    handleError(error, "Error creating category")
   }
 
   revalidatePath('/dashboard/categories');
@@ -74,7 +74,7 @@ export const list = async () => {
         ]
     )
 
-    if (items.documents.length < 0) return null
+    if (items.documents.length == 0) return null
 
     return parseStringify(items.documents);
 
@@ -129,7 +129,7 @@ export const getItems = async (
         queries
       );
 
-      if( items.documents.length < 0 ) return null
+      if( items.documents.length == 0 ) return null
 
     return parseStringify(items.documents);
   } catch (error: any) {
@@ -151,7 +151,7 @@ export const getItem = async (id: string) => {
       ]
     )
 
-    if ( item.total < 1 ) return null;
+    if ( item.total == 0 ) return null;
 
     return parseStringify(item.documents[0]);
   } catch (error: any) {
@@ -176,15 +176,14 @@ export const deleteItem = async ({ $id }: Category) => {
   redirect('/dashboard/categories')
 }
 
-export const updateItem = async (id: string, data: Category): Promise<void> => {
+export const updateItem = async (id: string, data: Category) => {
+  if (!id || !data ) return null;
   const { database, databaseId, collectionId } = await databaseCheck(CATEGORY_COLLECTION_ID);
 
   try {
     // Fetch the current item
     const currentItem = await getItem(id);
-    if (!currentItem) {
-      throw new Error('Item not found');
-    }
+    if (!currentItem) return null
 
     // Update slug if name has changed
     if (data.name !== currentItem.name) {

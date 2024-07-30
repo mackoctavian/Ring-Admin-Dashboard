@@ -107,10 +107,10 @@ const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
                 <div className="flex rounded-md border">
                     <Image
                         src="/icons/icons/calendar.svg"
-                        height={24}
-                        width={24}
-                        alt="user"
-                        className="ml-2"
+                        height={18}
+                        width={18}
+                        alt="Select date"
+                        className="ml-2 mr-2"
                     />
                     <FormControl>
                         <ReactDatePicker
@@ -124,6 +124,7 @@ const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
                     </FormControl>
                 </div>
             );
+
         case FormFieldType.SELECT:
             return (
                 <FormControl>

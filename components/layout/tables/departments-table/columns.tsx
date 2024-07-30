@@ -27,18 +27,18 @@ export const columns: ColumnDef<Department>[] = [
   },
   {
     accessorKey: "name",
-    header: "NAME",
+    header: "Department name",
   },
   {
     accessorKey: "shortName",
-    header: "SHORT NAME",
+    header: "Short name",
   },
   {
     accessorKey: "branch.name",
-    header: "BRANCH",
+    header: "Branch",
   },
   {
-    header: "STATUS",
+    header: "Status",
     id: "status",
     cell: ({ row }) => <StateColumn state={row.original.status} />,
   },

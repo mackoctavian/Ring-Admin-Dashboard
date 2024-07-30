@@ -27,26 +27,27 @@ export const columns: ColumnDef<ExpensePayment>[] = [
     enableHiding: false,
   },
   {
+    id: "name",
     accessorKey: "expense.name",
-    header: "EXPENSE",
+    header: "Expense",
   },
   {
     accessorKey: "paymentMethod",
-    header: "PAYMENT METHOD",
+    header: "Payment Method",
   },
   {
-    header: "AMOUNT",
+    header: "Amount",
     id: "amount",
     cell: ({ row }) => <NumberColumn value={row.original.amount} />,
   },
   {
     id: "paymentDate",
-    header: "PAYMENT DATE",
+    header: "Payment Date",
     // @ts-ignore
     cell: ({ row }) => <DateTimeColumn value={row.original.paymentDate}  />,
   },
   {
     accessorKey: "description",
-    header: "DESCRIPTION",
+    header: "Description",
   },
 ];
