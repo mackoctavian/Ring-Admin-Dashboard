@@ -445,15 +445,13 @@ declare type Customer = {
   dateOfBirth?: Date;
   nationality?: string;
   lastVisitDate: Date;
-  registrationBranch?: Branch;
+  registrationBranch?: string;
   address?: string;
   notes?: string;
   allowNotifications: boolean;
   points: number;
   totalSpend: number;
   totalVisits: number;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 
 /* End Customer */
@@ -461,15 +459,11 @@ declare type Customer = {
 /* Campaign */
 
 declare type Campaign = {
-  $id: string;
+  $id?: string;
   title: string;
   audience: CampaignAudience;
   message: string;
-  businessId: string;
   scheduleDate: Date;
-  status: boolean;
-  $createdAt: Date;
-  $updatedAt: Date;
 }
 
 /* End campaign */
@@ -512,7 +506,7 @@ declare type InventoryVariant = {
 
 declare type InventoryModification = {
   $id?: string;
-  item: InventoryVariant,
+  item: string,
   quantity: number,
   value: number,
   reason: string,
@@ -539,7 +533,7 @@ declare type Stock = {
 
 /* Expense */
 declare type Expense = {
-  $id?: string;
+  $id: string;
   name: string;
   category: string;
   currency: string;
@@ -576,14 +570,12 @@ declare interface ExpenseDto {
 
 declare type ExpensePayment = {
   $id?: string;
-  expense: Expense;
+  expense: string;
   paymentDate: Date;
   receipt?: string;
   amount: number;
   paymentMethod: PaymentMethod; 
   description?: string;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 /* End Expense */
 

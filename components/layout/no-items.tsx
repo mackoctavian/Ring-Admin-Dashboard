@@ -2,6 +2,7 @@ import {buttonVariants} from "@/components/ui/button"
 import {cn} from "@/lib/utils";
 import {Plus} from "lucide-react";
 import Link from "next/link";
+import React from "react";
 
 interface NoItemsProps {
     newItemUrl: string;
@@ -10,18 +11,18 @@ interface NoItemsProps {
 
 export default function NoItems({ newItemUrl, itemName }: NoItemsProps) {
     return (
-        <div className="flex items-center justify-center rounded-lg border border-dashed shadow-sm min-h-screen w-full">
-            <div className="flex flex-col items-center gap-1 text-center">
-                <h3 className="text-2xl font-bold tracking-tight mb-2">
-                    You have no {itemName}(s)
-                </h3>
-                <p className="text-sm text-muted-foreground mb-2">
+        <div className='h-svh'>
+            <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
+                <h1 className='text-[2rem] font-bold leading-tight'>You have no {itemName}(s)</h1>
+                <p className='text-center text-muted-foreground'>
                     You do not have any {itemName}(s) in your records, add {itemName}(s) to start viewing data.
                 </p>
-                <Link href={newItemUrl} className={cn(buttonVariants({variant: "default"}))}>
-                    <Plus className="mr-2 h-4 w-4"/> Add {itemName}(s)
-                </Link>
+                <div className='mt-6 flex gap-4'>
+                    <Link href={newItemUrl} className={cn(buttonVariants({ variant: "default" }))} >
+                        <Plus className="mr-2 h-4 w-4" /> Add {itemName}(s)
+                    </Link>
+                </div>
             </div>
         </div>
-    );
+    )
 }

@@ -1,9 +1,9 @@
-"use client";
+"use client"
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Customer } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
-import { StateColumn } from "../state-column";
 import { DateTimeColumn } from "../date-colum";
 
 export const columns: ColumnDef<Customer>[] = [
@@ -28,23 +28,24 @@ export const columns: ColumnDef<Customer>[] = [
   },
   {
     accessorKey: "name",
-    header: "NAME",
+    header: "Customer name",
   },
   {
     accessorKey: "phoneNumber",
-    header: "PHONE",
+    header: "Phone number",
   },
   {
     accessorKey: "email",
-    header: "EMAIL",
+    header: "Email address",
   },
   {
     accessorKey: "registrationBranch.name",
-    header: "BRANCH",
+    header: "Registration branch",
   },
   {
-    header: "LAST VISIT",
+    header: "Last visit date",
     id: "lastVisitDate",
+    //@ts-ignore
     cell: ({ row }) => <DateTimeColumn value={row.original.lastVisitDate} />,
   },
   {

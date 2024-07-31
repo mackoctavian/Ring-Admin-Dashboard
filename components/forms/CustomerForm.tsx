@@ -2,9 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
-import { ReloadIcon } from "@radix-ui/react-icons"
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
@@ -13,8 +11,6 @@ import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon } from "@radix-ui/react-icons"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input";
 import { Customer } from "@/types";
 import { createItem, updateItem } from "@/lib/actions/customer.actions"
 import { useToast } from "@/components/ui/use-toast"
@@ -24,37 +20,26 @@ import CountrySelector from "../layout/country-selector";
 import {
   Form,
   FormControl,
-  FormField,
   FormItem,
-  FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select"
-  
+import {SelectItem} from "@/components/ui/select"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { CustomerSchema, Gender } from "@/types/data-schemas";
+import {CustomerSchema, Gender} from "@/types/data-schemas";
 import BranchSelector from "../layout/branch-selector";
 import "react-day-picker/style.css"
+import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
   
 const CustomerForm = ({ item }: { item?: Customer | null }) => {
-    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast()
 
     const form = useForm<z.infer<typeof CustomerSchema>>({
         resolver: zodResolver(CustomerSchema),
         defaultValues: item ? item : {
-            status: true,
             allowNotifications: true,
         },
     });
@@ -72,18 +57,20 @@ const CustomerForm = ({ item }: { item?: Customer | null }) => {
 
         try {
             if (item) {
-                await updateItem(item.$id, data);
+                //@ts-ignore
+                await updateItem(item.$id!, data);
                 toast({
                     variant: "success",
                     title: "Success",
-                    description: "Customer details updated succesfully!"
+                    description: "Customer details updated successfully!"
                 });
             } else {
+                //@ts-ignore
                 await createItem(data);
                 toast({
                     variant: "success",
                     title: "Success",
-                    description: "Customer added succesfully!"
+                    description: "Customer added successfully!"
                 });
             }
         } catch (error: any) {
@@ -93,10 +80,7 @@ const CustomerForm = ({ item }: { item?: Customer | null }) => {
                 description: "There was an issue submitting your form, please try later"
             });
         } finally {
-            //delay loading
-            setTimeout(() => {
-                setIsLoading(false);
-            }, 1000);
+            setIsLoading(false);
         }
     };
 
@@ -105,213 +89,127 @@ return (
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Full name</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder="Enter customer's full name"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
+                    control={form.control}
+                    name="name"
+                    label="Customer's full name *"
+                    placeholder="Enter customer's full name"
                 />
 
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
                     control={form.control}
                     name="email"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Email address</FormLabel>
-                        <FormControl>
-                            <Input
-                            type="email"
-                            placeholder="Enter customer's email address"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
+                    label="Email address *"
+                    placeholder="Enter customer's email address"
+                    type="email"
                 />
 
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.PHONE_INPUT}
                     control={form.control}
                     name="phoneNumber"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Phone number</FormLabel>
-                        <FormControl>
-                            <Input
-                            type="tel"
-                            placeholder="Enter customer's phone number"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
+                    label="Phone number"
+                    placeholder="Enter customer's phone number"
                 />
 
-                <FormField
-                    control={form.control}
-                    name="code"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Customer Unique Code ( Auto generated )</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder="Enter customer's unique code"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
                     control={form.control}
                     name="registrationBranch"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Registration branch</FormLabel>
-                        <FormControl>
-                            <BranchSelector {...field} />
-                            </FormControl>
-                        <FormMessage />
-                    </FormItem>
+                    label="Registration branch *"
+                    renderSkeleton={(field) => (
+                        <BranchSelector value={field.value} onChange={field.onChange}/>
                     )}
                 />
 
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
                     control={form.control}
                     name="address"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Address</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder="Enter customer's address"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
+                    label="Customer's physical address"
+                    placeholder="Enter customer's address"
                 />
 
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.SELECT}
                     control={form.control}
                     name="gender"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Gender</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select gender" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value={Gender.UNDISCLOSED}>Do not disclose</SelectItem>
-                                <SelectItem value={Gender.MALE}>Male</SelectItem>
-                                <SelectItem value={Gender.FEMALE}>Female</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
+                    label="Gender *"
+                    placeholder="Select gender">
+                        <SelectItem value={Gender.UNDISCLOSED}>Do not disclose</SelectItem>
+                        <SelectItem value={Gender.MALE}>Male</SelectItem>
+                        <SelectItem value={Gender.FEMALE}>Female</SelectItem>
+                </CustomFormField>
 
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
                     control={form.control}
                     name="nationality"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Nationality</FormLabel>
-                            <CountrySelector onChange={field.onChange} value={field.value} />
-                            <FormMessage />
-                        </FormItem>
+                    label="Nationality *"
+                    renderSkeleton={(field) => (
+                        <CountrySelector value={field.value} onChange={field.onChange}/>
                     )}
                 />
 
-
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
                     control={form.control}
                     name="dateOfBirth"
-                    render={({ field }) => (
+                    label="Date of birth"
+                    renderSkeleton={(field) => (
                         <FormItem className="flex flex-col mt-2">
-                            <FormLabel>Date of birth</FormLabel>
                             <Popover>
                                 <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
-                                        {field.value ? ( format(field.value, "PPP") ) : (
-                                            <span>Select date of birth</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
+                                    <FormControl>
+                                        <Button variant={"outline"} className={cn( "font-normal", !field.value && "text-muted-foreground" )}>
+                                            {field.value ? ( format(field.value, "PPP") ) : (
+                                                <span>Select date of birth</span>
+                                            )}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </FormControl>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    hideNavigation={true}
-                                    captionLayout="dropdown"
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={ (date) => date > new Date() || date < new Date("1970-01-01") }
-                                />
+                                    <Calendar
+                                        hideNavigation={true}
+                                        captionLayout="dropdown"
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        disabled={ (date) => date > new Date() || date < new Date("1970-01-01") }
+                                    />
                                 </PopoverContent>
                             </Popover>
-                            <FormMessage />
                         </FormItem>
                     )}
                 />
 
-
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
                     control={form.control}
                     name="allowNotifications"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Allow notifications *</FormLabel>
-                            <FormControl>
-                                <div className="mt-2">
-                                    <Switch
-                                        id="allowNotifications"
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                    />
-                                </div>
-                            </FormControl>
-                        </FormItem>
+                    label="Allow notifications? *"
+                    renderSkeleton={(field) => (
+                        <div className="mt-2">
+                            <Switch
+                                id="allowNotifications"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        </div>
                     )}
                 />
 
             </div>
-            <FormField
+
+            <CustomFormField
+                fieldType={FormFieldType.TEXTAREA}
                 control={form.control}
                 name="notes"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Admin notes</FormLabel>
-                    <FormControl>
-                        <Textarea
-                            placeholder="Any other important details about the customer"
-                            className="resize-none"
-                            {...field}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
+                label="Admin notes"
+                placeholder="Any other important details about the customer"
             />
 
             <div className="flex h-5 items-center space-x-4">

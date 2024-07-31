@@ -111,6 +111,7 @@ const BusinessRegistrationForm = () => {
                             label={`First name`}
                             placeholder="First name"
                         />
+
                         <CustomFormField
                             fieldType={FormFieldType.INPUT}
                             control={form.control}
@@ -118,6 +119,7 @@ const BusinessRegistrationForm = () => {
                             label={`Last name`}
                             placeholder="Last name"
                         />
+
                         <CustomFormField
                             fieldType={FormFieldType.INPUT}
                             control={form.control}
@@ -125,6 +127,7 @@ const BusinessRegistrationForm = () => {
                             label={`Business name`}
                             placeholder="Business name"
                         />
+
                         <CustomFormField
                             fieldType={FormFieldType.INPUT}
                             control={form.control}
@@ -132,6 +135,7 @@ const BusinessRegistrationForm = () => {
                             label="Email address"
                             placeholder="Business email address"
                         />
+
                         <CustomFormField
                             fieldType={FormFieldType.PHONE_INPUT}
                             control={form.control}
@@ -139,6 +143,7 @@ const BusinessRegistrationForm = () => {
                             label="Phone number"
                             placeholder="Business phone number"
                         />
+
                         <CustomFormField
                             fieldType={FormFieldType.INPUT}
                             control={form.control}
@@ -146,6 +151,7 @@ const BusinessRegistrationForm = () => {
                             label="Registration number"
                             placeholder="Business registration number"
                         />
+
                         <CustomFormField
                             fieldType={FormFieldType.CUSTOM_SELECTOR}
                             control={form.control}

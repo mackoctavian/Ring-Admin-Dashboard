@@ -29,26 +29,26 @@ export const columns: ColumnDef<InventoryVariant>[] = [
   {
     id: "fullName",
     accessorKey: "fullName",
-    header: "NAME",
+    header: "Stock item",
   },
   {
     id: "packaging",
     accessorKey: "inventory.packaging",
-    header: "PACKAGING",
+    header: "Packaging",
   },
   {
-    header: "QUANTITY",
+    header: "Quantity",
     id: "quantity",
     cell: ({ row }) => <NumberColumn value={row.original.quantity} />,
   },
   {
-    header: "VALUE",
+    header: "Value",
     id: "value",
     cell: ({ row }) => <MoneyColumn value={row.original.value} />,
   },
   {
     accessorKey: "status",
-    header: "STATUS",
+    header: "Status",
   },
   {
     id: "actions",

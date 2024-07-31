@@ -84,7 +84,6 @@ import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
                 amount: data.amount,
                 status: data.status,
                 tax: data.tax,
-                expenseDate: Date.now(),
                 currency: data.currency,
                 dueDate: data.dueDate,
                 description: data.description,

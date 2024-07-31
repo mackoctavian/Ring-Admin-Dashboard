@@ -259,19 +259,7 @@ export const CampaignSchema = z.object({
             return new Date(val);
         }
         return val;
-    }, z.date({message: "Select a date to broadcast your message"})),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    }, z.date({message: "Select a date to broadcast your message"}))
 });
     
 
@@ -674,7 +662,7 @@ export const UpdateInventorySchema = z.object({
 
 export const InventoryModificationSchema = z.object({
     $id: z.string().optional(),
-    item: InventoryVariantSchema,
+    item: z.string(),
     quantity: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
@@ -688,19 +676,7 @@ export const InventoryModificationSchema = z.object({
         return val;
     }, z.number()),
     reason: z.string(),
-    notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    notes: z.preprocess((val) => val === null ? "" : val, z.string().optional())
 });
 
 export const ModifierItemSchema = z.object({
@@ -814,7 +790,7 @@ export const CustomerSchema = z.object({
         return val;
     }, z.date().optional()),
     nationality: z.preprocess((val) => val === null ? "" : val, z.string().optional()),        
-    registrationBranch: BranchSchema.omit({business: true, daysOpen: true}),
+    registrationBranch: z.string(),
     address: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     allowNotifications: z.boolean(),
@@ -1094,7 +1070,7 @@ export const ExpenseSchema = z.object({
 
 export const ExpensePaymentSchema = z.object({
     $id: z.string().optional(),
-    expense: ExpenseSchema,
+    expense: z.string(),
     paymentDate: z.date(),
     paymentMethod: z.nativeEnum(PaymentMethod, {message: "Select the repayment method"}),
     amount: z.preprocess((val) => {
@@ -1104,19 +1080,7 @@ export const ExpensePaymentSchema = z.object({
         return val;
     }, z.number().nonnegative()),
     document: z.string().optional(),
-    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    description: z.preprocess((val) => val === null ? "" : val, z.string().optional())
 });
 
 export const SectionSchema = z.object({

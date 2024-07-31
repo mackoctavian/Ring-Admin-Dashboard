@@ -6,30 +6,16 @@ import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select"
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
+import { SelectItem } from "@/components/ui/select"
 import { Category } from "@/types";
-import { CategoryType, CategorySchema } from "@/types/data-schemas";
+import {CategoryType, CategorySchema, ModifierType} from "@/types/data-schemas";
 import { createItem, updateItem } from "@/lib/actions/category.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 import CategorySelector from "@/components/layout/category-selector";
 import { SubmitButton } from "../ui/submit-button";
+import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 
  const CategoryForm = ({ item }: { item?: Category | null }) => {
     const [isLoading, setIsLoading] = useState(false)
@@ -47,21 +33,21 @@ import { SubmitButton } from "../ui/submit-button";
     const onInvalid = (errors : any ) => {
         toast({
             variant: "warning",
-            title: "Data validation failed!", 
+            title: "Data validation failed!",
             description: "Please make sure all the fields marked with * are filled correctly."
         });
     }
-        
+
     const onSubmit = async (data: z.infer<typeof CategorySchema>) => {
         setIsLoading(true);
-    
+
         try {
             if (item) {
                 //@ts-ignore
                 await updateItem(item.$id, data);
                 toast({
                     variant: "success",
-                    title: "Success", 
+                    title: "Success",
                     description: "Category details updated successfully!"
                 });
             } else {
@@ -69,14 +55,14 @@ import { SubmitButton } from "../ui/submit-button";
                 await createItem(data);
                 toast({
                     variant: "success",
-                    title: "Success", 
+                    title: "Success",
                     description: "Category created successfully!"
                 });
             }
         } catch (error: any) {
             toast({
                 variant: "destructive",
-                title: "Uh oh! Something went wrong.", 
+                title: "Uh oh! Something went wrong.",
                 description: "There was an issue submitting your form, please try later"
             });
         } finally {
@@ -88,95 +74,60 @@ import { SubmitButton } from "../ui/submit-button";
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
+
+                    <CustomFormField
+                        fieldType={FormFieldType.INPUT}
                         control={form.control}
                         name="name"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Category name</FormLabel>
-                            <FormControl>
-                                <Input
-                                placeholder="Category name (eg. Hair Products)"
-                                {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                
-                    <FormField
-                        control={form.control}
-                        name="type"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Category type</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select category type" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value={CategoryType.PRODUCT}>Product</SelectItem>
-                                    <SelectItem value={CategoryType.SERVICE}>Service</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        
-                    <FormField
-                        control={form.control}
-                        name="parent"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Parent category</FormLabel>
-                                <CategorySelector {...field} />
-                                <FormMessage />
-                            </FormItem>
-                            )}
+                        label="Category name *"
+                        placeholder="Category name (eg. Pizza)"
                     />
 
-                    <FormField
+                    <CustomFormField
+                        fieldType={FormFieldType.SELECT}
+                        control={form.control}
+                        name="type"
+                        label="Category type *"
+                        placeholder="Select category type">
+                        <SelectItem value={CategoryType.PRODUCT}>Product</SelectItem>
+                        <SelectItem value={CategoryType.SERVICE}>Service</SelectItem>
+                    </CustomFormField>
+
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
+                        control={form.control}
+                        name="parent"
+                        label="Parent category"
+                        renderSkeleton={(field) => (
+                            <CategorySelector value={field.value} onChange={field.onChange} />
+                        )}
+                    />
+
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
                         control={form.control}
                         name="status"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Status *</FormLabel>
-                                <FormControl>
-                                    <div className="mt-2">
-                                        <Switch
-                                            id="status"
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    </div>
-                                </FormControl>
-                            </FormItem>
+                        label="Status *"
+                        renderSkeleton={(field) => (
+                            <div className="mt-2">
+                                <Switch
+                                    id="status"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </div>
                         )}
                     />
                 </div>
-                <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Category description</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Short description of the category"
-                                    className="resize-none"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                
-        
+
+                <CustomFormField
+                    fieldType={FormFieldType.TEXTAREA}
+                    control={form.control}
+                    name="description"
+                    label="Category description"
+                    placeholder="Short description of the category"
+                />
+
                 <div className="flex h-5 items-center space-x-4">
                     <CancelButton />
                     <Separator orientation="vertical" />
@@ -186,5 +137,5 @@ import { SubmitButton } from "../ui/submit-button";
         </Form>
         );
     };
-  
+
 export default CategoryForm;

@@ -39,7 +39,7 @@ export default async function Page({ searchParams }: ParamsProps) {
 
                     <div className="flex items-center space-x-2">
                         <Link href={`/dashboard/branches/new`}
-                              className={cn(buttonVariants({variant: "default"}), "h-7 gap-1 size-md flex items-center dark:text-white")}>
+                              className={cn(buttonVariants({variant: "default"}), "gap-1 size-md flex items-center dark:text-white")}>
                             <Plus className="h-3.5 w-3.5"/>
                             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap"> Add Branch </span>
                         </Link>

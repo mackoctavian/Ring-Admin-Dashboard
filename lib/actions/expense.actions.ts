@@ -64,7 +64,7 @@ export const list = async ( status?: string ) => {
       queries
     )
 
-    if( items.documents.length < 0 ) return null
+    if( items.documents.length == 0 ) return null
 
     return parseStringify(items.documents);
 
@@ -105,7 +105,7 @@ export const getItems = async (
         queries
       )
 
-      if ( items.documents.length < 1 ) return null
+      if ( items.documents.length == 0 ) return null
   
       return parseStringify(items.documents);
     } catch (error: any) {
@@ -126,7 +126,7 @@ export const getItem = async (id: string) => {
       ]
     )
 
-    if ( item.total < 1 ) return null;
+    if ( item.total == 0 ) return null;
 
     return parseStringify(item.documents[0]);
   } catch (error: any) {
@@ -185,11 +185,16 @@ export const updateItem = async (id: string, data: ExpenseDto) => {
 export const recordPayment = async (data: ExpensePayment) => {
   const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSE_PAYMENTS_COLLECTION_ID)
 
+  const expenseData = await getItem(data.expense)
+  if ( !expenseData ) return null;
+
+  const {$databaseId, $collectionId, ...expense} = expenseData;
+
   // Update the expense balance
-  data.expense.balance = data.expense.balance - data.amount;
+  expense.balance = expense.balance - data.amount;
 
   // Update the expense status
-  data.expense.status = updateExpenseStatus(data.expense.balance, data.expense.amount);
+  expense.status = updateExpenseStatus(expense.balance, expense.amount);
 
   try {
       await database.createDocument(
@@ -201,9 +206,16 @@ export const recordPayment = async (data: ExpensePayment) => {
           businessId,
         }
       )
-    } catch (error: any) {
-      handleError(error, "Error recording payment")
-    }
+
+    await database.updateDocument(
+        databaseId,
+        EXPENSES_COLLECTION_ID!,
+        expense.$id,
+        expense);
+
+  } catch (error: any) {
+    handleError(error, "Error recording payment")
+  }
 
   revalidatePath('/dashboard/expenses')
   redirect('/dashboard/expenses')

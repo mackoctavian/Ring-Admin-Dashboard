@@ -15,7 +15,7 @@ export default function NotFoundError() {
           does not exist or might have been removed.
         </p>
         <div className='mt-6 flex gap-4'>
-            <Link href="/" className={cn(buttonVariants({ variant: "default" }))} >
+            <Link href={`/dashboard`} className={cn(buttonVariants({ variant: "default" }))} >
                 <HomeIcon className="mr-2 h-4 w-4" /> Go home
             </Link>
         </div>

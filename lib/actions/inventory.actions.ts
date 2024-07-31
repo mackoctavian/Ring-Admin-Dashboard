@@ -2,52 +2,27 @@
 
 import {databaseCheck, handleError} from "@/lib/utils/actions-service";
 
-const env = process.env.NODE_ENV
-import * as Sentry from "@sentry/nextjs"
-import { ID, Query, AppwriteException } from "node-appwrite";
-import { createAdminClient } from "../appwrite";
+import { ID, Query } from "node-appwrite";
 import { parseStringify } from "../utils";
 import { Inventory, InventoryModification } from "@/types";
-import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 import { InventoryStatus } from "@/types/data-schemas";
-import { auth } from "@clerk/nextjs/server";
-import { getBusinessId } from "./business.actions";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
 import { capitalizeFirstLetter } from "@/lib/utils"
 
 const {
-    APPWRITE_DATABASE: DATABASE_ID,
     INVENTORY_COLLECTION: INVENTORY_COLLECTION_ID,
     INVENTORY_VARIANTS_COLLECTION: INVENTORY_VARIANTS_COLLECTION_ID,
     INVENTORY_MODIFICATION_COLLECTION: INVENTORY_MODIFICATION_COLLECTION_ID,
     ALARM_QUANTITY = 3
 } = process.env;
 
-const checkRequirements = async (collectionId: string | undefined) => {
-  if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
-
-  const { database } = await createAdminClient();
-  if (!database) throw new Error('Database client could not be initiated');
-
-  const { userId } = auth();
-  if (!userId) {
-    throw new Error('You must be signed in to use this feature');
-  }
-  
-  const businessId = await getBusinessId();
-  if( !businessId ) throw new Error('Business ID could not be initiated');
-
-  return { database, userId, businessId };
-};
-
-
 export const createItem = async (data: Inventory) => {
-  const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID)
-  const alarmQuantity : number = parseInt(ALARM_QUANTITY);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
+  const alarmQuantity : number = parseInt(String(ALARM_QUANTITY));
 
   for ( const variant of data.variants ) {
-    //Add business Id to the variant
+    //Add business id to the variant
     variant.businessId = businessId;
 
     // Ensure quantities and values are parsed correctly and are numbers
@@ -80,8 +55,8 @@ export const createItem = async (data: Inventory) => {
   //console.log(data)
   try {
     await database.createDocument(
-      DATABASE_ID!,
-      INVENTORY_COLLECTION_ID!,
+      databaseId,
+      collectionId,
       ID.unique(),
       {
         ...data,
@@ -89,73 +64,51 @@ export const createItem = async (data: Inventory) => {
       }
     )
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+    handleError(error, "Error creating stock item:");
   }
 
-  revalidatePath('/inventory')
-  redirect('/inventory')
+  revalidatePath('/dashboard/inventory')
+  redirect('/dashboard/inventory')
 };
 
 export const list = async ( ) => {
-  const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
+  try {
+    const items = await database.listDocuments(
+      databaseId,
+      collectionId,
+      [
+        Query.orderAsc("name"),
+        Query.equal('businessId', businessId!)
+      ]
+    );
 
-    try {
-      const items = await database.listDocuments(
-        DATABASE_ID!,
-        INVENTORY_COLLECTION_ID!,
-        [
-          Query.orderAsc("name"),
-          Query.equal('businessId', businessId!)
-        ]
-      );
+    if (items.documents.length == 0) return null
 
-      return parseStringify(items.documents);
+    return parseStringify(items.documents);
 
-    } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
-    }
-  };
+  } catch (error: any) {
+    handleError(error, "Error listing stock items")
+  }
+}
 
 export const listVariants = async ( ) => {
-    const { database, businessId } = await checkRequirements(INVENTORY_VARIANTS_COLLECTION_ID);
-
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_VARIANTS_COLLECTION_ID);
     try {
       const items = await database.listDocuments(
-        DATABASE_ID!,
-        INVENTORY_VARIANTS_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         [
           Query.orderAsc("fullName"),
-          Query.equal('businessId', businessId!)
+          Query.equal('businessId', businessId)
         ]
       );
 
+      if (items.documents.length == 0) return null
+
       return parseStringify(items.documents);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error listing variants");
     }
   };
 
@@ -165,8 +118,7 @@ export const listVariants = async ( ) => {
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
-
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
     try {  
       const queries = [];
       queries.push(Query.equal("businessId", businessId));
@@ -186,107 +138,76 @@ export const listVariants = async ( ) => {
       }
   
       const items = await database.listDocuments(
-        DATABASE_ID!,
-        INVENTORY_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         queries
       );
   
-      if (items.documents.length === 0) {
-        return [];
-      }
+      if (items.documents.length == 0) return null
   
       return parseStringify(items.documents);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error getting stock intake data")
     }
-  };
+}
 
+export const getVariantItems = async (
+  q?: string,
+  status?: InventoryStatus | null,
+  limit?: number | null,
+  offset?: number | 1,
+) => {
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_VARIANTS_COLLECTION_ID);
 
-  export const getVariantItems = async (
-    q?: string,
-    status?: InventoryStatus | null,
-    limit?: number | null, 
-    offset?: number | 1,
-  ) => {
-    const { database, businessId } = await checkRequirements(INVENTORY_VARIANTS_COLLECTION_ID);
-  
-    try {  
-      const queries = [];
-      queries.push(Query.equal("businessId", businessId));
-      queries.push(Query.orderAsc("fullName"));
+  try {
+    const queries = [];
+    queries.push(Query.equal("businessId", businessId));
+    queries.push(Query.orderAsc("fullName"));
 
-      if ( limit ) {
-        queries.push(Query.limit(limit));
-        queries.push(Query.offset(offset!));
-      }
-  
-      if (q) {
-        queries.push(Query.search('fullName', q));
-      }
-  
-      if (status) {
-        queries.push(Query.equal('status', status));
-      }
-  
-      const items = await database.listDocuments(
-        DATABASE_ID!,
-        INVENTORY_VARIANTS_COLLECTION_ID!,
-        queries
-      );
-  
-      if (items.documents.length === 0) {
-        return [];
-      }
-  
-      return parseStringify(items.documents);
-    } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+    if ( limit ) {
+      queries.push(Query.limit(limit));
+      queries.push(Query.offset(offset!));
     }
-  };
+
+    if (q) {
+      queries.push(Query.search('fullName', q));
+    }
+
+    if (status) {
+      queries.push(Query.equal('status', status));
+    }
+
+    const items = await database.listDocuments(
+      databaseId,
+      collectionId,
+      queries
+    );
+
+    if (items.documents.length == 0) return null
+
+    return parseStringify(items.documents);
+  } catch (error: any) {
+    handleError(error, "Error getting variants")
+  }
+};
 
 export const getItem = async (id: string) => {
     if( !id ) return null
-    const { database } = await checkRequirements(INVENTORY_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
 
     try {
-      if (!id) throw new Error('Document ID is missing');
-  
       const item = await database.listDocuments(
-        DATABASE_ID!,
-        INVENTORY_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         [Query.equal('$id', id)]
       )
   
-      if ( item.total < 1 ) return null;
+      if ( item.total == 0 ) return null;
 
       return parseStringify(item.documents[0]);
 
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error getting stock item")
     }
 };
 
@@ -312,32 +233,25 @@ export const getInventoryVariant = async (id: string) => {
 
 export const deleteItem = async ({ $id }: Inventory) => {
     if (!$id) return null;
-    const { database } = await checkRequirements(INVENTORY_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
 
     try {
       await database.deleteDocument(
-        DATABASE_ID!,
-        INVENTORY_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         $id);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error deleting inventory item")
     }
 
-    revalidatePath('/inventory')
-    redirect('/inventory')
+    revalidatePath('/dashboard/inventory')
+    redirect('/dashboard/inventory')
   };
 
 export const updateItem = async (inventoryId: string, data: Inventory) => {
-  const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
-  const alarmQuantity = parseInt(ALARM_QUANTITY, 10);
+  if (!inventoryId || !data ) return null;
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
+  const alarmQuantity = parseInt(String(ALARM_QUANTITY));
 
   try {
     for (const variant of data.variants) {
@@ -359,8 +273,6 @@ export const updateItem = async (inventoryId: string, data: Inventory) => {
         }
 
       }else{
-        //New variant added
-
         // Set new ID
         variant.$id = ID.unique();
 
@@ -392,86 +304,72 @@ export const updateItem = async (inventoryId: string, data: Inventory) => {
     }
 
     await database.updateDocument(
-      DATABASE_ID!,
-      INVENTORY_COLLECTION_ID!,
+      databaseId,
+      collectionId,
       inventoryId,
       data
-    );
-
-
+    )
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-
-    if (process.env.NODE_ENV === "development") {
-      console.error(error);
-    }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+    handleError(error, "Error updating variant:")
   }
 
-  revalidatePath('/inventory');
-  redirect('/inventory');
+  revalidatePath('/dashboard/inventory');
+  redirect('/dashboard/inventory');
 };
 
 export const modifyStockItem = async (data: InventoryModification) => {
     if (!data) return null;
-    const { database, businessId } = await checkRequirements(INVENTORY_COLLECTION_ID);
-    const alarmQuantity = parseInt(ALARM_QUANTITY, 10);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_MODIFICATION_COLLECTION_ID);
+    const alarmQuantity = parseInt(String(ALARM_QUANTITY));
+
+    const inventoryVariantItem = await getInventoryVariant(data.item)
+    if ( !inventoryVariantItem ) return null
+
+    //Remove un-needed variables
+    const { $databaseId, $collectionId, ...variantItem } = inventoryVariantItem;
 
     try {
       //Create record of modification
       await database.createDocument(
-        DATABASE_ID!,
-        INVENTORY_MODIFICATION_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         ID.unique(),
         {
           ...data,
           businessId: businessId,
-          itemId: data.item.$id
+          itemId: variantItem.$id
         }
       )
 
       //modify item quantity
-      data.item.actualValue = data.value;
-      data.item.value = data.value;
+      variantItem.actualValue = data.value;
+      variantItem.value = data.value;
 
       //modify item value
-      data.item.actualQuantity = data.quantity;
-      data.item.quantity = data.quantity;
+      variantItem.actualQuantity = data.quantity;
+      variantItem.quantity = data.quantity;
 
       //Update stock status
-      if ( data.item.quantity === 0 ) {
-        data.item.status = InventoryStatus.OUT_OF_STOCK;
-      } else if (data.item.quantity <= data.item.lowQuantity) {
-        data.item.status = InventoryStatus.LOW_STOCK;
-      } else if (data.item.quantity <= data.item.lowQuantity + alarmQuantity) {
-        data.item.status = InventoryStatus.ALARM;
+      if ( variantItem.quantity === 0 ) {
+        variantItem.status = InventoryStatus.OUT_OF_STOCK;
+      } else if (variantItem.quantity <= variantItem.lowQuantity) {
+        variantItem.status = InventoryStatus.LOW_STOCK;
+      } else if (variantItem.quantity <= variantItem.lowQuantity + alarmQuantity) {
+        variantItem.status = InventoryStatus.ALARM;
       } else {
-        data.item.status = InventoryStatus.IN_STOCK;
+        variantItem.status = InventoryStatus.IN_STOCK;
       }
 
       await database.updateDocument(
-        DATABASE_ID!,
+        databaseId,
         INVENTORY_VARIANTS_COLLECTION_ID!,
-        data.item.$id!,
-        data.item);
+          variantItem.$id!,
+          variantItem);
   
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error updating modifying stock values: ")
     }
 
-    revalidatePath('/inventory')
-    redirect('/inventory')
+    revalidatePath('/dashboard/inventory')
+    redirect('/dashboard/inventory')
   };
