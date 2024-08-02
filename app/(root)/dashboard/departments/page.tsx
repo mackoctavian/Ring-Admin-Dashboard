@@ -11,7 +11,7 @@ import NoItems from "@/components/layout/no-items";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {DataTable} from "@/components/layout/tables/data-table";
 
-const breadcrumbItems = [{ title: "Departments", link: "dashboard/departments" }]
+const breadcrumbItems = [{ title: "Departments", link: "/dashboard/departments" }]
 
 type ParamsProps = {
     searchParams: {

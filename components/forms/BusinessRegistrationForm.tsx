@@ -108,55 +108,55 @@ const BusinessRegistrationForm = () => {
                             fieldType={FormFieldType.INPUT}
                             control={form.control}
                             name="firstName"
-                            label={`First name`}
-                            placeholder="First name"
+                            label={`Your first name *`}
+                            placeholder="Enter first name"
                         />
 
                         <CustomFormField
                             fieldType={FormFieldType.INPUT}
                             control={form.control}
                             name="lastName"
-                            label={`Last name`}
-                            placeholder="Last name"
+                            label={`Your last name *`}
+                            placeholder="Enter last name"
                         />
 
                         <CustomFormField
                             fieldType={FormFieldType.INPUT}
                             control={form.control}
                             name="name"
-                            label={`Business name`}
-                            placeholder="Business name"
+                            label={`Name of your business *`}
+                            placeholder="Enter business name"
                         />
 
                         <CustomFormField
                             fieldType={FormFieldType.INPUT}
                             control={form.control}
                             name="email"
-                            label="Email address"
-                            placeholder="Business email address"
+                            label="Business email address *"
+                            placeholder="Enter business email address"
                         />
 
                         <CustomFormField
                             fieldType={FormFieldType.PHONE_INPUT}
                             control={form.control}
                             name="phoneNumber"
-                            label="Phone number"
-                            placeholder="Business phone number"
+                            label="Contact number *"
+                            placeholder="Enter business phone number"
                         />
 
                         <CustomFormField
                             fieldType={FormFieldType.INPUT}
                             control={form.control}
                             name="registrationNumber"
-                            label="Registration number"
-                            placeholder="Business registration number"
+                            label="Business registration number"
+                            placeholder="Enter business registration number"
                         />
 
                         <CustomFormField
                             fieldType={FormFieldType.CUSTOM_SELECTOR}
                             control={form.control}
                             name="country"
-                            label="Country"
+                            label="Country of operation *"
                             renderSkeleton={(field) => (
                                 <CountrySelector value={field.value} onChange={field.onChange}/>
                             )}
@@ -165,7 +165,7 @@ const BusinessRegistrationForm = () => {
                             fieldType={FormFieldType.CUSTOM_SELECTOR}
                             control={form.control}
                             name="currency"
-                            label="Operating currency"
+                            label="Business operating currency *"
                             renderSkeleton={(field) => (
                                 <CurrencySelector value={field.value} onChange={field.onChange}/>
                             )}
@@ -174,7 +174,7 @@ const BusinessRegistrationForm = () => {
                             fieldType={FormFieldType.CUSTOM_SELECTOR}
                             control={form.control}
                             name="size"
-                            label="Business size"
+                            label="Size of your business *"
                             renderSkeleton={(field) => (
                                 <BusinessSizeSelector value={field.value} onChange={field.onChange}/>
                             )}
@@ -183,7 +183,7 @@ const BusinessRegistrationForm = () => {
                             fieldType={FormFieldType.CUSTOM_SELECTOR}
                             control={form.control}
                             name="businessType"
-                            label="Business type"
+                            label="Type of business *"
                             renderSkeleton={(field) => (
                                 <BusinessTypeSelector value={field.value} onChange={field.onChange}/>
                             )}
@@ -194,7 +194,7 @@ const BusinessRegistrationForm = () => {
                             fieldType={FormFieldType.SKELETON}
                             control={form.control}
                             name="logo"
-                            label="Logo"
+                            label="Upload your logo"
                             renderSkeleton={(field) => (
                                 <FormControl>
                                     <FileUploader files={field.value} onChange={field.onChange} />
@@ -205,8 +205,8 @@ const BusinessRegistrationForm = () => {
                             fieldType={FormFieldType.TEXTAREA}
                             control={form.control}
                             name="description"
-                            label="Business description"
-                            placeholder="Short description of your business"
+                            label="Brief description of your business"
+                            placeholder="Brief description detailing your business"
                         />
                         <CustomFormField
                             fieldType={FormFieldType.CHECKBOX}

@@ -16,14 +16,20 @@ interface Props {
 
 const CategorySelector: React.FC<Props> = ({ value, onChange }) => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchCategories() {
       try {
+        setIsLoading(true);
         const categoriesData = await list();
-        setCategories(categoriesData);
+        setCategories(categoriesData || []); // Ensure it's always an array
+        setError(null);
       } catch (error: any) {
-        // Error handling can be added here if needed
+        setError("Failed to load categories");
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchCategories();
@@ -33,6 +39,14 @@ const CategorySelector: React.FC<Props> = ({ value, onChange }) => {
     onChange(value === 'null' ? null : value);
   };
 
+  if (isLoading) {
+    return <div className={`text-sm text-muted-foreground`}>Loading categories...</div>;
+  }
+
+  if (error) {
+    return <div className={`text-sm text-destructive-foreground`}>Error: could not load categories</div>;
+  }
+
   return (
       <Select value={value || 'null'} onValueChange={handleSelectChange}>
         <SelectTrigger>
@@ -41,6 +55,7 @@ const CategorySelector: React.FC<Props> = ({ value, onChange }) => {
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="null">Select category</SelectItem>
           {categories.map((category) => (
               <SelectItem key={category.$id} value={category.$id}>
                 {category.name}

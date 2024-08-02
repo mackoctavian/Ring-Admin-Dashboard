@@ -2,66 +2,33 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
-import { ReloadIcon } from "@radix-ui/react-icons"
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Section, Branch } from "@/types";
-import { Textarea } from "@/components/ui/textarea"
+import { Section } from "@/types";
 import { createItem, updateItem } from "@/lib/actions/section.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { SectionSchema, SectionType } from "@/types/data-schemas";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-    FormDescription
-  } from "@/components/ui/form";
+import {CategoryType, SectionSchema, SectionType} from "@/types/data-schemas";
+import {SelectItem} from "@/components/ui/select"
+import {Form} from "@/components/ui/form";
 import BranchSelector from "../layout/branch-selector";
+import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
   
 const SectionForm = ({ item }: { item?: Section | null }) => {
-    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast()
 
-    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(item?.branch ?? null);
-    useEffect(() => {
-        if (item && item.branch) {
-        setSelectedBranch(item.branch);
-        } else {
-        setSelectedBranch(null);
-        }
-    }, [item]);
-
-    const handleBranchChange = (branch: Branch | null) => {
-        setSelectedBranch(branch);
-    };
-
     const form = useForm<z.infer<typeof SectionSchema>>({
         resolver: zodResolver(SectionSchema),
-        defaultValues: item ? item : {
-            status: false,
-        },
+        //handle nullable inputs
+        //@ts-ignore
+        defaultValues: item ? { ...item, description: item.description ?? '', branch: item.branch.$id ?? '', type: item.type ?? '' }: {}
     });
 
     const onInvalid = (errors : any ) => {
-        console.error("Creating section failed: ", JSON.stringify(errors));
         toast({
             variant: "warning",
             title: "Data validation failed!", 
@@ -74,18 +41,20 @@ const SectionForm = ({ item }: { item?: Section | null }) => {
     
         try {
             if (item) {
+                //@ts-ignore
                 await updateItem(item!.$id, data);
                 toast({
                     variant: "success",
                     title: "Success", 
-                    description: "Section / space updated succesfully!"
+                    description: "Space / section updated successfully!"
                 });
             } else {
+                //@ts-ignore
                 await createItem(data);
                 toast({
                     variant: "success",
                     title: "Success", 
-                    description: "Section / space created succesfully!"
+                    description: "Space / section created successfully!"
                 });
             }
         } catch (error: any) {
@@ -95,141 +64,82 @@ const SectionForm = ({ item }: { item?: Section | null }) => {
                 description: error.message || "There was an issue submitting your form, please try later"
             });
         } finally {
-        //delay loading
-        setTimeout(() => {
             setIsLoading(false);
-            }, 2000); 
         }
     };
 
 return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
+                    control={form.control}
+                    name={`name`}
+                    label="Section / space name *"
+                    placeholder="Enter section name ( eg. Room 01 / Table 01 )"
+                />
 
-            <div className="grid grid-cols-4 gap-4">
-                <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Section / space name *</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder="Section name ( eg. Room 01 / Table 01 )"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
+                <CustomFormField
+                    fieldType={FormFieldType.SELECT}
+                    control={form.control}
+                    name="type"
+                    label="Type *"
+                    placeholder="Select section / space type">
+                        <SelectItem value={SectionType.ROOM}>Room</SelectItem>
+                        <SelectItem value={SectionType.SEAT}>Seat</SelectItem>
+                        <SelectItem value={SectionType.TABLE}>Table</SelectItem>
+                </CustomFormField>
+
+                <CustomFormField
+                    fieldType={FormFieldType.CUSTOM_SELECTOR}
+                    control={form.control}
+                    name={`branch`}
+                    label="Branch *"
+                    renderSkeleton={(field) => (
+                        <BranchSelector value={field.value} onChange={field.onChange}/>
                     )}
                 />
 
-                <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Section / space type *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select section / space type" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value={SectionType.ROOM}>Room</SelectItem>
-                            <SelectItem value={SectionType.SEAT}>Seat</SelectItem>
-                            <SelectItem value={SectionType.TABLE}>Table</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-
-                <FormField
-                control={form.control}
-                name="branch"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Branch *</FormLabel>
-                        <BranchSelector 
-                            value={selectedBranch}
-                            onChange={(branch) => { setSelectedBranch(branch); field.onChange(branch); }}
-                            />
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
                     control={form.control}
-                    name="noOfCustomers"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Number of customers *</FormLabel>
-                            <FormControl>
-                                <Input
-                                    type="number"
-                                    placeholder="Number of customers"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                            <FormDescription>Number of customers the section can handle at a time</FormDescription>
-                        </FormItem>
-                        )}
-                    />
+                    name={`noOfCustomers`}
+                    label="Number of customers *"
+                    type="number"
+                    placeholder="Enter number of customers *"
+                    description="Number of customers the section can service at a time"
+                />
 
-                    <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Status *</FormLabel>
-                                <FormControl>
-                                    <div className="mt-2">
-                                        <Switch
-                                            id="status"
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    </div>
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
+                    control={form.control}
+                    name="status"
+                    label="Status *"
+                    renderSkeleton={(field) => (
+                        <div className="mt-2">
+                            <Switch
+                                id="status"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        </div>
+                    )}
+                />
             </div>
 
-            <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Enter service description"
-                                    className="resize-none"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-        
-        
-
-            
-
+            <CustomFormField
+                fieldType={FormFieldType.TEXTAREA}
+                control={form.control}
+                name={`description`}
+                label="Extra space / section details"
+                placeholder="Any extra details about the space / section"
+            />
     
             <div className="flex h-5 items-center space-x-4">
                 <CancelButton />
-            
                 <Separator orientation="vertical" />
-
-                <SubmitButton loading={isLoading} label={item ? "Update section / space" : "Save section / space"} />
+                <SubmitButton loading={isLoading} label={item ? "Update space / section" : "Save space / section"} />
             </div>
         </form>
     </Form>

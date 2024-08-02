@@ -2,19 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import {Form} from "@/components/ui/form";
 import { Branch } from "@/types";
 import { createItem, updateItem } from "@/lib/actions/branch.actions"
 import { useToast } from "@/components/ui/use-toast"
@@ -23,6 +15,7 @@ import TimeSelector from "../layout/time-selector";
 import DaysSelector from "../layout/days-selector";
 import { BranchSchema } from "@/types/data-schemas";
 import {SubmitButton} from "@/components/ui/submit-button";
+import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 
 const BranchForm = ({ item }: { item?: Branch | null }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -30,19 +23,11 @@ const BranchForm = ({ item }: { item?: Branch | null }) => {
 
     const form = useForm<z.infer<typeof BranchSchema>>({
         resolver: zodResolver(BranchSchema),
-        defaultValues: item
-            ? {
-                ...item,
-                daysOpen: item.daysOpen ? JSON.parse(item.daysOpen) : [],
-            }
-            : {
-                status: false,
-                daysOpen: [],
-            },
+        //handle nullable inputs
+        defaultValues: item ? { ...item, address: item.address ?? '' }: {}
     });
 
     const onInvalid = (errors: any) => {
-        console.error("Creating branch failed: ", JSON.stringify(errors));
         toast({
             variant: "warning",
             title: "Data validation failed!",
@@ -54,6 +39,7 @@ const BranchForm = ({ item }: { item?: Branch | null }) => {
         setIsLoading(true);
         try {
             if (item) {
+                //@ts-ignore
                 await updateItem(item.$id!, data);
                 toast({
                     variant: "success",
@@ -61,6 +47,7 @@ const BranchForm = ({ item }: { item?: Branch | null }) => {
                     description: "Branch details have been updated successfully!",
                 });
             } else {
+                //@ts-ignore
                 await createItem(data);
                 toast({
                     variant: "success",
@@ -75,184 +62,108 @@ const BranchForm = ({ item }: { item?: Branch | null }) => {
                 description: error.message || "There was an issue submitting your form, please try later",
             });
         } finally {
-            setTimeout(() => {
-                setIsLoading(false);
-            }, 1000);
+            setIsLoading(false);
         }
     };
 
 return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-            <div className="grid grid-cols-3 gap-4">
-                <FormField
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
                     control={form.control}
                     name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Branch name</FormLabel>
-                            <FormControl>
-                                <Input
-                                    placeholder="Branch full name (eg. Nairobi Branch)"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
+                    label="Branch name *"
+                    placeholder="Enter branch full name (eg. Msasani Branch)"
                 />
 
-                <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Branch email address</FormLabel>
-                        <FormControl>
-                            <Input
-                            type="email"
-                            placeholder="Enter branch email address"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-
-                <FormField
-                control={form.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Branch phone number</FormLabel>
-                        <FormControl>
-                            <Input
-                            type="tel"
-                            placeholder="Enter branch phone number"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
                     control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Branch address</FormLabel>
-                            <FormControl>
-                                <Input
-                                placeholder="Enter branch location"
-                                {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
+                    name="email"
+                    label="Branch email address *"
+                    placeholder="Enter branch email address"
+                    type="email"
+                />
 
-                    <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Branch location</FormLabel>
-                                <FormControl>
-                                    <Input
-                                    placeholder="Enter branch location"
-                                    {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                <CustomFormField
+                    fieldType={FormFieldType.PHONE_INPUT}
+                    control={form.control}
+                    name="phoneNumber"
+                    label="Branch phone number *"
+                    placeholder="Enter branch phone number"
+                />
 
-                    <FormField
-                        control={form.control}
-                        name="staffCount"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Number of staff</FormLabel>
-                                <FormControl>
-                                    <Input
-                                    type="number"
-                                    min="1"
-                                    placeholder="Enter number of staff"
-                                    {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    
-                    <FormField
-                        control={form.control}
-                        name="daysOpen"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Branch open days</FormLabel>
-                                <FormControl>
-                                    <DaysSelector 
-                                        placeholder="Select days branch is open"
-                                        field={field}
-                                        />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                    />
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
+                    control={form.control}
+                    name="city"
+                    label="Branch location (city) *"
+                    placeholder="Enter branch location"
+                />
 
-                    
-                    <FormField
-                        control={form.control}
-                        name="openingTime"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Branch opening time</FormLabel>
-                                <FormControl>
-                                    <TimeSelector {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                    />
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
+                    control={form.control}
+                    name={`address`}
+                    label="Branch address"
+                    placeholder="Enter branch address"
+                />
 
-                    <FormField
-                        control={form.control}
-                        name="closingTime"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Branch closing time</FormLabel>
-                                <FormControl>
-                                    <TimeSelector {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                    />
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
+                    control={form.control}
+                    name="staffCount"
+                    label="Number of staff *"
+                    placeholder="Enter number of staff"
+                    type="number"
+                />
 
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
+                    control={form.control}
+                    name="daysOpen"
+                    label="Branch open days *"
+                    renderSkeleton={(field) => (
+                        <DaysSelector value={field.value} onChange={field.onChange} />
+                    )}
+                />
+
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
+                    control={form.control}
+                    name="openingTime"
+                    label="Branch opening time *"
+                    renderSkeleton={(field) => (
+                        <TimeSelector value={field.value} onChange={field.onChange} />
+                    )}
+                />
+
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
+                    control={form.control}
+                    name="closingTime"
+                    label="Branch closing time *"
+                    renderSkeleton={(field) => (
+                        <TimeSelector value={field.value} onChange={field.onChange} />
+                    )}
+                />
+
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
                     control={form.control}
                     name="status"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Status *</FormLabel>
-                            <FormControl>
-                                <div className="mt-2">
-                                    <Switch
-                                        id="status"
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                    />
-                                </div>
-                            </FormControl>
-                        </FormItem>
+                    label="Status *"
+                    renderSkeleton={(field) => (
+                        <div className="mt-2">
+                            <Switch
+                                id="status"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        </div>
                     )}
                 />
             </div>
@@ -264,7 +175,7 @@ return (
             </div>
         </form>
     </Form>
-);
+    );
 };
 
 export default BranchForm;

@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import * as enums from "./data-schemas";
 import { Option } from "@/components/ui/multiple-selector";
-import {ExpenseStatus, PaymentMethod, POSItemStatus} from "./data-schemas";
+import {ExpenseStatus, Gender, PaymentMethod, POSItemStatus} from "./data-schemas";
 
 declare type SearchParamProps = {
   params: { [key: string]: string };
@@ -72,6 +72,8 @@ declare type SignInParams = {
 
 declare type User = {
   $id?: string;
+  firstName: string;
+  lastName: string;
   email: string;
   name: string;
   phoneNumber?: string;
@@ -83,10 +85,10 @@ declare type User = {
   points: number;
   status: boolean;
   userId: string;
-  businesses: Business[];
+  orgId: string;
+  business: string;
   isOwner: boolean;
-  $createdAt?: Date;
-  $updatedAt?: Date;
+  termsConsent: boolean;
 };
 
 declare type Business = {
@@ -240,13 +242,10 @@ declare type Branch = {
   address?: string;
   city?: string;
   staffCount: number;
-  daysOpen: Option[];
+  daysOpen: string[];
   departments: Department[];
   openingTime?: string;
   closingTime?: string;
-  $createdAt?: Date;
-  $updatedAt?: Date;
-  canDelete: boolean;
   status: boolean;
   canDelete: boolean;
 }
@@ -405,9 +404,10 @@ declare type Supplier = {
 /* Staff */
 
 declare type Staff = {
-  $id: string;
-  name: string;
-  email: string;
+  $id?: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
   phoneNumber: string;
   code?:code;
   gender: Gender;
@@ -420,15 +420,13 @@ declare type Staff = {
   emergencyRelationship?: string;
   address?: string;
   notes?: string;
-  department?: Department[];
-  branch?: Branch[];
-  image?: string;
-  businessId: string;
+  department?: string[];
+  branch?: string[];
+  image: FormData | undefined;
+  businessId?: string;
   status: boolean;
   posAccess: boolean;
   dashboardAccess: boolean;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 /* End Staff */
 
@@ -583,10 +581,10 @@ declare type ExpensePayment = {
 
 /* Section */
 declare type Section = {
-  $id?: string;
+  $id: string;
   name: string;
   type: SectionType;
-  branch: Branch;
+  branch: string;
   branchId: string;
   businessId: string;
   description: string;
@@ -605,6 +603,7 @@ declare type Device = {
   imei?: string;
   name: string;
   branchId: string;
+  branch: string;
   businessId: string;
   code: number;
   status: boolean;

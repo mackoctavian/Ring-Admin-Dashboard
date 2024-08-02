@@ -212,33 +212,19 @@ export const BranchSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     email: z.string().email("Invalid email address"),
-    businessId: z.string().optional(),
-    business: BusinessSchema.optional(),
     phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
     address: z.string().optional().nullable(),
-    city: z.string().optional().nullable(),
-    daysOpen: z.string(),
-    openingTime: z.string().optional(),
-    closingTime: z.string().optional(),
+    city: z.string(),
+    daysOpen: z.array(z.string()).min(1, { message: "Select at least one day" }),
+    openingTime: z.string(),
+    closingTime: z.string(),
     staffCount: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
         }
         return val;
-    }, z.number().nonnegative()),
-    status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    }, z.number().nonnegative().gt(0)),
+    status: z.boolean()
 })
 
 export const DepartmentSchema = z.object({
@@ -266,7 +252,8 @@ export const CampaignSchema = z.object({
 
 export const StaffSchema = z.object({
     $id: z.string().optional(),
-    name: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
     email: z.string().email("Invalid email address").trim().optional().nullable(),
     phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
     code: z.preprocess((val) => val === null ? undefined : val, z.string().optional()),
@@ -291,33 +278,12 @@ export const StaffSchema = z.object({
     emergencyRelationship: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     address: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    // image: z.instanceof(File)
-    // .optional()
-    // .refine(
-    //     (file) => !file || file.size !== 0 || file.size <= MAX_UPLOAD_SIZE,
-    //     `Max image size is ${MAX_MB}MB`
-    // )
-    // .refine(
-    //     (file) => !file || file.type === "" || ACCEPTED_IMAGE_TYPES.includes(file.type),
-    //     "Only .jpg .jpeg and .png formats are supported"
-    // ).nullable(),
+    image: z.custom<File[]>().optional(),
     posAccess: z.boolean(),
     dashboardAccess: z.boolean(),
     status: z.boolean(),
-    department: z.array(DepartmentSchema.omit({branch: true})).min(1, { message: "Select at least one department" }),
-    branch: z.array(BranchSchema.omit({business: true})).min(1, { message: "Select at least one branch" }),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    department: z.array(z.string()).min(1, { message: "Select at least one department" }),
+    branch: z.array(z.string()).min(1, { message: "Select at least one branch" })
 }).superRefine((values, context) => {
     if ( values.dashboardAccess === true && ( !values.email || values.email.trim() === "" ) ){
     console.log("Email value",values.email)
@@ -1085,35 +1051,17 @@ export const ExpensePaymentSchema = z.object({
 
 export const SectionSchema = z.object({
     $id: z.string().optional(),
-    name: z.string({
-        required_error: "Section name is required",
-        invalid_type_error: "Section name must be more than 2 characters long",
-    }).min(2),
+    name: z.string().min(2),
     noOfCustomers: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
         }
         return val;
-    }, z.number().nonnegative()),
-    type: z.nativeEnum(SectionType,{
-        required_error: "Section type is required",
-        invalid_type_error: "Select a valid section type",
-    }),
-    branch: BranchSchema.omit({business: true}),
-    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    }, z.number().nonnegative().gt(0)),
+    type: z.nativeEnum(SectionType),
+    branch: z.string(),
+    description: z.string().optional().nullable(),
+    status: z.boolean()
 });
 
 
@@ -1123,7 +1071,7 @@ export const DeviceSchema = z.object({
         required_error: "Device name is required",
         invalid_type_error: "Device name must be more than 2 characters long",
     }).min(2),
-    branch: BranchSchema.omit({business: true}),
+    branchId: z.string(),
     status: z.boolean(),
     code: z.coerce
             .string()
@@ -1132,17 +1080,5 @@ export const DeviceSchema = z.object({
             .regex(/^[A-Z0-9]*$/, "Activation code can only have letters and numbers!")
             .min(6, "Activation code must be 6 characters long!")
             .max(6, "Activation code must be 6 characters long!")
-            .transform((val) => val.toUpperCase()),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+            .transform((val) => val.toUpperCase())
 });

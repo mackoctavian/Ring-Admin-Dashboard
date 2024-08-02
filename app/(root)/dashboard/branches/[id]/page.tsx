@@ -1,39 +1,48 @@
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
 import BreadCrumb from "@/components/layout/breadcrumb";
 import { getItem } from '@/lib/actions/branch.actions';
-import { Branch } from "@/types";
+import {Branch} from "@/types";
 import BranchForm from "@/components/forms/BranchForm";
+import {notFound} from "next/navigation";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 
-const breadcrumbItems = [{ title: "Branches", link: "/branches" }, { title: "New", link: "" } ];
-
-const BranchPage = async ({ params }: { params: { id: string } }) => {
+export default async function BranchPage({ params }: { params: { id: string } }) {
+    const isNewItem = params.id === "new";
     let item: Branch | null = null;
-    let newItem = true;
 
-    if (params.id && params.id !== "new") {
+    if (!isNewItem) {
         try {
             item = await getItem(params.id);
-            newItem = false;
+            if (!item) notFound();
         } catch (error) {
-            throw new Error("Error loading data" + error);
+            throw new Error("Failed to load branch data");
         }
     }
 
+    const breadcrumbItems = [{ title: "Branches", link: "/dashboard/branches" }, { title: isNewItem ? "New" : item?.name || "Edit", link: "" }];
+
     return (
-        <>
-            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-                <BreadCrumb items={breadcrumbItems} />
-
-                <div className="flex items-start justify-between">
-                    <Heading title={!newItem ? `Edit branch` : `Create branch`} description={!newItem ? "Edit your branch" : "Add new branch to your business"} />
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <div className="flex items-center justify-between mb-2">
+                <div className="relative flex-1 md:max-w-md">
+                    <BreadCrumb items={breadcrumbItems}/>
                 </div>
-                <Separator />
-
-                <BranchForm item={item} />
             </div>
-        </>
-    );
-};
 
-export default BranchPage;
+            <BranchCard isNewItem={isNewItem} item={item} />
+        </div>
+    );
+}
+
+const BranchCard = ({ isNewItem, item }: { isNewItem: boolean; item: Branch | null }) => (
+    <Card>
+        <CardHeader>
+            <CardTitle>{isNewItem ? "Create branch" : "Edit branch"}</CardTitle>
+            <CardDescription>
+                {isNewItem ? "Create new branch" : "Edit branch details"}
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <BranchForm item={item} />
+        </CardContent>
+    </Card>
+)

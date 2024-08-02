@@ -194,7 +194,9 @@ export const uploadFile = async (file: FormData) => {
 
         return uploadedFile?.$id ? `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET}/files/${uploadedFile.$id}/view??project=${APPWRITE_PROJECT}` : null;
     } catch (error) {
-        handleError(error)
+        console.error(error);
+        //Fail gracefully if logo failed to upload
+        return null;
     }
 }
 
@@ -246,7 +248,7 @@ export const registerBusiness = async ({ logo, ...business }: RegisterBusinessPa
             ID.unique(),
             {
                 email: user.primaryEmailAddress?.emailAddress.trim(),
-                name: business.firstName.trim() + business.lastName.trim(),
+                name: business.firstName.trim() + " " + business.lastName.trim(),
                 firstName: business.firstName.trim(),
                 lastName: business.lastName.trim(),
                 phoneNumber: user.phoneNumbers.length > 0 ? user.phoneNumbers[0].phoneNumber : business.phoneNumber,
@@ -265,17 +267,20 @@ export const registerBusiness = async ({ logo, ...business }: RegisterBusinessPa
         if ( logo ) {
             logoUrl = await uploadFile(logo)
 
-            //Prepare image for clerk organization
-            const logoBlob = logo?.get("blobFile") as Blob;
+            //Only do this if logo was uploaded, else fail gracefully and proceed with business registration
+            if( logoUrl ){
+                //Prepare image for clerk organization
+                const logoBlob = logo?.get("blobFile") as Blob;
 
-            //Prepare image for clerk organization, do not await for this
-            clerkClient.organizations.updateOrganizationLogo(
-                clerkOrganization.id,
-                {
-                    uploaderUserId: user.id,
-                    file: logoBlob
-                }
-            );
+                //Prepare image for clerk organization, do not await for this
+                clerkClient.organizations.updateOrganizationLogo(
+                    clerkOrganization.id,
+                    {
+                        uploaderUserId: user.id,
+                        file: logoBlob
+                    }
+                )
+            }
         }
 
         // Persist business details
@@ -320,78 +325,6 @@ export const registerBusiness = async ({ logo, ...business }: RegisterBusinessPa
     revalidatePath("/business-registration")
     redirect('/dashboard')
 }
-
-// export const registerBusiness = async (data: Business) => {
-//     const validate = BusinessRegistrationSchema.omit({ logo: true }).safeParse(data);
-//     if (!validate.success) {
-//         console.error("Validation error", validate.error.flatten());
-//         return { error: "Data validation failed" };
-//     }
-//
-//     const item = validate.data as Business;
-//     const generatedSlug = item.name.toLowerCase().replace(/\s+/g, '-');
-//
-//     try {
-//         const { database } = await createAdminClient();
-//         const user = await currentUser();
-//         if (!user) { return { error: "User data could not be loaded" }; }
-//
-//         const clerkOrganization = await clerkClient.organizations.createOrganization({
-//             name: item.name,
-//             createdBy: user.id
-//         });
-//
-//         const newBusinessOwner = await database.createDocument(
-//             DATABASE_ID!,
-//             USER_COLLECTION_ID!,
-//             ID.unique(),
-//             {
-//                 email: user.primaryEmailAddress?.emailAddress,
-//                 name: user.fullName,
-//                 phoneNumber: user.phoneNumbers.length > 0 ? user.phoneNumbers[0].phoneNumber : item.phoneNumber,
-//                 image: user.imageUrl,
-//                 gender: Gender.UNDISCLOSED,
-//                 points: 0,
-//                 status: true,
-//                 userId: user.id,
-//                 orgId: clerkOrganization.id,
-//                 isOwner: true,
-//             }
-//         );
-//
-//         const newBusiness = await database.createDocument(
-//             DATABASE_ID!,
-//             BUSINESS_COLLECTION_ID!,
-//             ID.unique(),
-//             {
-//                 ...item,
-//                 slug: generatedSlug,
-//                 branches: [],
-//                 authId: user.id,
-//                 orgId: clerkOrganization.id,
-//                 users: [newBusinessOwner],
-//             }
-//         );
-//
-//         const newBranch = await createDefaultBranch(parseStringify(newBusiness));
-//         await createDefaultDepartment(newBranch);
-//         await initTrial(newBusiness.$id, parseStringify(newBusinessOwner));
-//
-//         await clerkClient.users.updateUser(user.id, {
-//             publicMetadata: {
-//                 onboardingComplete: true,
-//                 businessId: newBusiness.$id,
-//                 invite: false,
-//                 organizationId: clerkOrganization.id,
-//             },
-//         });
-//
-//         revalidatePath("/business-registration");
-//         redirect('/dashboard');
-//     } catch (error) {
-//         handleError(error);
-//     }
-// };
 
 export const updateItem = async (id: string, data: Business) => {
     try {

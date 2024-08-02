@@ -75,7 +75,6 @@ const StockForm =() => {
         title: "Success",
         description: "Stock intake recorded successfully!",
       });
-      form.reset();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -84,6 +83,7 @@ const StockForm =() => {
       });
     } finally {
       setIsLoading(false);
+      form.reset();
     }
   };
 

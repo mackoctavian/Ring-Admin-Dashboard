@@ -62,13 +62,7 @@ export const createDefaultBranch = async (business: Business) => {
                 email: business.email,
                 phoneNumber: business.phoneNumber,
                 address: business.address,
-                daysOpen: JSON.stringify([
-                    { label: "Monday", value: "Monday" },
-                    { label: "Tuesday", value: "Tuesday" },
-                    { label: "Wednesday", value: "Wednesday" },
-                    { label: "Thursday", value: "Thursday" },
-                    { label: "Friday", value: "Friday" },
-                ]),
+                daysOpen: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
                 staffCount: 1,
                 city: business.city,
                 openingTime: "09:00",
@@ -108,10 +102,6 @@ export const createItem = async (item: Branch) => {
         const { database } = await checkRequirements();
         const currentBusiness: Business = await getCurrentBusiness();
 
-        const daysOpen = item.daysOpen.map(option => ({ ...option }));
-        // @ts-ignore
-        item.daysOpen = JSON.stringify(daysOpen);
-
         await database.createDocument(
             DATABASE_ID!,
             BRANCH_COLLECTION_ID!,
@@ -122,12 +112,12 @@ export const createItem = async (item: Branch) => {
                 businessId: currentBusiness.$id,
             }
         );
-
-        revalidatePath('/dashboard/branches');
-        redirect('/dashboard/branches');
     } catch (error) {
         handleError(error);
     }
+
+    revalidatePath('/dashboard/branches');
+    redirect('/dashboard/branches');
 };
 
 export const list = async () => {
@@ -209,13 +199,13 @@ export const deleteItem = async ({ $id }: Branch) => {
             DATABASE_ID!,
             BRANCH_COLLECTION_ID!,
             $id
-        );
-
-        revalidatePath('/dashboard/branches');
-        redirect('/dashboard/branches');
+        )
     } catch (error) {
         handleError(error);
     }
+
+    revalidatePath('/dashboard/branches');
+    redirect('/dashboard/branches');
 };
 
 export const updateItem = async (id: string, data: Branch) => {
@@ -223,24 +213,16 @@ export const updateItem = async (id: string, data: Branch) => {
     try {
         const { database } = await checkRequirements();
 
-        const daysOpen = data.daysOpen.map(option => ({
-            ...option,
-            branchId: id,
-        }));
-
-        // @ts-ignore
-        data.daysOpen = JSON.stringify(daysOpen);
-
         await database.updateDocument(
             DATABASE_ID!,
             BRANCH_COLLECTION_ID!,
             id,
             data
-        );
-
-        revalidatePath('/dashboard/branches');
-        redirect('/dashboard/branches');
+        )
     } catch (error) {
         handleError(error);
     }
-};
+
+    revalidatePath('/dashboard/branches');
+    redirect('/dashboard/branches');
+}

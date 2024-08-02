@@ -11,10 +11,10 @@ interface NoItemsProps {
 
 export default function NoItems({ newItemUrl, itemName }: NoItemsProps) {
     return (
-        <div className='h-svh'>
+        <div className='h-[calc(100vh-220px)] border border-dashed'>
             <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
-                <h1 className='text-[2rem] font-bold leading-tight'>You have no {itemName}(s)</h1>
-                <p className='text-center text-muted-foreground'>
+                <h1 className='text-[1.5rem] font-bold leading-tight'>You have no {itemName}(s)</h1>
+                <p className='text-sm text-center text-muted-foreground'>
                     You do not have any {itemName}(s) in your records, add {itemName}(s) to start viewing data.
                 </p>
                 <div className='mt-6 flex gap-4'>

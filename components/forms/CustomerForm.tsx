@@ -39,9 +39,9 @@ const CustomerForm = ({ item }: { item?: Customer | null }) => {
 
     const form = useForm<z.infer<typeof CustomerSchema>>({
         resolver: zodResolver(CustomerSchema),
-        defaultValues: item ? item : {
-            allowNotifications: true,
-        },
+        //handle nullable inputs & objects
+        //@ts-ignore
+        defaultValues: item ? { ...item, branch: item.branch.$id ?? '', allowNotifications: true }: {}
     });
 
     const onInvalid = (errors : any ) => {

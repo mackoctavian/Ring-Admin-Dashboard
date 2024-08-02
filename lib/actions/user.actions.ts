@@ -1,12 +1,14 @@
 'use server';
 
+import {handleError} from "@/lib/utils/actions-service";
+
 const env = process.env.NODE_ENV
 
 import { ID, Query, AppwriteException } from "node-appwrite"
 import * as Sentry from "@sentry/nextjs"
 import { createAdminClient } from "../appwrite"
 import { parseStringify } from "../utils"
-import { SignInParams , SignUpParams, User } from "@/types"
+import { User } from "@/types"
 import { auth } from "@clerk/nextjs/server"
 import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
 
@@ -50,7 +52,7 @@ export const getLoggedInUser = async () => {
 export const createUser = async (user: User) => {
   const { userId } = auth();
   if (!userId) { throw Error("User not authorized to perform this action") }
-  
+
   try {
     const { database } = await createAdminClient();
     
@@ -66,14 +68,6 @@ export const createUser = async (user: User) => {
     return parseStringify(newUser);
 
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+    handleError(error, "Error creating user");
   }
 }

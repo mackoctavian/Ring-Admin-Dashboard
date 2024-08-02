@@ -4,7 +4,6 @@ import {Campaign} from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-
 import { columns } from "@/components/layout/tables/campaigns-table/columns";
 import { getItems } from "@/lib/actions/campaign.actions";
 import NoItems from "@/components/layout/no-items";

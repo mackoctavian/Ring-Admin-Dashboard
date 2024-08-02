@@ -130,12 +130,12 @@ import "react-day-picker/style.css"
                         name="paymentMethod"
                         label="Payment method *"
                         placeholder="Select payment method">
-                        <SelectItem value={PaymentMethod.CASH}>Cash</SelectItem>
-                        <SelectItem value={PaymentMethod.MOBILE}>Mobile money</SelectItem>
-                        <SelectItem value={PaymentMethod.BANK}>Bank transfer</SelectItem>
-                        <SelectItem value={PaymentMethod.CARD}>Card</SelectItem>
-                        <SelectItem value={PaymentMethod.CHEQUE}>Cheque</SelectItem>
-                        <SelectItem value={PaymentMethod.OTHER}>Other</SelectItem>
+                            <SelectItem value={PaymentMethod.CASH}>Cash</SelectItem>
+                            <SelectItem value={PaymentMethod.MOBILE}>Mobile money</SelectItem>
+                            <SelectItem value={PaymentMethod.BANK}>Bank transfer</SelectItem>
+                            <SelectItem value={PaymentMethod.CARD}>Card</SelectItem>
+                            <SelectItem value={PaymentMethod.CHEQUE}>Cheque</SelectItem>
+                            <SelectItem value={PaymentMethod.OTHER}>Other</SelectItem>
                     </CustomFormField>
 
                     <CustomFormField

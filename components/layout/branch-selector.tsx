@@ -16,33 +16,46 @@ interface Props {
 
 const BranchSelector: React.FC<Props> = ({ value, onChange }) => {
   const [branches, setBranches] = useState<Branch[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchBranches() {
       try {
+        setIsLoading(true);
         const branchesData = await list();
-        setBranches(branchesData);
-      } catch (error) {
-        console.error('Error fetching branches:', error);
+        setBranches(branchesData || []); // Ensure it's always an array
+        setError(null);
+      } catch (error: any) {
+        setError("Failed to load branches");
+        console.error("Error fetching branches:", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
     fetchBranches();
   }, []);
 
   const handleSelectChange = (selectedId: string) => {
-    onChange(selectedId);
+    onChange(selectedId === 'default' ? '' : selectedId);
   };
 
-  const selectedBranch = branches.find(br => br.$id === value);
+  if (isLoading) {
+    return <div className={`text-sm text-muted-foreground`}>Loading branches...</div>;
+  }
+
+  if (error) {
+    return <div className={`text-sm text-destructive-foreground`}>Error: could not load branches</div>;
+  }
+
 
   return (
-      <Select value={value || 'default'} onValueChange={handleSelectChange} disabled={loading}>
+      <Select
+          value={value || 'default'}
+          onValueChange={handleSelectChange}>
         <SelectTrigger>
           <SelectValue>
-            {loading ? 'Loading...' : (selectedBranch ? selectedBranch.name : 'Select branch')}
+            {value ? branches.find(branch => branch.$id === value)?.name || 'Select branch' : 'Select branch'}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>

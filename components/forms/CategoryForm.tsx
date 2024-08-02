@@ -23,11 +23,9 @@ import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 
     const form = useForm<z.infer<typeof CategorySchema>>({
         resolver: zodResolver(CategorySchema),
-        defaultValues: item ? { ...item, parent: item.parent } : {
-            type: CategoryType.PRODUCT,
-            description: '',
-            status: false,
-        },
+        //handle nullable inputs & objects
+        //@ts-ignore
+        defaultValues: item ? { ...item, parent: item.parent.$id ?? '', description: '' }: {}
     });
 
     const onInvalid = (errors : any ) => {

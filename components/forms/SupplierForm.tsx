@@ -6,13 +6,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
+import {Form} from "@/components/ui/form";
 import { Supplier } from "@/types";
 import { createItem, updateItem } from "@/lib/actions/supplier.actions"
 import { useToast } from "@/components/ui/use-toast"
@@ -58,6 +52,7 @@ const SupplierForm = ({ item }: { item?: Supplier }) => {
             };
 
             if (item && item.$id) {
+                //@ts-ignore
                 await updateItem(item.$id, supplierData);
                 toast({
                     variant: "success",
@@ -65,6 +60,7 @@ const SupplierForm = ({ item }: { item?: Supplier }) => {
                     description: "Supplier details updated successfully!"
                 });
             } else {
+                //@ts-ignore
                 await createItem(supplierData);
                 toast({
                     variant: "success",
@@ -72,7 +68,6 @@ const SupplierForm = ({ item }: { item?: Supplier }) => {
                     description: "Supplier created successfully!"
                 });
             }
-            form.reset(supplierData);
         } catch (error: any) {
             toast({
                 variant: "destructive",
@@ -81,6 +76,7 @@ const SupplierForm = ({ item }: { item?: Supplier }) => {
             });
         } finally {
             setIsLoading(false);
+            form.reset();
         }
     };
 
@@ -134,25 +130,23 @@ return (
                     label="Address"
                     placeholder="Enter supplier's address"
                 />
-                
-                <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Status *</FormLabel>
-                        <FormControl>
-                            <div className="mt-2">
-                                <Switch
-                                    id="status"
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                            </div>
-                        </FormControl>
-                    </FormItem>
-                )}
-            />
+
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
+                    control={form.control}
+                    name="status"
+                    label="Status *"
+                    renderSkeleton={(field) => (
+                        <div className="mt-2">
+                            <Switch
+                                id="status"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        </div>
+                    )}
+                />
+
             </div>
             <CustomFormField
                 fieldType={FormFieldType.TEXTAREA}

@@ -22,7 +22,9 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
 
     const form = useForm<z.infer<typeof DepartmentSchema>>({
         resolver: zodResolver(DepartmentSchema),
-        defaultValues: item ? item : {},
+        //handle nullable inputs & objects
+        //@ts-ignore
+        defaultValues: item ? { ...item, branch: item.branch.$id ?? '' }: {}
     });
 
     const onInvalid = (errors : any ) => {

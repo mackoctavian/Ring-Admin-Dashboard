@@ -66,7 +66,7 @@ export default async function Page({ searchParams }: ParamsProps) {
                             />
                         </CardContent>
                     </Card>
-                ) : (<NoItems newItemUrl={`/dashboard/staff/new`} itemName={`staff`}/>)}
+                ) : (<NoItems newItemUrl={`/dashboard/staff/new`} itemName={`employee`}/>)}
             </div>
         </>
     );

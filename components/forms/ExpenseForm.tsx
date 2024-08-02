@@ -117,6 +117,7 @@ import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
             });
         } finally {
             setIsLoading(false);
+            form.reset();
         }
     }
 

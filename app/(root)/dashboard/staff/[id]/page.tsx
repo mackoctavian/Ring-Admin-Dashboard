@@ -14,12 +14,11 @@ export default async function StaffPage({ params }: { params: { id: string } }) 
             item = await getItem(params.id);
             if (!item) notFound();
         } catch (error) {
-            console.error("Error loading data:", error);
             throw new Error("Failed to load staff data");
         }
     }
 
-    const breadcrumbItems = [{ title: "Staff", link: "/dashboard/staff" }, { title: isNewItem ? "New" : item?.name || "Edit", link: "" }];
+    const breadcrumbItems = [{ title: "Staff", link: "/dashboard/staff" }, { title: isNewItem ? "New" : item?.firstName || "Edit", link: "" }];
 
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

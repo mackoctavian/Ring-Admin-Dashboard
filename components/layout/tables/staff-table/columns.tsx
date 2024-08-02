@@ -26,8 +26,12 @@ export const columns: ColumnDef<Staff>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "name",
-    header: "Staff name",
+    accessorKey: "firstName",
+    header: "First name",
+  },
+  {
+    accessorKey: "lastName",
+    header: "Last name",
   },
   {
     accessorKey: "phoneNumber",

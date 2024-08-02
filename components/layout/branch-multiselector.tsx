@@ -7,8 +7,8 @@ import { Branch } from '@/types';
 import { ReloadIcon } from "@radix-ui/react-icons"
 
 interface Props {
-  value?: Branch[] | [];
-  onChange: (value: Branch[] | []) => void;
+  value?: string[];
+  onChange: (value: string[]) => void;
 }
 
 const BranchSelector: React.FC<Props> = ({ value = [], onChange }) => {
@@ -21,9 +21,9 @@ const BranchSelector: React.FC<Props> = ({ value = [], onChange }) => {
       try {
         const branchesData = await list();
         setBranches(branchesData);
-        const formattedOptions = branchesData.map(branch => ({ label: branch.name, value: branch.$id }));
+        const formattedOptions = branchesData.map((branch: Branch) => ({ label: branch.name, value: branch.$id }));
         setOptions(formattedOptions);
-      } catch (error : any) {
+      } catch (error) {
         console.error('Error fetching branches:', error);
       } finally {
         setLoading(false);
@@ -33,10 +33,8 @@ const BranchSelector: React.FC<Props> = ({ value = [], onChange }) => {
   }, []);
 
   const handleSelectChange = (selectedOptions: Option[]) => {
-    const selectedBranches = selectedOptions
-      .map(option => branches.find(branch => branch.$id === option.value))
-      .filter((branch): branch is Branch => branch !== undefined);
-    onChange(selectedBranches.length > 0 ? selectedBranches : []);
+    const selectedBranchIds = selectedOptions.map(option => option.value);
+    onChange(selectedBranchIds);
   };
 
   const handleSearch = async (searchValue: string): Promise<Option[]> => {
@@ -44,43 +42,41 @@ const BranchSelector: React.FC<Props> = ({ value = [], onChange }) => {
       return options;
     }
 
-    const filteredBranches = branches.filter(branch =>
-      branch.name.toLowerCase().includes(searchValue.toLowerCase())
+    const filteredOptions = options.filter(option =>
+        option.label.toLowerCase().includes(searchValue.toLowerCase())
     );
-    const formattedOptions = filteredBranches.map(branch => ({
-      label: branch.name,
-      value: branch.$id!,
-    }));
 
     // If all branches are selected, return empty options to prevent "No results found" message
     if (value && value.length === branches.length) {
       return [];
     }
 
-    return formattedOptions;
+    return filteredOptions;
   };
 
+  const selectedOptions = options.filter(option => value.includes(option.value));
+
   return (
-    <MultipleSelector
-      onSearch={handleSearch}
-      defaultOptions={options}
-      value={value ? value.map(branch => ({ label: branch.name, value: branch.$id })) : []}
-      onChange={handleSelectChange}
-      triggerSearchOnFocus
-      placeholder="Select branches..."
-      loadingIndicator={
-        <><ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Loading branches...</>
-      }
-      emptyIndicator={
-        loading ? (
-          <><ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Loading branches...</>
-        ) : (
-          value && value.length > 0 && value.length === branches.length ? [] : (
-            <p className="py-2 text-center text-sm leading-10 text-muted-foreground">No results found.</p>
-          )
-        )
-      }
-    />
+      <MultipleSelector
+          onSearch={handleSearch}
+          defaultOptions={options}
+          value={selectedOptions}
+          onChange={handleSelectChange}
+          triggerSearchOnFocus
+          placeholder="Select branches..."
+          loadingIndicator={
+            <><ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Loading branches...</>
+          }
+          emptyIndicator={
+            loading ? (
+                <><ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Loading branches...</>
+            ) : (
+                value && value.length > 0 && value.length === branches.length ? [] : (
+                    <p className="py-2 text-center text-sm leading-10 text-muted-foreground">No results found.</p>
+                )
+            )
+          }
+      />
   );
 };
 

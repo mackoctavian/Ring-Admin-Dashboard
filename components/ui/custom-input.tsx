@@ -5,7 +5,7 @@ import ReactDatePicker from "react-datepicker";
 import { Control } from "react-hook-form";
 import PhoneInput from 'react-phone-number-input'
 import {
-    FormControl,
+    FormControl, FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectTrigger, SelectValue } from "./select";
 import { Textarea } from "./textarea";
 import {Checkbox} from "./checkbox";
 import 'react-phone-number-input/style.css'
+import React from "react";
 
 export enum FormFieldType {
     INPUT = "input",
@@ -42,6 +43,7 @@ interface CustomProps {
     renderSkeleton?: (field: any) => React.ReactNode;
     fieldType: FormFieldType;
     type?: string;
+    description?: string;
 }
 
 const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
@@ -154,7 +156,7 @@ const RenderInput = ({ field, props }: { field: any; props: CustomProps }) => {
 };
 
 const CustomFormField = (props: CustomProps) => {
-    const { control, name, label } = props;
+    const { control, name, label, description } = props;
 
     return (
         <FormField
@@ -167,6 +169,7 @@ const CustomFormField = (props: CustomProps) => {
                     )}
                     <RenderInput field={field} props={props} />
 
+                    <FormDescription>{description}</FormDescription>
                     <FormMessage />
                 </FormItem>
             )}

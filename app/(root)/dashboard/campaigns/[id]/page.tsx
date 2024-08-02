@@ -14,7 +14,6 @@ export default async function CampaignPage({ params }: { params: { id: string } 
             item = await getItem(params.id);
             if (!item) notFound();
         } catch (error) {
-            console.error("Error loading data:", error);
             throw new Error("Failed to load campaign data");
         }
     }
