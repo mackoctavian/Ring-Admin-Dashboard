@@ -3,10 +3,10 @@
 import Image from "next/image";
 import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import {cn, convertFileToUrl} from "@/lib/utils";
+import { cn, convertFileToUrl } from "@/lib/utils";
 
 type FileUploaderProps = {
-    files: File[] | undefined;
+    files: File[] | string | undefined;
     onChange: (files: File[]) => void;
 };
 
@@ -18,12 +18,24 @@ export const FileUploader = ({ files, onChange }: FileUploaderProps) => {
     const theme = true;
     const { getRootProps, getInputProps } = useDropzone({ onDrop });
 
+    const getImageSrc = () => {
+        if (typeof files === 'string') {
+            return files;
+        }
+        if (Array.isArray(files) && files.length > 0) {
+            return convertFileToUrl(files[0]);
+        }
+        return '';
+    };
+
+    const imageSrc = getImageSrc();
+
     return (
         <div {...getRootProps()} className="file-upload border text-center p-4 cursor-pointer">
             <input {...getInputProps()} />
-            {files && files?.length > 0 ? (
+            {imageSrc ? (
                 <Image
-                    src={convertFileToUrl(files[0])}
+                    src={imageSrc}
                     width={1000}
                     height={1000}
                     alt="Uploaded file"
@@ -36,11 +48,11 @@ export const FileUploader = ({ files, onChange }: FileUploaderProps) => {
                         width={40}
                         height={40}
                         alt="upload"
-                        className={cn({ 'brightness-[10] invert-0': theme })}
+                        className={cn({ 'brightness-[10] invert-0 m-auto mb-2 text-center': theme })}
                     />
                     <div className="file-upload_label">
                         <p className={`text-xs`}><span>Click to upload </span> or drag and drop</p>
-                        <p className={`text-sm`}>SVG, PNG, JPG or GIF (max. 800x400px)</p>
+                        <p className={`text-sm`}>PNG, JPG or GIF (max. 800x400px)</p>
                     </div>
                 </>
             )}

@@ -171,41 +171,18 @@ export const UserSchema: z.ZodSchema = z.lazy(() =>
 )
 
 export const BusinessSchema = z.object({
-    $id: z.string().optional(),
     name: z.string(),
-    businessType: BusinessTypeSchema,
+    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number"),
+    logo: z.custom<File[]>().optional(),
     size: z.string(),
-    registrationNumber: z.string().optional(),
-    // logo: z.instanceof(File)
-    // .optional()
-    // .refine(
-    //     (file) => !file || file.size !== 0 || file.size <= MAX_UPLOAD_SIZE,
-    //     `Max image size is ${MAX_MB}MB`
-    // )
-    // .refine(
-    //     (file) => !file || file.type === "" || ACCEPTED_IMAGE_TYPES.includes(file.type),
-    //     "Only .jpg .jpeg and .png formats are supported"
-    // ),
-    email: z.string().email(),
-    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-    address: z.string().optional().nullable(),
+    currency: z.string(),
     city: z.string().optional().nullable(),
     country: z.string(),
-    authId: z.string(),
-    description: z.string().optional(),
-    slug: z.string(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    email: z.string().email(),
+    address: z.string().optional().nullable(),
+    businessType: BusinessTypeSchema,
+    description: z.string().optional().nullable(),
+    registrationNumber: z.string().optional().nullable()
 })
 
 export const BranchSchema = z.object({

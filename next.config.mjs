@@ -9,6 +9,9 @@ const nextConfig = {
     eslint: {
       ignoreDuringBuilds: true,
     },
+    images: {
+        domains: ['cloud.appwrite.io'],
+    },
     // Custom webpack configuration
     webpack: (config, { dev }) => {
       if (dev) {

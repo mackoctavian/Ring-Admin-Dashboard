@@ -1,5 +1,7 @@
 'use server';
 
+import {databaseCheck} from "@/lib/utils/actions-service";
+
 const env = process.env.NODE_ENV;
 
 import * as Sentry from "@sentry/nextjs";
@@ -60,19 +62,20 @@ const checkRequirements = async () => {
 
 export const getCurrentBusiness = async () => {
     try {
-        const businessId = await getBusinessId();
-        const { database } = await checkRequirements();
-        const response = await database.getDocument(
-            DATABASE_ID!,
-            BUSINESS_COLLECTION_ID!,
-            businessId!
+        const { database, businessId, databaseId, collectionId } = await databaseCheck(BUSINESS_COLLECTION_ID);
+        //const businessId = await getBusinessId();
+        //const { database } = await checkRequirements();
+        const item = await database.getDocument(
+            databaseId,
+            collectionId,
+            businessId
         );
 
-        return parseStringify(response);
+        return parseStringify(item);
     } catch (error) {
         handleError(error);
     }
-};
+}
 
 export const getBusinessId = async () => {
     try {

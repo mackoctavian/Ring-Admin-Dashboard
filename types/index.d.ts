@@ -98,7 +98,7 @@ declare type Business = {
   logo: FormData | undefined;
   businessType: BusinessType;
   size: string;
-  branches?: Branch[];
+  branches?: string[];
   registrationNumber?: string;
   email: string;
   phoneNumber: string;
@@ -108,8 +108,6 @@ declare type Business = {
   owner?: string;
   description?: string;
   slug?: string;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 
 declare interface RegisterBusinessParams {
