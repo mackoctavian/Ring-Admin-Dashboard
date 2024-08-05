@@ -1,42 +1,26 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
 import { Cross2Icon, PlusIcon } from "@radix-ui/react-icons"
 import { PlusCircle } from "lucide-react"
-import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
+import { useForm} from 'react-hook-form';
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input";
-import { Product, Category, ProductUnit, ProductInventoryItemUsage, ProductVariant } from "@/types";
+import {Product, ProductVariant} from "@/types";
 import { createItem, updateItem } from "@/lib/actions/product.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
-import { generateSKU } from "@/lib/utils"
 import ModifierSelector from "../layout/modifier-multiselector";
-import { CategoryType, ProductSchema, POSItemStatus } from "@/types/data-schemas"
+import {ProductSchema, POSItemStatus} from "@/types/data-schemas"
 import CategorySelector from "@/components/layout/category-multiselector"
 import InventorySelector from "@/components/layout/inventory-selector"
-import { Heading } from "@/components/ui/heading";
 import {
     Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-    FormDescription
+    FormControl
 } from "@/components/ui/form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+import {SelectItem} from "@/components/ui/select"
 import { SubmitButton } from '../ui/submit-button';
 import UnitSelector from '../layout/unit-selector';
 import BranchSelector from '../layout/branch-multiselector';
@@ -49,40 +33,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-
-import {
-  ChevronLeft,
-  Home,
-  LineChart,
-  Package,
-  Package2,
-  PanelLeft,
-  Search,
-  Settings,
-  ShoppingCart,
-  Upload,
-  Users2,
-} from "lucide-react"
-import { Label } from "@/components/ui/label"
-import Image from "next/image"
+import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
+import {FileUploader} from "@/components/ui/custom-file-uploader";
 
 const ProductForm = ({ item }: { item?: Product | null }) => {
-
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast()
 
+  console.log(item);
+
   const form = useForm({
     resolver: zodResolver(ProductSchema),
-    defaultValues: item ? item : {
-      variants: [{
-        status: false,
-        tax: 0,
-        inventoryItems: []
-      }],
-    },
+    defaultValues: item ? { ...item, description: ''}: {}
   });
 
-  const { control, handleSubmit, setValue, getValues, formState: { errors } } = form;
+  const { handleSubmit, setValue, getValues } = form;
 
   const onInvalid = (errors: any) => {
     console.log(errors)
@@ -115,7 +80,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
-        description: JSON.stringify(error) || 'There was an issue submitting your form, please try later',
+        description: 'There was an issue submitting your form, please try later',
       });
     } finally {
       setIsLoading(false);
@@ -124,7 +89,6 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
 
   const [variants, setVariants] = useState<ProductVariant[]>(
     item ? item.variants : [{
-      allowDiscount: false,
       status: false,
       inventoryItems: []
     }]
@@ -138,7 +102,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
   }, [item, setValue]);
 
   const handleAddVariant = () => {
-    const newVariant = { allowDiscount: false, status: false, inventoryItems: [] };
+    const newVariant = { name: '', price: '', tax: '', allowDiscount: false, status: false, inventoryItems: [] };
     setVariants([...variants, newVariant]);
     setValue('variants', [...getValues('variants'), newVariant]);
   };
@@ -187,70 +151,32 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                  <FormField
-                    control={control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Product name *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Product name"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Product category *</FormLabel>
-                        <FormControl>
-                          <CategorySelector type={CategoryType.PRODUCT} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={control}
-                    name="sku"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Product SKU </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Product sku ( Auto-generated )"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                  <CustomFormField
+                      fieldType={FormFieldType.INPUT}
+                      control={form.control}
+                      name={`name`}
+                      label="Product name *"
+                      placeholder="Enter product name"
                   />
 
+                  <CustomFormField
+                      fieldType={FormFieldType.CUSTOM_SELECTOR}
+                      control={form.control}
+                      name={`category`}
+                      label="Product category *"
+                      renderSkeleton={(field) => (
+                          <CategorySelector value={field.value} onChange={field.onChange}/>
+                      )}
+                  />
                 </div>
-                <FormField
-                  control={control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Enter product description"
-                          className="resize-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+
+                <CustomFormField
+                    fieldType={FormFieldType.TEXTAREA}
+                    control={form.control}
+                    name={`description`}
+                    label="Product description"
+                    placeholder="Enter product description"
                 />
               </CardContent>
             </Card>
@@ -265,164 +191,116 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
               <CardContent>
                 <div className="space-y-8">
                   {variants.map((variant, variantIndex) => (
-                    <div key={variant.$id} className="border bg-gray-100 p-4 rounded-md">
-                      <div className="flex justify-between items-center">
-                        {variants.length > 1 && (
-                          <Button type="button" onClick={() => handleRemoveVariant(variantIndex)} variant="link" className="ml-auto">
-                            <Cross2Icon className="mr-2 h-4 w-4" /> Archive variant
-                          </Button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <FormField
-                          control={control}
-                          name={`variants[${variantIndex}].name`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Variant name *</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Variant name"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={control}
-                          name={`variants[${variantIndex}].price`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Variant price *</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type='number'
-                                  step='0.01'
-                                  placeholder="Variant price"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={control}
-                          name={`variants[${variantIndex}].tax`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Variant tax *</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type='number'
-                                  step='0.01'
-                                  placeholder="Variant tax"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={control}
-                          name={`variants[${variantIndex}].barcode`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Variant barcode</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Variant barcode"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={control}
-                          name={`variants[${variantIndex}].status`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Status</FormLabel>
-                              <FormControl>
-                                <div className="mt-2">
-                                  <Switch
-                                    id={`variant-status-${variant.$id}`}
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </div>
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        {variant.inventoryItems.map((inv, inventoryIndex) => (
-                          <div key={inv.$id} className="space-y-2 p-2 rounded-md">
-                            <Separator className="my-7" />
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                              <FormField
-                                control={control}
-                                name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].item`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Stock item</FormLabel>
-                                    <FormControl>
-                                      <InventorySelector {...field} />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={control}
-                                name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].amountUsed`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Quantity used</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder="Quantity used"
-                                        type="number"
-                                        step="0.01"
-                                        {...field}
-                                      />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={control}
-                                name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].unit`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Unit</FormLabel>
-                                    <FormControl>
-                                      <UnitSelector {...field} />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                              <Button type="button" className='mt-8' onClick={() => handleRemoveInventory(variantIndex, inv.$id)} variant='destructive'>
-                                Remove tracking
+                      <div key={variant.$id} className="border p-4 rounded-md">
+                        <div className="flex justify-between items-center">
+                          {variants.length > 1 && (
+                              <Button type="button" onClick={() => handleRemoveVariant(variantIndex)} variant="link" className="ml-auto">
+                                <Cross2Icon className="mr-2 h-4 w-4"/> Archive variant
                               </Button>
-                            </div>
-                          </div>
-                        ))}
-                        <Button type="button" onClick={() => handleAddInventory(variantIndex)} variant="link">
-                          <PlusIcon className="mr-2 h-4 w-4" /> Track stock item
-                        </Button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <CustomFormField
+                              fieldType={FormFieldType.INPUT}
+                              control={form.control}
+                              name={`variants[${variantIndex}].name`}
+                              label="Product variant name *"
+                              placeholder="Enter variant name"
+                          />
+
+                          <CustomFormField
+                              fieldType={FormFieldType.INPUT}
+                              control={form.control}
+                              name={`variants[${variantIndex}].price`}
+                              label="Product variant price *"
+                              placeholder="Enter variant price"
+                              type="number"
+                          />
+
+                          <CustomFormField
+                              fieldType={FormFieldType.INPUT}
+                              control={form.control}
+                              name={`variants[${variantIndex}].tax`}
+                              label="Product variant tax *"
+                              placeholder="Enter variant tax amount"
+                              type="number"
+                          />
+
+                          <CustomFormField
+                              fieldType={FormFieldType.INPUT}
+                              control={form.control}
+                              name={`variants[${variantIndex}].barcode`}
+                              label="Product variant barcode"
+                              placeholder="Enter variant barcode"
+                          />
+
+                          <CustomFormField
+                              fieldType={FormFieldType.SKELETON}
+                              control={form.control}
+                              name={`variants[${variantIndex}].status`}
+                              label="Status *"
+                              renderSkeleton={(field) => (
+                                  <div className="mt-2">
+                                    <Switch
+                                        id={`variant-status-${variant.$id}`}
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                  </div>
+                              )}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          {variant.inventoryItems.map((inv, inventoryIndex) => (
+                              <div key={inv.$id} className="space-y-2 p-2 rounded-md">
+                                <Separator className="my-7"/>
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+                                  <CustomFormField
+                                      fieldType={FormFieldType.CUSTOM_SELECTOR}
+                                      control={form.control}
+                                      name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].item`}
+                                      label="Stock item *"
+                                      renderSkeleton={(field) => (
+                                          <InventorySelector value={field.value} onChange={field.onChange}/>
+                                      )}
+                                  />
+
+                                  <CustomFormField
+                                      fieldType={FormFieldType.INPUT}
+                                      control={form.control}
+                                      name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].amountUsed`}
+                                      label="Quantity used *"
+                                      placeholder="Enter quantity used per sale"
+                                      type="number"
+                                  />
+
+                                  <CustomFormField
+                                      fieldType={FormFieldType.CUSTOM_SELECTOR}
+                                      control={form.control}
+                                      name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].unit`}
+                                      label="Unit of item usage *"
+                                      renderSkeleton={(field) => (
+                                          <UnitSelector value={field.value} onChange={field.onChange}/>
+                                      )}
+                                  />
+
+                                  <Button type="button" className='mt-8' onClick={() => handleRemoveInventory(variantIndex, inv.$id)} variant='destructive'>
+                                    Stop tracking
+                                  </Button>
+                                </div>
+                              </div>
+                          ))}
+                          <Button type="button" onClick={() => handleAddInventory(variantIndex)} variant="link">
+                            <PlusIcon className="mr-2 h-4 w-4"/> Track stock usage
+                          </Button>
+                        </div>
                       </div>
-                    </div>
                   ))}
                 </div>
                 <CardFooter className="justify-center p-1">
                   <Button type="button" variant="ghost" className="gap-1" onClick={handleAddVariant}>
-                    <PlusCircle className="h-3.5 w-3.5" />
+                    <PlusCircle className="h-3.5 w-3.5"/>
                     Add Variant
                   </Button>
                 </CardFooter>
@@ -437,28 +315,16 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                 <CardTitle>Product status</CardTitle>
               </CardHeader>
               <CardContent>
-                <FormField
-                  control={control}
-                  name="posStatus"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={POSItemStatus.DRAFT}>{POSItemStatus.DRAFT}</SelectItem>
-                          <SelectItem value={POSItemStatus.ACTIVE}>{POSItemStatus.ACTIVE}</SelectItem>
-                          <SelectItem value={POSItemStatus.ARCHIVED}>{POSItemStatus.ARCHIVED}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <CustomFormField
+                    fieldType={FormFieldType.SELECT}
+                    control={form.control}
+                    name="posStatus"
+                    label="Status *"
+                    placeholder="Select product status">
+                  <SelectItem value={POSItemStatus.DRAFT}>{POSItemStatus.DRAFT}</SelectItem>
+                  <SelectItem value={POSItemStatus.ACTIVE}>{POSItemStatus.ACTIVE}</SelectItem>
+                  <SelectItem value={POSItemStatus.ARCHIVED}>{POSItemStatus.ARCHIVED}</SelectItem>
+                </CustomFormField>
               </CardContent>
             </Card>
             <Card>
@@ -467,32 +333,24 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-6">
-                  <FormField
-                    control={control}
-                    name="branch"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Branch *</FormLabel>
-                        <FormControl>
-                          <BranchSelector {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <CustomFormField
+                      fieldType={FormFieldType.CUSTOM_SELECTOR}
+                      control={form.control}
+                      name="branch"
+                      label="Branch *"
+                      renderSkeleton={(field) => (
+                          <BranchSelector value={field.value} onChange={field.onChange}/>
+                      )}
                   />
 
-                  <FormField
-                    control={control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Department *</FormLabel>
-                        <FormControl>
-                          <DepartmentSelector {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <CustomFormField
+                      fieldType={FormFieldType.CUSTOM_SELECTOR}
+                      control={form.control}
+                      name="department"
+                      label="Department *"
+                      renderSkeleton={(field) => (
+                          <DepartmentSelector value={field.value} onChange={field.onChange}/>
+                      )}
                   />
                 </div>
               </CardContent>
@@ -503,22 +361,14 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                 <CardTitle>Product modifiers</CardTitle>
               </CardHeader>
               <CardContent>
-                <FormField
-                  control={control}
-                  name="modifier"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Modifiers</FormLabel>
-                      <FormControl>
-                        <ModifierSelector
-                          placeholder="Select modifier"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>Modifiers selected here will be applied to the product during sale</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <CustomFormField
+                    fieldType={FormFieldType.CUSTOM_SELECTOR}
+                    control={form.control}
+                    name="modifier"
+                    label="Modifiers"
+                    renderSkeleton={(field) => (
+                        <ModifierSelector value={field.value} onChange={field.onChange}/>
+                    )}
                 />
               </CardContent>
             </Card>
@@ -532,32 +382,27 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-2">
-                  {/*<FormField*/}
-                  {/*  control={control}*/}
-                  {/*  name="image"*/}
-                  {/*  render={({ field }) => (*/}
-                  {/*    <FormItem>*/}
-                  {/*      <FormControl>*/}
-                  {/*        <Input*/}
-                  {/*          type="file"*/}
-                  {/*          placeholder="Product image"*/}
-                  {/*          {...field}*/}
-                  {/*        />*/}
-                  {/*      </FormControl>*/}
-                  {/*      <FormMessage />*/}
-                  {/*    </FormItem>*/}
-                  {/*  )}*/}
-                  {/*/>*/}
+                  <CustomFormField
+                      fieldType={FormFieldType.SKELETON}
+                      control={form.control}
+                      name="image"
+                      label="Upload product image"
+                      renderSkeleton={(field) => (
+                          <FormControl>
+                            <FileUploader files={field.value} onChange={field.onChange}/>
+                          </FormControl>
+                      )}
+                  />
                 </div>
               </CardContent>
             </Card>
           </div>
-        </div>
 
-        <div className="flex h-5 items-center space-x-4">
-          <CancelButton />
-          <Separator orientation="vertical" />
-          <SubmitButton loading={isLoading} label={item ? "Update product" : "Save product"} />
+          <div className="flex h-5 items-center space-x-4">
+            <CancelButton/>
+            <Separator orientation="vertical"/>
+            <SubmitButton loading={isLoading} label={item ? "Update product" : "Save product"}/>
+          </div>
         </div>
       </form>
     </Form>
@@ -569,6 +414,6 @@ export default ProductForm;
 function uuidv4() {
   const crypto = require('crypto');
   return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-    (c ^ crypto.randomFillSync(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+      (c ^ crypto.randomFillSync(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
   );
 }

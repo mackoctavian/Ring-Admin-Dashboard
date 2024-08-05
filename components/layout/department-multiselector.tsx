@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useEffect, useState } from 'react';
 import MultipleSelector, { Option } from '@/components/ui/multiple-selector';
 import { list } from '@/lib/actions/department.actions';
@@ -5,7 +7,7 @@ import { Department } from '@/types';
 import { ReloadIcon } from "@radix-ui/react-icons"
 
 interface Props {
-  value?: string[];
+  value?: Department[];
   onChange: (value: string[]) => void;
 }
 
@@ -52,7 +54,9 @@ const DepartmentSelector: React.FC<Props> = ({ value = [], onChange }) => {
     return filteredOptions;
   };
 
-  const selectedOptions = options.filter(option => value.includes(option.value));
+  const selectedOptions = options.filter(option =>
+      value.some(department => department.$id === option.value)
+  );
 
   return (
       <MultipleSelector

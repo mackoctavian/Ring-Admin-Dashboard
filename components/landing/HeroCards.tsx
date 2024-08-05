@@ -1,8 +1,8 @@
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {Button, buttonVariants} from "@/components/ui/button";
+import {buttonVariants} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
-import {AppleIcon, Check, TabletSmartphoneIcon} from "lucide-react";
+import {Check, TabletSmartphoneIcon} from "lucide-react";
 
 export const HeroCards = () => {
     return (
@@ -11,13 +11,13 @@ export const HeroCards = () => {
             <Card className="absolute w-[340px] -top-[15px] drop-shadow-xl shadow-black/10 dark:shadow-white/10">
                 <CardHeader className="flex flex-row items-center gap-4 pb-2">
                     <Avatar>
-                        <AvatarImage alt="John Doe" src="https://github.com/shadcn.png"/>
-                        <AvatarFallback>JD</AvatarFallback>
+                        <AvatarImage alt="Mohammed Awami" src="https://github.com/shadcn.png"/>
+                        <AvatarFallback>AK</AvatarFallback>
                     </Avatar>
 
                     <div className="flex flex-col">
-                        <CardTitle className="text-lg">John Doe</CardTitle>
-                        <CardDescription>@john_doe</CardDescription>
+                        <CardTitle className="text-lg">Anthony Kabaka</CardTitle>
+                        <CardDescription>@akabaka</CardDescription>
                     </div>
                 </CardHeader>
 
@@ -45,13 +45,13 @@ export const HeroCards = () => {
             <Card className="absolute top-[190px] left-[50px] w-72  drop-shadow-xl shadow-black/10 dark:shadow-white/10">
                 <CardHeader>
                     <CardTitle className="flex item-center justify-between">
-                        Starter
+                        Premium
                         <Badge variant="secondary" className="text-sm text-primary">
                             Most popular
                         </Badge>
                     </CardTitle>
                     <div>
-                        <span className="text-3xl font-bold">$50</span>
+                        <span className="text-3xl font-bold">$49.99</span>
                         <span className="text-muted-foreground"> /month</span>
                     </div>
 
@@ -76,11 +76,11 @@ export const HeroCards = () => {
 
                 <CardFooter className="flex">
                     <div className="space-y-4">
-                        {["Manage 2 Branches", "Unlimited Products", "4 Users Included"].map(
+                        {["Manage unlimited branches", "Unlimited products & services", "20 users included"].map(
                             (benefit: string) => (
                                 <span key={benefit} className="flex">
                                     <Check className="text-green-500" />{" "}
-                                    <h3 className="ml-2">{benefit}</h3>
+                                    <p className="ml-2">{benefit}</p>
                                 </span>
                             )
                         )}
@@ -95,7 +95,7 @@ export const HeroCards = () => {
                         <TabletSmartphoneIcon />
                     </div>
                     <div>
-                        <CardTitle>Free POS app</CardTitle>
+                        <CardTitle>Free mobile POS app</CardTitle>
                         <CardDescription className="text-md mt-2">
                             Simplify your sales with our free, user-friendly Point of Sale app. Manage transactions, track inventory, and gain insights on the go.
                         </CardDescription>

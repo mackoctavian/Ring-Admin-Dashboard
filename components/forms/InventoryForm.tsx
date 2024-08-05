@@ -58,10 +58,12 @@ const InventoryForm = ({ item }: { item?: Inventory | null }) => {
       title: "Uh oh! Something went wrong.",
       description: "There was an issue submitting your form, please try later",
     });
+    console.error(JSON.stringify(errors))
   }, [toast]);
 
   const onSubmit = useCallback(async (data) => {
     setIsLoading(true);
+
     try {
       if (isEditMode && item?.$id) {
         await updateItem(item.$id, data);

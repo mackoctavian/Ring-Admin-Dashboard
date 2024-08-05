@@ -11,15 +11,15 @@ interface NoItemsProps {
 
 export default function NoItems({ newItemUrl, itemName }: NoItemsProps) {
     return (
-        <div className='h-[calc(100vh-220px)] border border-dashed'>
+        <div className='h-[calc(100vh-240px)] border border-dashed'>
             <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
-                <h1 className='text-[1.5rem] font-bold leading-tight'>You have no {itemName}(s)</h1>
+                <h1 className='text-[1.5rem] font-bold leading-tight'>No {itemName} data found</h1>
                 <p className='text-sm text-center text-muted-foreground'>
-                    You do not have any {itemName}(s) in your records, add {itemName}(s) to start viewing data.
+                    There are no {itemName} records found at the moment, add new {itemName} record to start viewing data.
                 </p>
                 <div className='mt-6 flex gap-4'>
                     <Link href={newItemUrl} className={cn(buttonVariants({ variant: "default" }))} >
-                        <Plus className="mr-2 h-4 w-4" /> Add {itemName}(s)
+                        <Plus className="mr-2 h-4 w-4" /> Add {itemName}
                     </Link>
                 </div>
             </div>

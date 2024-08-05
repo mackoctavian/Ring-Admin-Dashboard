@@ -25,7 +25,6 @@ export default async function Page({ searchParams }: ParamsProps) {
   const q = searchParams.search?.toString() || null;  
   const offset = (page - 1) * pageLimit;
 
-
   const data : Modifier[] = await getItems(q?.toString(), null, pageLimit, offset);
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);

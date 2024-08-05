@@ -1,13 +1,8 @@
 'use server';
 
-import {databaseCheck} from "@/lib/utils/actions-service";
-
-const env = process.env.NODE_ENV;
-
-import * as Sentry from "@sentry/nextjs";
-import {AppwriteException, ID, InputFile, Query} from "node-appwrite";
-import {getStatusMessage, HttpStatusCode} from '../status-handler';
-import {createAdminClient, createSaaSAdminClient, createStorageClient} from "../appwrite";
+import {databaseCheck, handleError, saasDatabaseCheck} from "@/lib/utils/actions-service";
+import {ID, InputFile, Query} from "node-appwrite";
+import {createAdminClient, createStorageClient} from "../appwrite";
 import {parseStringify} from "../utils";
 import {Business, RegisterBusinessParams, SubscriptionDetails, User} from "@/types";
 import {auth, clerkClient, currentUser} from "@clerk/nextjs/server";
@@ -23,59 +18,13 @@ const {
     APPWRITE_PROJECT,
     APPWRITE_DATABASE: DATABASE_ID,
     BUSINESS_COLLECTION: BUSINESS_COLLECTION_ID,
-    BUSINESS_CATEGORY_COLLECTION: BUSINESS_CATEGORY_COLLECTION_ID,
+    BUSINESS_TYPE_COLLECTION: BUSINESS_TYPE_COLLECTION_ID,
     USER_COLLECTION: USER_COLLECTION_ID,
-    APPWRITE_SAAS_DATABASE: SAAS_DATABASE_ID,
     SUBSRIBERS_COLLECTION: SUBSCRIBERS_COLLECTION_ID,
     APPWRITE_BUCKET: APPWRITE_BUCKET,
     TRIAL_DAYS,
     SUBSCRIPTION_COST
 } = process.env;
-
-const handleError = (error: any) => {
-    let errorMessage = 'Something went wrong with your request, please try again later.'
-    if (error instanceof AppwriteException) { errorMessage = getStatusMessage(error.code as HttpStatusCode) }
-
-    if (env === "development") { console.error(error) } else { Sentry.captureException(error) }
-
-    throw Error(errorMessage);
-}
-
-const checkRequirements = async () => {
-    if (!DATABASE_ID || !BUSINESS_COLLECTION_ID) {
-        throw new Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-    if (!database) throw new Error('Database client could not be initiated');
-
-    const { userId } = auth();
-    if (!userId) {
-        throw new Error('You must be signed in to use this feature');
-    }
-
-    // const businessId = await getBusinessId();
-    // if (!businessId) throw new Error('Business ID could not be initiated');
-
-    return { database, userId };
-}
-
-export const getCurrentBusiness = async () => {
-    try {
-        const { database, businessId, databaseId, collectionId } = await databaseCheck(BUSINESS_COLLECTION_ID);
-        //const businessId = await getBusinessId();
-        //const { database } = await checkRequirements();
-        const item = await database.getDocument(
-            databaseId,
-            collectionId,
-            businessId
-        );
-
-        return parseStringify(item);
-    } catch (error) {
-        handleError(error);
-    }
-}
 
 export const getBusinessId = async () => {
     try {
@@ -94,7 +43,7 @@ export const getBusinessId = async () => {
             [Query.equal('orgId', [orgId!])]
         );
 
-        if (item.total < 1) return null;
+        if (item.total == 0) return null;
 
         const business: Business = parseStringify(item.documents[0]);
         const businessId = business.$id;
@@ -111,15 +60,16 @@ export const getBusinessId = async () => {
 }
 
 export const getBusiness = async () => {
-    try {
-        const { database, userId } = await checkRequirements();
-        const business = await database.listDocuments(
-            DATABASE_ID!,
-            BUSINESS_COLLECTION_ID!,
-            [Query.equal('authId', [userId])]
-        );
+    const { database, databaseId, userId, collectionId } = await databaseCheck(BUSINESS_COLLECTION_ID, { needsUserId: true });
 
-        if ( business.total < 1 ) return null;
+    try {
+        const business = await database.listDocuments(
+            databaseId!,
+            collectionId!,
+            [Query.equal('authId', [userId!])]
+        )
+
+        if ( business.total == 0 ) return null;
 
         return parseStringify(business.documents[0]);
     } catch (error) {
@@ -128,20 +78,16 @@ export const getBusiness = async () => {
 }
 
 export const getSubscription = async () => {
-    try {
-        const businessId = await getBusinessId();
-        if (!SAAS_DATABASE_ID || !SUBSCRIBERS_COLLECTION_ID) {
-            throw new Error('SaaS Database ID or Subscribers Collection ID is missing');
-        }
+    const { database, businessId, databaseId, collectionId } = await saasDatabaseCheck(SUBSCRIBERS_COLLECTION_ID, { needsBusinessId: true });
 
-        const { database } = await createSaaSAdminClient();
+    try {
         const item = await database.listDocuments(
-            SAAS_DATABASE_ID,
-            SUBSCRIBERS_COLLECTION_ID,
-            [Query.equal('businessId', businessId as string)]
+            databaseId,
+            collectionId,
+            [Query.equal('businessId', businessId!)]
         );
 
-        if (item.total < 1) return null
+        if (item.total == 0) return null
 
         return parseStringify(item.documents[0]) as SubscriptionDetails;
     } catch (error) {
@@ -149,28 +95,18 @@ export const getSubscription = async () => {
     }
 }
 
-export const getBusinessInfo = async ({ user }: { user: string }) => {
-    try {
-        const { database } = await createAdminClient();
-        const business = await database.listDocuments(
-            DATABASE_ID!,
-            BUSINESS_COLLECTION_ID!,
-            [Query.equal('userId', [user])]
-        );
-        return parseStringify(business.documents[0]);
-    } catch (error) {
-        handleError(error);
-    }
-}
-
 export const getBusinessTypes = async () => {
+    const { database, databaseId, collectionId } = await saasDatabaseCheck(BUSINESS_TYPE_COLLECTION_ID);
+
     try {
-        const { database } = await createAdminClient();
         const data = await database.listDocuments(
-            DATABASE_ID!,
-            BUSINESS_CATEGORY_COLLECTION_ID!,
+            databaseId,
+            collectionId,
     [ Query.orderAsc("name") ]
-        );
+        )
+
+        if ( data.total == 0 ) return null;
+
         return parseStringify(data.documents);
     } catch (error) {
         handleError(error);
@@ -204,14 +140,15 @@ export const uploadFile = async (file: FormData) => {
 }
 
 export const initTrial = async (businessId: string, data: User) => {
+    const { database, databaseId, collectionId } = await saasDatabaseCheck(SUBSCRIBERS_COLLECTION_ID);
+
     try {
-        const { database } = await createSaaSAdminClient();
         const trialEndDate = addDays(new Date(), parseInt(TRIAL_DAYS!, 10));
         const subscriptionCost = parseFloat(SUBSCRIPTION_COST!);
 
         await database.createDocument(
-            SAAS_DATABASE_ID!,
-            SUBSCRIBERS_COLLECTION_ID!,
+            databaseId,
+            collectionId,
             ID.unique(),
             {
                 businessId,
@@ -231,11 +168,11 @@ export const initTrial = async (businessId: string, data: User) => {
 
 export const registerBusiness = async ({ logo, ...business }: RegisterBusinessParams)=> {
     let logoUrl;
+    const { database, databaseId, collectionId } = await databaseCheck(USER_COLLECTION_ID);
 
     try {
         const generatedSlug = business.name.toLowerCase().replace(/\s+/g, '-');
 
-        const { database } = await createAdminClient();
         const user = await currentUser();
         if (!user) { return { error: "User data could not be loaded" }; }
 
@@ -244,10 +181,19 @@ export const registerBusiness = async ({ logo, ...business }: RegisterBusinessPa
             createdBy: user.id,
         });
 
+        //Update user's name on clerk, since not available on free version
+        clerkClient.users.updateUser(
+            user.id,
+    {
+                firstName: business.firstName,
+                lastName: business.lastName
+            }
+        )
+
         // Persist business owner details
         const newBusinessOwner = await database.createDocument(
-            DATABASE_ID!,
-            USER_COLLECTION_ID!,
+            databaseId,
+            collectionId,
             ID.unique(),
             {
                 email: user.primaryEmailAddress?.emailAddress.trim(),
@@ -289,7 +235,7 @@ export const registerBusiness = async ({ logo, ...business }: RegisterBusinessPa
         // Persist business details
         const { firstName, lastName, termsConsent, ...createBusinessObj } = business;
         const newBusiness = await database.createDocument(
-            DATABASE_ID!,
+            databaseId,
             BUSINESS_COLLECTION_ID!,
             ID.unique(),
             {
@@ -330,14 +276,18 @@ export const registerBusiness = async ({ logo, ...business }: RegisterBusinessPa
 }
 
 export const updateItem = async (id: string, data: Business) => {
+    if( !id || !data) return null;
+
+    const { database, databaseId, collectionId } = await databaseCheck(BUSINESS_COLLECTION_ID);
+
     try {
-        const { database } = await createAdminClient();
         const item = await database.updateDocument(
-            DATABASE_ID!,
-            BUSINESS_COLLECTION_ID!,
+            databaseId,
+            collectionId,
             id,
             data
-        );
+        )
+
         return parseStringify(item);
     } catch (error) {
         handleError(error);

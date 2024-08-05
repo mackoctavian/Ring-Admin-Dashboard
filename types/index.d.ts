@@ -92,7 +92,7 @@ declare type User = {
 };
 
 declare type Business = {
-  $id?: string;
+  $id: string;
   name: string;
   currency: string;
   logo: FormData | undefined;
@@ -185,7 +185,7 @@ declare type Category = {
 
 /* Discount */
 declare type Discount = {
-  $id?: string;
+  $id: string;
   name: string;
   code?: string;
   type: DiscountType;
@@ -402,7 +402,7 @@ declare type Supplier = {
 /* Staff */
 
 declare type Staff = {
-  $id?: string;
+  $id: string;
   firstName: string;
   lastName: string;
   email?: string;
@@ -419,7 +419,7 @@ declare type Staff = {
   address?: string;
   notes?: string;
   department?: string[];
-  branch?: string[];
+  branch?: Branch[];
   image: FormData | undefined;
   businessId?: string;
   status: boolean;

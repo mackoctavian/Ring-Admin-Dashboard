@@ -13,7 +13,7 @@ const {
   } = process.env;
 
 export const createItem = async (item: Device) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID, {needsBusinessId: true});
 
   try {
     await database.createDocument(
@@ -37,7 +37,7 @@ export const createItem = async (item: Device) => {
 }
 
 export const list = async ( ) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID, {needsBusinessId: true});
 
   try {
     const items = await database.listDocuments(
@@ -45,7 +45,7 @@ export const list = async ( ) => {
       collectionId,
       [
         Query.orderAsc("$createdAt"),
-        Query.equal('businessId', businessId)
+        Query.equal('businessId', businessId!)
       ]
     )
 
@@ -65,11 +65,11 @@ export const getItems = async (
     offset?: number | 1,
   ) => {
 
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID, {needsBusinessId: true});
     try {
        const queries = [];
 
-       queries.push(Query.equal('businessId', [businessId]));
+       queries.push(Query.equal('businessId', [businessId!]));
        queries.push(Query.orderDesc("$createdAt"));
 
        if ( limit ) {
@@ -101,7 +101,7 @@ export const getItems = async (
 
   export const getItem = async (id: string) => {
     if (!id) return null;
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
+    const { database, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
 
     try {
       const item = await database.listDocuments(
@@ -120,7 +120,7 @@ export const getItems = async (
 
   export const deleteItem = async ({ $id }: Device) => {
     if (!$id) return null;
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
+    const { database, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
 
     try {
       await database.deleteDocument(
@@ -138,7 +138,7 @@ export const getItems = async (
 
 export const updateItem = async (id: string, data: Device) => {
   if (!id || !data ) return null;
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
+  const { database, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
 
   try {
     await database.updateDocument(

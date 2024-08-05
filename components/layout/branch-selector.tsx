@@ -48,14 +48,15 @@ const BranchSelector: React.FC<Props> = ({ value, onChange }) => {
     return <div className={`text-sm text-destructive-foreground`}>Error: could not load branches</div>;
   }
 
-
   return (
       <Select
           value={value || 'default'}
           onValueChange={handleSelectChange}>
         <SelectTrigger>
           <SelectValue>
-            {value ? branches.find(branch => branch.$id === value)?.name || 'Select branch' : 'Select branch'}
+            { //@ts-ignore
+              value ? branches.find(branch => branch.$id === value.$id)?.name || 'Select branch' : 'Select branch'
+            }
           </SelectValue>
         </SelectTrigger>
         <SelectContent>

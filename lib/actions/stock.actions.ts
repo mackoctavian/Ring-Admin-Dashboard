@@ -17,7 +17,7 @@ const {
 } = process.env;
 
 export const createItem = async (items: Stock[]) => {
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(STOCK_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(STOCK_COLLECTION_ID, {needsBusinessId: true});
     const alarmQuantity = ALARM_QUANTITY || 10;
 
   try {
@@ -110,13 +110,13 @@ export const createItem = async (items: Stock[]) => {
 
 // List items
 export const list = async ( ) => {
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(STOCK_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(STOCK_COLLECTION_ID, {needsBusinessId: true});
 
     try {
       const items = await database.listDocuments(
         databaseId,
         collectionId,
-        [Query.equal('businessId', businessId)],
+        [Query.equal('businessId', businessId!)],
       );
 
       if (items.documents.length == 0) return null
@@ -137,11 +137,11 @@ export const getItems = async (
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(STOCK_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(STOCK_COLLECTION_ID, {needsBusinessId: true});
 
     try {
       const queries = [];
-      queries.push(Query.equal('businessId', businessId));
+      queries.push(Query.equal('businessId', businessId!));
       queries.push(Query.orderDesc("$createdAt"));
 
       if ( limit ) {
@@ -173,18 +173,18 @@ export const getItems = async (
 
 export const getItem = async (id: string) => {
     if (!id) return null;
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(STOCK_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(STOCK_COLLECTION_ID, {needsBusinessId: true});
     try {
         const item = await database.listDocuments(
           databaseId,
           collectionId,
           [
             Query.equal('$id', id),
-            Query.equal('businessId', businessId)
+            Query.equal('businessId', businessId!)
           ]
         )
 
-        if ( item.total < 1 ) return null;
+        if ( item.total == 0 ) return null;
 
         return parseStringify(item.documents[0]);
     } catch (error: any) {

@@ -12,10 +12,11 @@ export default async function StaffPage({ params }: { params: { id: string } }) 
     if (!isNewItem) {
         try {
             item = await getItem(params.id);
-            if (!item) notFound();
         } catch (error) {
             throw new Error("Failed to load staff data");
         }
+
+        if (!item) notFound()
     }
 
     const breadcrumbItems = [{ title: "Staff", link: "/dashboard/staff" }, { title: isNewItem ? "New" : item?.firstName || "Edit", link: "" }];

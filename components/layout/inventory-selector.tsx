@@ -18,34 +18,41 @@ interface Props {
 
 const InventorySelector: React.FC<Props> = ({ value, onChange }) => {
   const [inventory, setInventory] = useState<InventoryVariant[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchInventory() {
       try {
+        setIsLoading(true);
         const inventoryData = await listVariants();
-        setInventory(inventoryData);
-      } catch (error) {
-        console.error('Error fetching inventory:', error);
+        setInventory(inventoryData || []); // Ensure it's always an array
+        setError(null);
+      } catch (error: any) {
+        setError("Failed to load inventory");
+        console.error("Error fetching inventory:", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
     fetchInventory();
   }, []);
 
   const handleSelectChange = (selectedId: string) => {
-    onChange(selectedId);
+    onChange(selectedId === 'default' ? '' : selectedId);
   };
 
+  // Safely find the selected inventory item
   const selectedInventory = inventory.find(inv => inv.$id === value);
 
   // Group inventory items by a property (e.g., Inventory)
   const groupedInventory = inventory.reduce((groups, item) => {
-    if (!groups[item.inventory.title]) {
-      groups[item.inventory.title] = [];
+    if (item && item.inventory && item.inventory.title) {
+      if (!groups[item.inventory.title]) {
+        groups[item.inventory.title] = [];
+      }
+      groups[item.inventory.title].push(item);
     }
-    groups[item.inventory.title].push(item);
     return groups;
   }, {} as { [key: string]: InventoryVariant[] });
 
@@ -54,16 +61,24 @@ const InventorySelector: React.FC<Props> = ({ value, onChange }) => {
     return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
   };
 
+  if (isLoading) {
+    return <div className={`text-sm text-muted-foreground`}>Loading stock items...</div>;
+  }
+
+  if (error) {
+    return <div className={`text-sm text-destructive-foreground`}>Error: could not load stock items</div>;
+  }
+
   return (
-      <Select value={value || 'default'} onValueChange={handleSelectChange} disabled={loading}>
+      <Select value={value || 'default'} onValueChange={handleSelectChange}>
         <SelectTrigger>
           <SelectValue>
-            {loading ? 'Loading...' : (selectedInventory ? selectedInventory.fullName : 'Select inventory item')}
+            {value ? selectedInventory?.fullName || 'Select stock item' : 'Select stock item'}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="default" disabled>
-            Select inventory item
+            Select stock item
           </SelectItem>
           {Object.keys(groupedInventory).map(category => (
               <SelectGroup key={category}>

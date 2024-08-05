@@ -18,31 +18,35 @@ interface Props {
 
 const StaffSelector: React.FC<Props> = ({ value, onChange }) => {
   const [staffs, setStaff] = useState<Staff[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchStaff() {
       try {
+        setIsLoading(true);
         const staffData = await list();
-        setStaff(staffData);
-      } catch (error) {
-        console.error('Error fetching staff:', error);
+        setStaff(staffData || []); // Ensure it's always an array
+        setError(null);
+      } catch (error: any) {
+        setError("Failed to load staff");
+        console.error("Error fetching staff:", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
     fetchStaff();
   }, []);
 
   const handleSelectChange = (selectedId: string) => {
-    onChange(selectedId);
+    onChange(selectedId === 'default' ? '' : selectedId);
   };
 
   const selectedStaff = staffs.find(stf => stf.$id === value);
 
   // Group staff by branch
   const groupedStaff = staffs.reduce((groups, staff) => {
-    const branchName = staff.branch![0].name;
+    const branchName = staff.branch && staff.branch[0] ? staff.branch[0].name : 'Unassigned';
     if (!groups[branchName]) {
       groups[branchName] = [];
     }
@@ -50,11 +54,19 @@ const StaffSelector: React.FC<Props> = ({ value, onChange }) => {
     return groups;
   }, {} as { [key: string]: Staff[] });
 
+  if (isLoading) {
+    return <div className={`text-sm text-muted-foreground`}>Loading staff...</div>;
+  }
+
+  if (error) {
+    return <div className={`text-sm text-destructive-foreground`}>Error: could not load staff</div>;
+  }
+
   return (
-      <Select value={value || 'default'} onValueChange={handleSelectChange} disabled={loading}>
+      <Select value={value || 'default'} onValueChange={handleSelectChange}>
         <SelectTrigger>
           <SelectValue>
-            {loading ? 'Loading...' : (selectedStaff ? selectedStaff.name : 'Select staff member')}
+            {value ? selectedStaff?.firstName + " " + selectedStaff?.lastName || 'Select staff member' : 'Select staff member'}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -66,7 +78,7 @@ const StaffSelector: React.FC<Props> = ({ value, onChange }) => {
                 <SelectLabel>{branchName}</SelectLabel>
                 {branchStaff.map((staff) => (
                     <SelectItem key={staff.$id} value={staff.$id}>
-                      {staff.name}
+                      {staff.firstName + " " + staff.lastName || 'Un-named staff'}
                     </SelectItem>
                 ))}
               </SelectGroup>

@@ -1,7 +1,7 @@
 const env = process.env.NODE_ENV
 
 import * as Sentry from "@sentry/nextjs"
-import {createAdminClient} from "@/lib/appwrite"
+import {createAdminClient, createSaaSAdminClient} from "@/lib/appwrite"
 import {auth} from "@clerk/nextjs/server"
 import {getBusinessId} from "@/lib/actions/business.actions"
 import {AppwriteException} from "node-appwrite"
@@ -12,37 +12,91 @@ const {
     APPWRITE_SAAS_DATABASE: SAAS_DATABASE_ID
 } = process.env;
 
-export const databaseCheck = async (collectionId: string | undefined) => {
-    if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing')
-    const databaseId = DATABASE_ID
+export const databaseCheck = async (
+    collectionId: string | undefined,
+    options: {
+        needsDatabase?: boolean;
+        needsUserId?: boolean;
+        needsBusinessId?: boolean;
+    } = {}
+) => {
+    const result: {
+        database?: any;
+        userId?: string;
+        businessId?: string;
+        databaseId?: string;
+        collectionId?: string;
+    } = {};
 
-    const { database } = await createAdminClient()
-    if (!database) throw new Error('Database client could not be initiated')
-
-    const { userId } = auth()
-    if (!userId) throw new Error('You must be signed in to use this feature')
-
-    const businessId = await getBusinessId()
-    if( !businessId ) throw new Error('Business ID could not be initiated')
-
-    return { database, userId, businessId, databaseId, collectionId }
-}
-
-export const saasDatabaseCheck = async (collectionId: string | undefined) => {
-    if (!SAAS_DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
-
-    const { database } = await createAdminClient();
-    if (!database) throw new Error('Database client could not be initiated');
-
-    const { userId } = auth();
-    if (!userId) {
-        throw new Error('You must be signed in to use this feature');
+    if (!DATABASE_ID || !collectionId) {
+        throw new Error('Database ID or Collection ID is missing');
     }
 
-    const businessId = await getBusinessId();
-    if( !businessId ) throw new Error('Business ID could not be initiated');
+    result.databaseId = DATABASE_ID;
+    result.collectionId = collectionId;
 
-    return { database, userId, businessId };
+    //force return database data
+    const { database } = await createAdminClient();
+    if (!database) throw new Error('Database client could not be initiated');
+    result.database = database;
+
+    if (options.needsUserId) {
+        const { userId } = auth();
+        if (!userId) throw new Error('You must be signed in to use this feature');
+        result.userId = userId;
+    }
+
+    if (options.needsBusinessId) {
+        const businessId = await getBusinessId();
+        if (!businessId) throw new Error('Business ID could not be initiated');
+        result.businessId = businessId;
+    }
+
+    return result;
+}
+
+export const saasDatabaseCheck = async (
+    collectionId: string | undefined,
+    options: {
+        needsDatabase?: boolean;
+        needsUserId?: boolean;
+        needsBusinessId?: boolean;
+    } = {}
+) => {
+    const result: {
+        database?: any;
+        userId?: string;
+        businessId?: string;
+        databaseId?: string;
+        collectionId?: string;
+    } = {};
+
+    if (!SAAS_DATABASE_ID || !collectionId) {
+        throw new Error('Database ID or Collection ID is missing');
+    }
+
+    //force return database id and collection
+    result.databaseId = SAAS_DATABASE_ID;
+    result.collectionId = collectionId;
+
+    //force return database
+    const { database } = await createSaaSAdminClient();
+    if (!database) throw new Error('Database client could not be initiated');
+    result.database = database;
+
+    if (options.needsUserId) {
+        const { userId } = auth();
+        if (!userId) throw new Error('You must be signed in to use this feature');
+        result.userId = userId;
+    }
+
+    if (options.needsBusinessId) {
+        const businessId = await getBusinessId();
+        if (!businessId) throw new Error('Business ID could not be initiated');
+        result.businessId = businessId;
+    }
+
+    return result;
 }
 
 export const handleError = (error: any, message?: string) => {

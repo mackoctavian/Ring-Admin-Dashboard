@@ -12,11 +12,11 @@ export default async function InventoryPage({ params }: { params: { id: string }
     if (!isNewItem) {
         try {
             item = await getItem(params.id);
-            if (!item) notFound();
         } catch (error) {
-            console.error("Error loading data:", error);
-            throw new Error("Failed to load stock item data");
+            throw new Error("Failed to load inventory data");
         }
+
+        if (!item) notFound()
     }
 
     const breadcrumbItems = [{ title: "Stock", link: "/dashboard/stock" }, { title: isNewItem ? "New" : item?.title || "Edit", link: "" }];

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
 import {Form} from "@/components/ui/form";
-import { Supplier } from "@/types";
+import {Supplier} from "@/types";
 import { createItem, updateItem } from "@/lib/actions/supplier.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
@@ -16,16 +16,15 @@ import BranchSelector from "../layout/branch-multiselector";
 import { SubmitButton } from "@/components/ui/submit-button"
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 
-const SupplierForm = ({ item }: { item?: Supplier }) => {
+const SupplierForm = ({ item }: { item?: Supplier | null }) => {
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast()
 
     const form = useForm<z.infer<typeof SupplierSchema>>({
         resolver: zodResolver(SupplierSchema),
-        defaultValues: item ? item : {
-            status: false,
-            description: ''
-        },
+        //handle nullable inputs
+        //@ts-ignore
+        defaultValues: item ? { ...item, description: item.description ?? '', branch: [item.branch.$id] ?? [], address: item.address ?? '' }: {}
     });
 
     const onInvalid = (errors : any ) => {

@@ -24,7 +24,7 @@ const updateExpenseStatus = (balance: number, amount: number) => {
 }
 
 export const createItem = async (item: ExpenseDto) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID)
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID, {needsBusinessId: true})
 
   try {
       await database.createDocument(
@@ -46,9 +46,9 @@ export const createItem = async (item: ExpenseDto) => {
 }
 
 export const list = async ( status?: string ) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID)
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID, {needsBusinessId: true})
   const queries = [];
-  queries.push(Query.equal("businessId", businessId));
+  queries.push(Query.equal("businessId", businessId!));
   queries.push(Query.orderDesc("$createdAt"));
 
   if( status === "INCOMPLETE"){
@@ -79,11 +79,11 @@ export const getItems = async (
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID)
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID, {needsBusinessId: true})
 
     try {
       const queries = [];
-      queries.push(Query.equal("businessId", businessId));
+      queries.push(Query.equal("businessId", businessId!));
       queries.push(Query.orderDesc("$createdAt"));
 
       if ( limit ) {
@@ -115,14 +115,14 @@ export const getItems = async (
 
 export const getItem = async (id: string) => {
   if (!id) return null;
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID)
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID, {needsBusinessId: true})
   try {
     const item = await database.listDocuments(
       databaseId,
       collectionId,
       [
         Query.equal('$id', id),
-        Query.equal('businessId', businessId),
+        Query.equal('businessId', businessId!),
       ]
     )
 
@@ -136,7 +136,7 @@ export const getItem = async (id: string) => {
 
 export const deleteItem = async ({ $id }: Expense) => {
   if (!$id) return null;
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID)
+  const { database, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID)
 
   try {
     const item = await database.deleteDocument(
@@ -153,7 +153,7 @@ export const deleteItem = async ({ $id }: Expense) => {
 
 export const updateItem = async (id: string, data: ExpenseDto) => {
   if (!id || !data) return null;
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID)
+  const { database, databaseId, collectionId } = await databaseCheck(EXPENSES_COLLECTION_ID)
 
   const itemBeforeUpdate = await getItem(id)
   if ( !itemBeforeUpdate ) throw new Error("Could not update expense");
@@ -183,7 +183,7 @@ export const updateItem = async (id: string, data: ExpenseDto) => {
 }
 
 export const recordPayment = async (data: ExpensePayment) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSE_PAYMENTS_COLLECTION_ID)
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(EXPENSE_PAYMENTS_COLLECTION_ID, {needsBusinessId: true})
 
   const expenseData = await getItem(data.expense)
   if ( !expenseData ) return null;

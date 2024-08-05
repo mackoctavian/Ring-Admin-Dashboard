@@ -43,7 +43,6 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
   const onSubmit = async (data: z.infer<typeof BusinessSchema>) => {
     setIsLoading(true);
 
-
       // Store file info in form data as
       let formData;
 
@@ -59,6 +58,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
       }
 
     try {
+      //@ts-ignore
       await updateItem(item!.$id, data);
 
       toast({
@@ -98,7 +98,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
                   label="Slug ( Auto-generated ) *"
                   placeholder="Slug"
               />
-              
+
               <CustomFormField
                   fieldType={FormFieldType.INPUT}
                   control={form.control}

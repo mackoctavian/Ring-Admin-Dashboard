@@ -32,19 +32,30 @@ export const columns: ColumnDef<InventoryVariant>[] = [
     header: "Stock item",
   },
   {
-    id: "packaging",
-    accessorKey: "inventory.packaging",
-    header: "Packaging",
-  },
-  {
     header: "Quantity",
     id: "quantity",
-    cell: ({ row }) => <NumberColumn value={row.original.quantity} />,
+    cell: ({ row }) => {
+      const quantity = row.original.quantity;
+      const packaging = row.original.inventory?.packaging;
+      const suffix = packaging ? `${packaging}${quantity === 1 ? '' : 's'}` : undefined;
+
+      return <NumberColumn value={quantity} suffix={suffix} />;
+    },
   },
   {
-    header: "Value",
-    id: "value",
+    header: "Total items count",
+    id: "itemsCount",
+    cell: ({ row }) => <NumberColumn value={row.original.itemsPerPackage * row.original.quantity} />,
+  },
+  {
+    header: "Total value",
+    id: "totalValue",
     cell: ({ row }) => <MoneyColumn value={row.original.value} />,
+  },
+  {
+    header: "Value per item",
+    id: "itemValue",
+    cell: ({ row }) => <MoneyColumn value={row.original.value / row.original.quantity} />,
   },
   {
     accessorKey: "status",

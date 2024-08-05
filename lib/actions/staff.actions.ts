@@ -3,26 +3,20 @@
 import {databaseCheck, handleError} from "@/lib/utils/actions-service";
 import { ID, Query } from "node-appwrite";
 import { parseStringify } from "../utils";
-import { Staff, User, Business } from "@/types";
-import { getCurrentBusiness } from "./business.actions";
+import { Staff, User } from "@/types";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { createUser } from "./user.actions"
-import {id} from "date-fns/locale";
-import {Gender} from "@/types/data-schemas";
 const {
     STAFF_COLLECTION: STAFF_COLLECTION_ID,
     SITE_URL: SITE_URL
 } = process.env;
 
 export const createItem = async (item: Staff) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID);
+  const { database, businessId, userId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID, { needsBusinessId: true, needsUserId: true });
 
     try {
-      const { userId } = auth();
-      if (!userId) return null;
-
       //Send invite to user
       if ( item.dashboardAccess ) {
         const { orgId } = auth()
@@ -47,10 +41,12 @@ export const createItem = async (item: Staff) => {
             isOwner: false,
             termsConsent: true
           }
+
+          //@ts-ignore
           await createUser(user);
 
           try{
-            clerkClient.users.getUser(userId).then((user) => {
+            clerkClient.users.getUser(userId!).then((user) => {
               clerkClient.users.getOrganizationMembershipList({ userId: user.id} ).then((organization) => {
                 //TODO: Allow multiple organizations
                 const invitation = {
@@ -91,7 +87,7 @@ export const createItem = async (item: Staff) => {
   }
 
 export const list = async ( ) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID, { needsBusinessId: true });
 
   try {
     const items = await database.listDocuments(
@@ -115,13 +111,13 @@ export const list = async ( ) => {
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID, { needsBusinessId: true });
   
     try {
       
       const queries = [];
 
-      queries.push(Query.equal('businessId', businessId));
+      queries.push(Query.equal('businessId', businessId!));
       queries.push(Query.orderDesc("$createdAt"));
       queries.push(Query.orderAsc("firstName"));
 
@@ -155,7 +151,7 @@ export const list = async ( ) => {
 
   export const getItem = async (id: string) => {
     if (!id) return null;
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID);
+    const { database, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID);
 
     try {
       const item = await database.listDocuments(
@@ -173,8 +169,8 @@ export const list = async ( ) => {
   }
 
   export const deleteItem = async ({ $id }: Staff) => {
-    if (!id) return null;
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID);
+    if (!$id) return null;
+    const { database, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID);
 
     try {
       const item = await database.deleteDocument(
@@ -188,10 +184,9 @@ export const list = async ( ) => {
 
   export const updateItem = async (id: string, data: Staff) => {
     if (!id || !data) return null;
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID);
-    try {
-      const business: Business = await getCurrentBusiness();
+    const { database, databaseId,businessId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID, { needsBusinessId: true });
 
+    try {
       const { userId } = auth();
       if (!userId) return null;
 
@@ -213,13 +208,15 @@ export const list = async ( ) => {
                   organizationId: organization.data[0].organization.id,
                 },
               };
-  
+
+              //@ts-ignore
               const invitationRespone = clerkClient.organizations.createOrganizationInvitation(invitation);
 
               invitationRespone.then((response) => {
                 const userDetails: User = { 
-                  name: data.name,
-                  email: data.email, 
+                  firstName: data.firstName,
+                  lastName: data.lastName,
+                  email: data.email!,
                   phoneNumber: data.phoneNumber,
                   dateOfBirth: data.dateOfBirth,
                   gender: data.gender,
@@ -227,8 +224,11 @@ export const list = async ( ) => {
                   status: true,
                   points:0, 
                   isOwner: false, 
-                  businesses: [business], 
-                  userId: response.id  
+                  business: businessId!,
+                  userId: response.id,
+                  name: data.firstName + ' '+data.lastName,
+                  orgId: organization.data[0].organization.id,
+                  termsConsent: true
                 }
                 createUser(userDetails);
               })

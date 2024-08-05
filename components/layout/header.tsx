@@ -22,7 +22,7 @@ export default function Header() {
           {/*<CurrencyConverter/>*/}
         </div>
         <div className="flex items-center gap-2">
-          <BranchNav/>
+          {/*<BranchNav/>*/}
           <UserNav/>
           <ThemeToggle/>
         </div>

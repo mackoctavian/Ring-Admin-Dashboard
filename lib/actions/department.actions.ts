@@ -58,13 +58,13 @@ export const createItem = async (item: Department) => {
 }
 
 export const list = async ( ) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEPARTMENT_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEPARTMENT_COLLECTION_ID, {needsBusinessId: true});
   try {
     const items = await database.listDocuments(
       databaseId,
       collectionId,
         [
-        Query.equal('businessId', businessId),
+        Query.equal('businessId', businessId!),
         Query.orderAsc('name')
       ]
     );
@@ -85,11 +85,11 @@ export const getItems = async (
   offset?: number | 1,
 ) => {
 
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEPARTMENT_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEPARTMENT_COLLECTION_ID, {needsBusinessId: true})
 
   try {
     const queries = [];
-    queries.push(Query.equal('businessId', businessId));
+    queries.push(Query.equal('businessId', businessId!));
     queries.push(Query.orderDesc("$createdAt"));
 
     if ( limit ) {

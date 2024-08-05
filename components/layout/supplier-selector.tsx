@@ -16,33 +16,45 @@ interface Props {
 
 const SupplierSelector: React.FC<Props> = ({ value, onChange }) => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchSuppliers() {
       try {
+        setIsLoading(true);
         const suppliersData = await list();
-        setSuppliers(suppliersData);
-      } catch (error) {
-        console.error('Error fetching suppliers:', error);
+        setSuppliers(suppliersData || []); // Ensure it's always an array
+        setError(null);
+      } catch (error: any) {
+        setError("Failed to load suppliers");
+        console.error("Error fetching suppliers:", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
     fetchSuppliers();
   }, []);
 
   const handleSelectChange = (selectedId: string) => {
-    onChange(selectedId);
+    onChange(selectedId === 'default' ? '' : selectedId);
   };
 
   const selectedSupplier = suppliers.find(sup => sup.$id === value);
 
+  if (isLoading) {
+    return <div className={`text-sm text-muted-foreground`}>Loading suppliers...</div>;
+  }
+
+  if (error) {
+    return <div className={`text-sm text-destructive-foreground`}>Error: could not load suppliers</div>;
+  }
+
   return (
-      <Select value={value || 'default'} onValueChange={handleSelectChange} disabled={loading}>
+      <Select value={value || 'default'} onValueChange={handleSelectChange}>
         <SelectTrigger>
           <SelectValue>
-            {loading ? 'Loading...' : (selectedSupplier ? selectedSupplier.name : 'Select supplier')}
+            {value ? selectedSupplier?.name || 'Select supplier' : 'Select supplier'}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -51,7 +63,7 @@ const SupplierSelector: React.FC<Props> = ({ value, onChange }) => {
           </SelectItem>
           {suppliers.map((supplier) => (
               <SelectItem key={supplier.$id} value={supplier.$id}>
-                {supplier.name}
+                {supplier.name || 'Unnamed supplier'}
               </SelectItem>
           ))}
         </SelectContent>

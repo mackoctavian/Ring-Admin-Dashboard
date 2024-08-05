@@ -1,15 +1,15 @@
-import { getCurrentBusiness } from '@/lib/actions/business.actions';
 import {Business} from "@/types";
 import {notFound} from "next/navigation";
 import BreadCrumb from "@/components/layout/breadcrumb";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import BusinessSettingsForm from "@/components/forms/BusinessForm";
+import {getBusiness} from "@/lib/actions/business.actions";
 
 export default async function BusinessSettingsPage() {
     let item: Business;
 
     try {
-        item = await getCurrentBusiness();
+        item = await getBusiness();
         if (!item) notFound();
     } catch (error) {
         throw new Error("Failed to load business data");

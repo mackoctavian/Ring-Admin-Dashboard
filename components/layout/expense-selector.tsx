@@ -18,36 +18,50 @@ interface Props {
 
 const ExpenseSelector: React.FC<Props> = ({ value, onChange, status }) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchExpenses() {
       try {
+        setIsLoading(true);
         const expensesData = await list(status);
-        setExpenses(expensesData);
-      } catch (error) {
-        console.error('Error fetching expenses:', error);
+        setExpenses(expensesData || []); // Ensure it's always an array
+        setError(null);
+      } catch (error: any) {
+        setError("Failed to load expenses");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
     fetchExpenses();
   }, [status]);
 
   const handleSelectChange = (selectedId: string) => {
-    onChange(selectedId);
+    onChange(selectedId === 'default' ? '' : selectedId);
   };
 
   const selectedExpense = expenses.find(exp => exp.$id === value);
 
-  //@ts-ignore
-  const formatExpenseLabel = (expense: Expense) => `${formatDateTime(expense.dueDate).dateOnly} ${expense.name}`;
+  const formatExpenseLabel = (expense: Expense) => {
+    if (!expense || !expense.dueDate) return 'Invalid expense';
+    //@ts-ignore
+    return `${formatDateTime(expense.dueDate).dateOnly} ${expense.name || 'Unnamed expense'}`;
+  };
+
+  if (isLoading) {
+    return <div className={`text-sm text-muted-foreground`}>Loading expenses...</div>;
+  }
+
+  if (error) {
+    return <div className={`text-sm text-destructive-foreground`}>Error: could not load expenses</div>;
+  }
 
   return (
-      <Select value={value || 'default'} onValueChange={handleSelectChange} disabled={loading}>
+      <Select value={value || 'default'} onValueChange={handleSelectChange}>
         <SelectTrigger>
           <SelectValue>
-            {loading ? 'Loading...' : (selectedExpense ? formatExpenseLabel(selectedExpense) : 'Select expense')}
+            {value ? formatExpenseLabel(selectedExpense as Expense) : 'Select expense'}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>

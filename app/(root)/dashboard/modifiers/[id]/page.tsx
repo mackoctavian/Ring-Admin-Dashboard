@@ -13,10 +13,11 @@ export default async function ModifierPage({ params }: { params: { id: string } 
     if (!isNewItem) {
         try {
             item = await getItem(params.id);
-            if (!item) notFound();
         } catch (error) {
-            handleError(error)
+            throw new Error("Failed to load modifiers");
         }
+
+        if (!item) notFound()
     }
 
     const breadcrumbItems = [{ title: "Modifiers", link: "/dashboard/modifiers" }, { title: isNewItem ? "New" : item?.name || "Edit", link: "" }];

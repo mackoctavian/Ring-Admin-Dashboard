@@ -13,7 +13,7 @@ const {
 } = process.env;
 
 export const createItem = async (item: Modifier): Promise<void> => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID, {needsBusinessId: true})
 
   try {
     await database.createDocument(
@@ -34,7 +34,7 @@ export const createItem = async (item: Modifier): Promise<void> => {
 }
 
 export const list = async () => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID, {needsBusinessId: true})
 
   try {
     const items = await database.listDocuments(
@@ -55,11 +55,11 @@ export const list = async () => {
 }
 
 export const getItems = async (q?: string, status?: boolean | null, limit?: number | null, offset?: number | 1) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID, {needsBusinessId: true})
 
     try {
       const queries = [];
-      queries.push(Query.equal("businessId", businessId));
+      queries.push(Query.equal("businessId", businessId!));
       queries.push(Query.orderDesc("$createdAt"));
 
       if (limit) {
@@ -91,7 +91,7 @@ export const getItems = async (q?: string, status?: boolean | null, limit?: numb
 
 export const getItem = async (id: string) => {
   if (!id) return null;
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID);
+  const { database, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID);
 
   try {
     const item = await database.listDocuments(
@@ -109,10 +109,10 @@ export const getItem = async (id: string) => {
 
 export const deleteItem = async ({ $id }: Modifier) => {
   if (!$id) throw new Error('Modifier id is missing')
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID);
+  const { database, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID);
 
   try {
-    const item = await database.deleteDocument(
+    await database.deleteDocument(
       databaseId,
       collectionId,
       $id
@@ -127,10 +127,9 @@ export const deleteItem = async ({ $id }: Modifier) => {
 
 export const updateItem = async (id: string, data: Modifier) => {
   if (!id) throw new Error('Modifier id is missing')
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID);
+  const { database, databaseId, collectionId } = await databaseCheck(MODIFIERS_COLLECTION_ID);
 
   try {
-  
     await database.updateDocument(
       databaseId,
       collectionId,

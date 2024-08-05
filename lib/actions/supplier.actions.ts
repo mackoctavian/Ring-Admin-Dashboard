@@ -14,7 +14,7 @@ const {
 
 export const createItem = async (item: Supplier) => {
   if (!item ) throw new Error('Supplier details required')
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID, {needsBusinessId: true});
 
     try {
       await database.createDocument(
@@ -35,7 +35,7 @@ export const createItem = async (item: Supplier) => {
 }
 
 export const list = async ( ) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID, {needsBusinessId: true});
 
   try {
       const items = await database.listDocuments(
@@ -44,7 +44,7 @@ export const list = async ( ) => {
         [Query.equal('businessId', businessId!)]
       )
 
-      if (items.documents.length < 0) return null
+      if (items.documents.length == 0) return null
 
       return parseStringify(items.documents);
     } catch (error: any) {
@@ -58,12 +58,12 @@ export const getItems = async (
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID, {needsBusinessId: true});
   
     try {
       const queries = [];
       
-      queries.push(Query.equal('businessId', businessId));
+      queries.push(Query.equal('businessId', businessId!));
       queries.push(Query.orderDesc("$createdAt"));
       queries.push(Query.orderAsc("name"));
 
@@ -96,7 +96,7 @@ export const getItems = async (
 
 export const getItem = async (id: string) => {
   if (!id) return null;
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
+  const { database, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
 
     try {
       const item = await database.listDocuments(
@@ -105,7 +105,7 @@ export const getItem = async (id: string) => {
         [Query.equal('$id', id)]
       )
 
-      if ( item.total < 1 ) return null;
+      if ( item.total == 0 ) return null;
   
       return parseStringify(item.documents[0]);
     } catch (error: any) {
@@ -115,7 +115,7 @@ export const getItem = async (id: string) => {
 
 export const deleteItem = async (id : string) => {
   if (!id ) throw new Error('Supplier details required')
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
+  const { database, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
 
     try {
       await database.deleteDocument(
@@ -127,13 +127,13 @@ export const deleteItem = async (id : string) => {
       handleError(error, "Error deleting supplier:")
     }
 
-    revalidatePath('/suppliers')
-    redirect('/suppliers')
+    revalidatePath('/dashboard/suppliers')
+    redirect('/dashboard/suppliers')
 }
 
 export const updateItem = async (id: string, data: Supplier) => {
   if (!id || !data) throw new Error('Supplier details required')
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
+  const { database, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
   try {
     await database.updateDocument(
       databaseId,
@@ -144,6 +144,6 @@ export const updateItem = async (id: string, data: Supplier) => {
       handleError(error, "Error updating supplier:")
   }
 
-  revalidatePath('/suppliers')
-  redirect('/suppliers')
+  revalidatePath('/dashboard/suppliers')
+  redirect('/dashboard/suppliers')
 }

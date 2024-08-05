@@ -10,7 +10,13 @@ const nextConfig = {
       ignoreDuringBuilds: true,
     },
     images: {
-        domains: ['cloud.appwrite.io'],
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'cloud.appwrite.io',
+                pathname: '**',
+            },
+        ],
     },
     // Custom webpack configuration
     webpack: (config, { dev }) => {

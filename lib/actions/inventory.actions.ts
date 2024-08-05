@@ -18,12 +18,14 @@ const {
 } = process.env;
 
 export const createItem = async (data: Inventory) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
+  if( !data ) throw new Error("Data required to process request")
+
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID, {needsBusinessId: true})
   const alarmQuantity : number = parseInt(String(ALARM_QUANTITY));
 
   for ( const variant of data.variants ) {
     //Add business id to the variant
-    variant.businessId = businessId;
+    variant.businessId = businessId!;
 
     // Ensure quantities and values are parsed correctly and are numbers
     const startingQuantity = variant.startingQuantity || 0;
@@ -72,7 +74,7 @@ export const createItem = async (data: Inventory) => {
 };
 
 export const list = async ( ) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID, {needsBusinessId: true})
   try {
     const items = await database.listDocuments(
       databaseId,
@@ -93,14 +95,14 @@ export const list = async ( ) => {
 }
 
 export const listVariants = async ( ) => {
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_VARIANTS_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_VARIANTS_COLLECTION_ID, {needsBusinessId: true})
     try {
       const items = await database.listDocuments(
         databaseId,
         collectionId,
         [
           Query.orderAsc("fullName"),
-          Query.equal('businessId', businessId)
+          Query.equal('businessId', businessId!)
         ]
       );
 
@@ -118,10 +120,10 @@ export const listVariants = async ( ) => {
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID, {needsBusinessId: true})
     try {  
       const queries = [];
-      queries.push(Query.equal("businessId", businessId));
+      queries.push(Query.equal("businessId", businessId!));
       queries.push(Query.orderAsc("name"));
 
       if ( limit ) {
@@ -157,11 +159,11 @@ export const getVariantItems = async (
   limit?: number | null,
   offset?: number | 1,
 ) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_VARIANTS_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_VARIANTS_COLLECTION_ID, {needsBusinessId: true})
 
   try {
     const queries = [];
-    queries.push(Query.equal("businessId", businessId));
+    queries.push(Query.equal("businessId", businessId!));
     queries.push(Query.orderAsc("fullName"));
 
     if ( limit ) {
@@ -193,7 +195,7 @@ export const getVariantItems = async (
 
 export const getItem = async (id: string) => {
     if( !id ) return null
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
+    const { database, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
 
     try {
       const item = await database.listDocuments(
@@ -213,7 +215,7 @@ export const getItem = async (id: string) => {
 
 export const getInventoryVariant = async (id: string) => {
   if( !id ) return null
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_VARIANTS_COLLECTION_ID);
+  const { database, databaseId, collectionId } = await databaseCheck(INVENTORY_VARIANTS_COLLECTION_ID);
 
   try {
     const item = await database.listDocuments(
@@ -233,7 +235,7 @@ export const getInventoryVariant = async (id: string) => {
 
 export const deleteItem = async ({ $id }: Inventory) => {
     if (!$id) return null;
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
+    const { database, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
 
     try {
       await database.deleteDocument(
@@ -250,8 +252,10 @@ export const deleteItem = async ({ $id }: Inventory) => {
 
 export const updateItem = async (inventoryId: string, data: Inventory) => {
   if (!inventoryId || !data ) return null;
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_COLLECTION_ID, {needsBusinessId: true})
   const alarmQuantity = parseInt(String(ALARM_QUANTITY));
+
+  console.log("variants", data.variants)
 
   try {
     for (const variant of data.variants) {
@@ -261,7 +265,7 @@ export const updateItem = async (inventoryId: string, data: Inventory) => {
       if (variant.$id) {
         //Variant exists so we are just updating
 
-        // Modify status incase low quantity value changed
+        // Modify status in-case low quantity value changed
         if (variant.quantity === 0) {
           variant.status = InventoryStatus.OUT_OF_STOCK;
         } else if (variant.quantity <= variant.lowQuantity) {
@@ -277,7 +281,7 @@ export const updateItem = async (inventoryId: string, data: Inventory) => {
         variant.$id = ID.unique();
 
         // Set business ID
-        variant.businessId = businessId
+        variant.businessId = businessId!
 
         // Ensure quantities and values are parsed correctly and are numbers
         variant.startingQuantity = variant.startingQuantity || 0;
@@ -289,7 +293,7 @@ export const updateItem = async (inventoryId: string, data: Inventory) => {
         variant.value = variant.startingValue
         variant.actualValue = variant.startingValue
 
-        if (variant.startingQuantity === 0) {
+        if (variant.startingQuantity == 0) {
           variant.status = InventoryStatus.OUT_OF_STOCK;
         } else if (variant.startingQuantity <= variant.lowQuantity) {
           variant.status = InventoryStatus.LOW_STOCK;
@@ -302,6 +306,9 @@ export const updateItem = async (inventoryId: string, data: Inventory) => {
       }
 
     }
+
+    console.log("Item", data)
+
 
     await database.updateDocument(
       databaseId,
@@ -319,7 +326,7 @@ export const updateItem = async (inventoryId: string, data: Inventory) => {
 
 export const modifyStockItem = async (data: InventoryModification) => {
     if (!data) return null;
-    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_MODIFICATION_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(INVENTORY_MODIFICATION_COLLECTION_ID, {needsBusinessId: true})
     const alarmQuantity = parseInt(String(ALARM_QUANTITY));
 
     const inventoryVariantItem = await getInventoryVariant(data.item)
@@ -350,7 +357,7 @@ export const modifyStockItem = async (data: InventoryModification) => {
       variantItem.quantity = data.quantity;
 
       //Update stock status
-      if ( variantItem.quantity === 0 ) {
+      if ( variantItem.quantity == 0 ) {
         variantItem.status = InventoryStatus.OUT_OF_STOCK;
       } else if (variantItem.quantity <= variantItem.lowQuantity) {
         variantItem.status = InventoryStatus.LOW_STOCK;
@@ -359,6 +366,8 @@ export const modifyStockItem = async (data: InventoryModification) => {
       } else {
         variantItem.status = InventoryStatus.IN_STOCK;
       }
+
+      console.log("Item", variantItem)
 
       await database.updateDocument(
         databaseId,

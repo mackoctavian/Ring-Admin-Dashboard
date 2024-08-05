@@ -6,10 +6,11 @@ import { createAdminClient } from "../appwrite";
 import { parseStringify } from "../utils";
 import { Branch, Business } from "@/types";
 import { getStatusMessage, HttpStatusCode } from '../status-handler';
-import { getBusinessId, getCurrentBusiness } from "./business.actions";
+import { getBusinessId } from "./business.actions";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
+import {databaseCheck, handleError} from "@/lib/utils/actions-service";
 
 const env = process.env.NODE_ENV;
 const DATABASE_ID = process.env.APPWRITE_DATABASE;
@@ -32,20 +33,6 @@ const checkRequirements = async () => {
     if (!businessId) throw new Error('Business ID could not be initiated');
 
     return { database, userId, businessId };
-};
-
-const handleError = (error: any) => {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-
-    if (env === "development") {
-        console.error(error);
-    }
-
-    Sentry.captureException(error);
-    throw new Error(errorMessage);
 };
 
 export const createDefaultBranch = async (business: Business) => {
@@ -99,17 +86,16 @@ export const getCurrentBranch = async () => {
 export const createItem = async (item: Branch) => {
     if (!item) return null;
     try {
-        const { database } = await checkRequirements();
-        const currentBusiness: Business = await getCurrentBusiness();
+        const { database, businessId, databaseId, collectionId } = await databaseCheck(BRANCH_COLLECTION_ID, { needsBusinessId: true });
 
         await database.createDocument(
-            DATABASE_ID!,
-            BRANCH_COLLECTION_ID!,
+            databaseId,
+            collectionId,
             ID.unique(),
             {
                 ...item,
-                business: currentBusiness,
-                businessId: currentBusiness.$id,
+                business: businessId,
+                businessId: businessId,
             }
         );
     } catch (error) {
@@ -118,7 +104,7 @@ export const createItem = async (item: Branch) => {
 
     revalidatePath('/dashboard/branches');
     redirect('/dashboard/branches');
-};
+}
 
 export const list = async () => {
     try {

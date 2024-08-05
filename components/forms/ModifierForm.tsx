@@ -100,8 +100,6 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                     description: "Modifier created successfully!"
                 });
             }
-
-            form.reset(modifierData)
         } catch (error) {
             toast({
                 variant: "destructive",
@@ -110,6 +108,7 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
             });
         } finally {
             setIsLoading(false);
+            form.reset()
         }
     }
 

@@ -34,7 +34,7 @@ export default function RootLayout({
           <div className="auth-asset flex items-center justify-center">
               <Image
                   src="/icons/login-security.svg"
-                  alt="Authentication Image"
+                  alt="Ring authentication"
                   width={500}
                   height={500}
                   priority={false}

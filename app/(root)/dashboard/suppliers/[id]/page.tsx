@@ -12,14 +12,17 @@ export default async function SupplierPage({ params }: { params: { id: string } 
     if (!isNewItem) {
         try {
             item = await getItem(params.id);
-            if (!item) notFound();
         } catch (error) {
-            console.error("Error loading data:", error);
             throw new Error("Failed to load supplier data");
         }
+
+        if (!item) notFound()
     }
 
-    const breadcrumbItems = [{ title: "Suppliers", link: "/dashboard/suppliers" }, { title: isNewItem ? "New" : item?.name || "Edit", link: "" }];
+    const breadcrumbItems = [
+        { title: "Suppliers", link: "/dashboard/suppliers" },
+        { title: isNewItem ? "New" : item?.name || "Edit", link: "" }
+    ];
 
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

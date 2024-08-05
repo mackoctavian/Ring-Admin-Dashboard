@@ -7,7 +7,7 @@ import { Branch } from '@/types';
 import { ReloadIcon } from "@radix-ui/react-icons"
 
 interface Props {
-  value?: string[];
+  value?: Branch[];
   onChange: (value: string[]) => void;
 }
 
@@ -54,7 +54,9 @@ const BranchSelector: React.FC<Props> = ({ value = [], onChange }) => {
     return filteredOptions;
   };
 
-  const selectedOptions = options.filter(option => value.includes(option.value));
+  const selectedOptions = options.filter(option =>
+      value.some(branch => branch.$id === option.value)
+  );
 
   return (
       <MultipleSelector

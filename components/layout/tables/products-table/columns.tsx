@@ -27,19 +27,15 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: "name",
-    header: "NAME",
-  },
-  {
-    accessorKey: "sku",
-    header: "SKU",
+    header: "Product name",
   },
   {
     accessorKey: "posStatus",
-    header: "STATUS",
+    header: "Status",
   },
   {
     accessorKey: "description",
-    header: "DESCRIPTION",
+    header: "Description",
   },
   {
     id: "actions",
