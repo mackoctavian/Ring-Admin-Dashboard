@@ -8,7 +8,7 @@ import { PlusCircle } from "lucide-react"
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
-import {Branch, Category, Department, Modifier, Product, ProductVariant} from "@/types";
+import {Product} from "@/types";
 import { createItem, updateItem } from "@/lib/actions/product.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";

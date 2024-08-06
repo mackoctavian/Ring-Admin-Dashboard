@@ -259,10 +259,10 @@ export const StaffSchema = z.object({
     posAccess: z.boolean(),
     dashboardAccess: z.boolean(),
     status: z.boolean(),
-    department: z.array(z.string()).min(1, { message: "Select at least one department" }),
-    branch: z.array(z.string()).min(1, { message: "Select at least one branch" })
+    department: z.array(DepartmentSchema).min(1, { message: "Select at least one department" }),
+    branch: z.array(BranchSchema).min(1, { message: "Select at least one branch" })
 }).superRefine((values, context) => {
-    if ( values.dashboardAccess === true && ( !values.email || values.email.trim() === "" ) ){
+    if ( values.dashboardAccess && ( !values.email || values.email.trim() === "" ) ){
     console.log("Email value",values.email)
       context.addIssue({
         code: z.ZodIssueCode.custom,

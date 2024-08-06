@@ -20,6 +20,7 @@ import { updateItem } from "@/lib/actions/business.actions"
 import { SubmitButton } from "@/components/ui/submit-button"
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 import {FileUploader} from "@/components/ui/custom-file-uploader";
+import CurrencySelector from "@/components/layout/currency-selector";
 
 const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -140,6 +141,16 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
                   label="Type of business *"
                   renderSkeleton={(field) => (
                       <BusinessTypeSelector value={field.value} onChange={field.onChange}/>
+                  )}
+              />
+
+              <CustomFormField
+                  fieldType={FormFieldType.CUSTOM_SELECTOR}
+                  control={form.control}
+                  name="currency"
+                  label="Business operating currency *"
+                  renderSkeleton={(field) => (
+                      <CurrencySelector value={field.value} onChange={field.onChange}/>
                   )}
               />
 
