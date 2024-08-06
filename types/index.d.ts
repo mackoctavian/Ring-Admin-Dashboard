@@ -312,9 +312,9 @@ declare type ProductVariant = {
   tax: number;
   barcode?: string;
   status: boolean;
+  product: Product;
+  productId: string;
   inventoryItems: ProductInventoryItemUsage[];
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 
 declare type ProductInventoryItemUsage = {

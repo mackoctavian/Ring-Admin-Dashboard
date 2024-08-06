@@ -189,7 +189,7 @@ export const getVariantItems = async (
 
     return parseStringify(items.documents);
   } catch (error: any) {
-    handleError(error, "Error getting variants")
+    handleError(error, "Error getting stock variants")
   }
 };
 

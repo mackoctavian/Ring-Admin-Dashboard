@@ -1,6 +1,6 @@
 "use client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Inventory, InventoryVariant } from "@/types";
+import { InventoryVariant } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { NumberColumn } from "../number-column";

@@ -1,15 +1,15 @@
 import BreadCrumb from "@/components/layout/breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
-import {Product} from "@/types";
+import { ProductVariant } from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
 import { columns } from "@/components/layout/tables/products-table/columns";
-import { getItems } from "@/lib/actions/product.actions";
 import NoItems from "@/components/layout/no-items";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {DataTable} from "@/components/layout/tables/data-table";
+import {getVariantItems} from "@/lib/actions/product.actions";
 
 const breadcrumbItems = [{ title: "Products", link: "/dashboard/products" }];
 
@@ -25,10 +25,11 @@ export default async function Page({ searchParams }: ParamsProps) {
     const q = searchParams.search?.toString() || null;
     const offset = (page - 1) * pageLimit;
 
-    const data : Product[] = await getItems(q?.toString(), null, pageLimit, offset);
+    const data : ProductVariant[] = await getVariantItems(q?.toString(), null, null, offset);
     const total = data? data.length : 0;
     const pageCount = Math.ceil(total / pageLimit);
 
+    console.log(data)
     return (
         <>
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

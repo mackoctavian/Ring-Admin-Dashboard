@@ -6,6 +6,7 @@ import { parseStringify } from "../utils";
 import {Product} from "@/types";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
+import {InventoryStatus} from "@/types/data-schemas";
 
 const {
     PRODUCTS_COLLECTION: PRODUCTS_COLLECTION_ID,
@@ -117,6 +118,46 @@ export const getItems = async (
     }
 };
 
+export const getVariantItems = async (
+    q?: string,
+    status?: boolean | null,
+    limit?: number | null,
+    offset?: number | 1,
+) => {
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID, {needsBusinessId: true})
+
+    try {
+        const queries = [];
+        queries.push(Query.equal("businessId", businessId!));
+        queries.push(Query.orderAsc("name"));
+
+        if ( limit ) {
+            queries.push(Query.limit(limit));
+            queries.push(Query.offset(offset!));
+        }
+
+        if (q) {
+            queries.push(Query.search('name', q));
+        }
+
+        if (status) {
+            queries.push(Query.equal('status', status));
+        }
+
+        const items = await database.listDocuments(
+            databaseId,
+            collectionId,
+            queries
+        );
+
+        if (items.documents.length == 0) return null
+
+        return parseStringify(items.documents);
+    } catch (error: any) {
+        handleError(error, "Error getting product variants")
+    }
+};
+
 export const getItem = async (id: string) => {
     if (!id) return null;
     const { database, databaseId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID)
@@ -199,7 +240,7 @@ export const updateItem = async (id: string, { image, variants, ...productData }
             }),
             ...updateVariants
         ]);
-        
+
         if (imageUrl !== oldImage && oldImage) {
             // TODO: Implement deleteImage function
             await deleteFile(oldImageId);
