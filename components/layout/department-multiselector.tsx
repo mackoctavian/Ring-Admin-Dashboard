@@ -1,14 +1,12 @@
-'use client'
-
 import React, { useEffect, useState } from 'react';
 import MultipleSelector, { Option } from '@/components/ui/multiple-selector';
 import { list } from '@/lib/actions/department.actions';
-import { Department } from '@/types';
+import {Branch, Department} from '@/types';
 import { ReloadIcon } from "@radix-ui/react-icons"
 
 interface Props {
   value?: Department[];
-  onChange: (value: string[]) => void;
+  onChange: (value: Department[]) => void;
 }
 
 const DepartmentSelector: React.FC<Props> = ({ value = [], onChange }) => {
@@ -33,8 +31,10 @@ const DepartmentSelector: React.FC<Props> = ({ value = [], onChange }) => {
   }, []);
 
   const handleSelectChange = (selectedOptions: Option[]) => {
-    const selectedDepartmentIds = selectedOptions.map(option => option.value);
-    onChange(selectedDepartmentIds);
+    const selectedDepartments = selectedOptions
+        .map(option => departments.find(department => department.$id === option.value))
+        .filter((department): department is Department => department !== undefined);
+    onChange(selectedDepartments);
   };
 
   const handleSearch = async (searchValue: string): Promise<Option[]> => {

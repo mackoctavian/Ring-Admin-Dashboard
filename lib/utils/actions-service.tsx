@@ -103,7 +103,11 @@ export const handleError = (error: any, message?: string) => {
     let errorMessage = 'Something went wrong with your request, please try again later.'
     if (error instanceof AppwriteException) { errorMessage = getStatusMessage(error.code as HttpStatusCode) }
 
-    if (env === "development") { console.error(error) } else { Sentry.captureException(error) }
+    if (env === "development") {
+        console.error(message + error)
+    } else {
+        Sentry.captureException(error)
+    }
 
     throw Error(errorMessage);
 }

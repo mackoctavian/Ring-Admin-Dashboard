@@ -191,7 +191,7 @@ export const BranchSchema = z.object({
     email: z.string().email("Invalid email address"),
     phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
     address: z.string().optional().nullable(),
-    city: z.string(),
+    city: z.string().optional().nullable(),
     daysOpen: z.array(z.string()).min(1, { message: "Select at least one day" }),
     openingTime: z.string(),
     closingTime: z.string(),
@@ -208,7 +208,7 @@ export const DepartmentSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     shortName: z.string(),
-    branch: z.string(),
+    branch: BranchSchema,
     status: z.boolean(),
 });
 
@@ -697,12 +697,12 @@ export const ProductSchema = z.object({
     name: z.string(),
     sku: z.string().optional().nullable(),
     category: z.array(CategorySchema).min(1, "Select category"),
-    description: z.string().min(5).optional().nullable(),
+    description: z.string().optional().nullable(),
     posStatus: z.nativeEnum(POSItemStatus),
-    branch: z.array(z.string()).min(1, { message: "Select at least one branch" }),
-    department: z.array(z.string()).min(1, { message: "Select at least one department" }),
-    modifier: z.array(z.string()).optional().nullable(),
-    image: z.string().optional().nullable(),
+    branch: z.array(BranchSchema).min(1, { message: "Select at least one branch" }),
+    department: z.array(DepartmentSchema).min(1, { message: "Select at least one department" }),
+    modifier: z.array(ModifierSchema).optional().nullable(),
+    image: z.custom<File[]>().optional(),
     variants: z.array(ProductVariantSchema).min(1, "At least one variant is required")
 });
 

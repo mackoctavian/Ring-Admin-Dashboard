@@ -146,17 +146,50 @@ export const deleteItem = async ({ $id }: Product) => {
 }
 
 export const updateItem = async (id: string, data: Product) => {
-  if (!id || !data) return null;
-  const { database, databaseId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID)
-  const { variants, ...productData } = data;
+    if (!id || !data) return null;
+    const { database, databaseId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID)
+    const { variants, ...productData } = data;
+
+    console.log("Product data", productData);
 
     try {
-      await database.updateDocument(
-        databaseId,
-        collectionId,
-        id,
-        data
-      )
+        //Update variants
+        for (const variant of variants) {
+            if ( variant.$id ){
+                //update variant
+                await database.updateDocument(
+                    databaseId,
+                    PRODUCTS_VARIANTS_COLLECTION_ID!,
+                    variant.$id,
+                    {
+                        ...variant,
+                        product: data.$id,
+                        productId: data.$id
+                    }
+                )
+            }else{
+                //create variant
+                await database.createDocument(
+                    databaseId,
+                    PRODUCTS_VARIANTS_COLLECTION_ID!,
+                    ID.unique(),
+                    {
+                        ...variant,
+                        product: data.$id,
+                        productId: data.$id
+                    }
+                )
+            }
+        }
+
+        await database.updateDocument(
+            databaseId,
+            collectionId,
+            id,
+            productData
+        )
+
+        throw("no update");
     } catch (error: any) {
       handleError(error, "Error updating product");
     }

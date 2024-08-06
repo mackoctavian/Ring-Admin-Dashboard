@@ -1,5 +1,3 @@
-'use client'
-
 import React, { useEffect, useState } from 'react';
 import MultipleSelector, { Option } from '@/components/ui/multiple-selector';
 import { list } from '@/lib/actions/branch.actions';
@@ -8,7 +6,7 @@ import { ReloadIcon } from "@radix-ui/react-icons"
 
 interface Props {
   value?: Branch[];
-  onChange: (value: string[]) => void;
+  onChange: (value: Branch[]) => void;
 }
 
 const BranchSelector: React.FC<Props> = ({ value = [], onChange }) => {
@@ -33,8 +31,10 @@ const BranchSelector: React.FC<Props> = ({ value = [], onChange }) => {
   }, []);
 
   const handleSelectChange = (selectedOptions: Option[]) => {
-    const selectedBranchIds = selectedOptions.map(option => option.value);
-    onChange(selectedBranchIds);
+    const selectedBranches = selectedOptions
+        .map(option => branches.find(branch => branch.$id === option.value))
+        .filter((branch): branch is Branch => branch !== undefined);
+    onChange(selectedBranches);
   };
 
   const handleSearch = async (searchValue: string): Promise<Option[]> => {

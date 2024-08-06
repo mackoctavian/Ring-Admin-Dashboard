@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import MultipleSelector, { Option } from '@/components/ui/multiple-selector';
 import { list } from '@/lib/actions/category.actions';
-import {Category} from '@/types';
+import { Category } from '@/types';
 import { ReloadIcon } from "@radix-ui/react-icons"
 
 interface Props {
   value?: Category[];
-  onChange: (value: string[]) => void;
+  onChange: (value: Category[]) => void;
 }
 
 const CategorySelector: React.FC<Props> = ({ value = [], onChange }) => {
@@ -23,7 +23,7 @@ const CategorySelector: React.FC<Props> = ({ value = [], onChange }) => {
         setCategories(categoriesData);
         const formattedOptions = categoriesData.map((category: Category) => ({ label: category.name, value: category.$id }));
         setOptions(formattedOptions);
-      } catch (error : any) {
+      } catch (error: any) {
         console.error('Error fetching categories:', error);
       } finally {
         setLoading(false);
@@ -33,8 +33,10 @@ const CategorySelector: React.FC<Props> = ({ value = [], onChange }) => {
   }, []);
 
   const handleSelectChange = (selectedOptions: Option[]) => {
-    const selectedCategoryIds = selectedOptions.map(option => option.value);
-    onChange(selectedCategoryIds);
+    const selectedCategories = selectedOptions
+        .map(option => categories.find(category => category.$id === option.value))
+        .filter((category): category is Category => category !== undefined);
+    onChange(selectedCategories);
   };
 
   const handleSearch = async (searchValue: string): Promise<Option[]> => {
