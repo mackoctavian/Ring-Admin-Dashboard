@@ -45,6 +45,8 @@ import {
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
+import { motion } from "framer-motion";
+
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
@@ -164,7 +166,7 @@ export function DataTable<TData, TValue>({
     }, [searchValue]);
 
     return (
-        <>
+        <motion.div>
             <div className="flex items-center justify-between mb-2">
                 <div className="relative flex-1 md:max-w-md">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"/>
@@ -315,6 +317,6 @@ export function DataTable<TData, TValue>({
                     </div>
                 </div>
             </div>
-        </>
+        </motion.div>
     );
 }

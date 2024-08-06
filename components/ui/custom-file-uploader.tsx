@@ -45,10 +45,10 @@ export const FileUploader = ({ files, onChange }: FileUploaderProps) => {
                 <>
                     <Image
                         src="/icons/icons/upload.svg"
-                        width={40}
-                        height={40}
+                        width={30}
+                        height={30}
                         alt="upload"
-                        className={cn({ 'brightness-[10] invert-0 m-auto mb-2 text-center': theme })}
+                        className={cn({ 'dark:brightness-[10] invert-0 m-auto mb-2 text-center': theme })}
                     />
                     <div className="file-upload_label">
                         <p className={`text-xs`}><span>Click to upload </span> or drag and drop</p>
