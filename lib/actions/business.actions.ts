@@ -1,8 +1,8 @@
 'use server';
 
-import {databaseCheck, handleError, saasDatabaseCheck} from "@/lib/utils/actions-service";
-import {ID, InputFile, Query} from "node-appwrite";
-import {createAdminClient, createStorageClient} from "../appwrite";
+import {databaseCheck, handleError, saasDatabaseCheck, uploadFile} from "@/lib/utils/actions-service";
+import {ID, Query} from "node-appwrite";
+import {createAdminClient} from "../appwrite";
 import {parseStringify} from "../utils";
 import {Business, RegisterBusinessParams, SubscriptionDetails, User} from "@/types";
 import {auth, clerkClient, currentUser} from "@clerk/nextjs/server";
@@ -14,8 +14,6 @@ import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation'
 
 const {
-    APPWRITE_ENDPOINT,
-    APPWRITE_PROJECT,
     APPWRITE_DATABASE: DATABASE_ID,
     BUSINESS_COLLECTION: BUSINESS_COLLECTION_ID,
     BUSINESS_TYPE_COLLECTION: BUSINESS_TYPE_COLLECTION_ID,
@@ -113,32 +111,6 @@ export const getBusinessTypes = async () => {
     }
 }
 
-export const uploadFile = async (file: FormData) => {
-    const { storage } = await createStorageClient();
-    let uploadedFile;
-
-    try{
-        const inputFile =
-            file &&
-            await InputFile.fromBlob(
-                file?.get("blobFile") as Blob,
-                file?.get("fileName") as string
-            );
-
-        uploadedFile = await storage.createFile(
-            APPWRITE_BUCKET!,
-            ID.unique(),
-            inputFile
-        );
-
-        return uploadedFile?.$id ? `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET}/files/${uploadedFile.$id}/view??project=${APPWRITE_PROJECT}` : null;
-    } catch (error) {
-        console.error(error);
-        //Fail gracefully if logo failed to upload
-        return null;
-    }
-}
-
 export const initTrial = async (businessId: string, data: User) => {
     const { database, databaseId, collectionId } = await saasDatabaseCheck(SUBSCRIBERS_COLLECTION_ID);
 
@@ -166,41 +138,48 @@ export const initTrial = async (businessId: string, data: User) => {
     }
 }
 
-export const registerBusiness = async ({ logo, ...business }: RegisterBusinessParams)=> {
-    let logoUrl;
+export const registerBusiness = async ({ logo, ...business }: RegisterBusinessParams) => {
     const { database, databaseId, collectionId } = await databaseCheck(USER_COLLECTION_ID);
 
     try {
-        const generatedSlug = business.name.toLowerCase().replace(/\s+/g, '-');
-
         const user = await currentUser();
-        if (!user) { return { error: "User data could not be loaded" }; }
+        if (!user) throw new Error("User data could not be loaded");
 
-        const clerkOrganization = await clerkClient.organizations.createOrganization({
-            name: business.name,
-            createdBy: user.id,
-        });
+        const generatedSlug = business.name.toLowerCase().replace(/\s+/g, '-');
+        const fullName = `${business.firstName.trim()} ${business.lastName.trim()}`;
 
-        //Update user's name on clerk, since not available on free version
-        clerkClient.users.updateUser(
-            user.id,
-    {
+        const [clerkOrganization, logoData] = await Promise.all([
+            clerkClient.organizations.createOrganization({
+                name: business.name,
+                createdBy: user.id,
+            }),
+            logo ? uploadFile(logo) : Promise.resolve(null)
+        ]);
+
+        await Promise.all([
+            clerkClient.users.updateUser(user.id, {
                 firstName: business.firstName,
                 lastName: business.lastName
-            }
-        )
+            }),
+            logoData?.imageUrl && clerkClient.organizations.updateOrganizationLogo(
+                clerkOrganization.id,
+                {
+                    uploaderUserId: user.id,
+                    file: logo?.get("blobFile") as Blob
+                }
+            )
+        ]);
 
-        // Persist business owner details
         const newBusinessOwner = await database.createDocument(
             databaseId,
             collectionId,
             ID.unique(),
             {
                 email: user.primaryEmailAddress?.emailAddress.trim(),
-                name: business.firstName.trim() + " " + business.lastName.trim(),
+                name: fullName,
                 firstName: business.firstName.trim(),
                 lastName: business.lastName.trim(),
-                phoneNumber: user.phoneNumbers.length > 0 ? user.phoneNumbers[0].phoneNumber : business.phoneNumber,
+                phoneNumber: user.phoneNumbers[0]?.phoneNumber || business.phoneNumber,
                 image: user.imageUrl,
                 gender: Gender.UNDISCLOSED,
                 points: 0,
@@ -210,29 +189,8 @@ export const registerBusiness = async ({ logo, ...business }: RegisterBusinessPa
                 isOwner: true,
                 termsConsent: business.termsConsent,
             }
-        )
+        );
 
-        // Upload logo if present
-        if ( logo ) {
-            logoUrl = await uploadFile(logo)
-
-            //Only do this if logo was uploaded, else fail gracefully and proceed with business registration
-            if( logoUrl ){
-                //Prepare image for clerk organization
-                const logoBlob = logo?.get("blobFile") as Blob;
-
-                //Prepare image for clerk organization, do not await for this
-                clerkClient.organizations.updateOrganizationLogo(
-                    clerkOrganization.id,
-                    {
-                        uploaderUserId: user.id,
-                        file: logoBlob
-                    }
-                )
-            }
-        }
-
-        // Persist business details
         const { firstName, lastName, termsConsent, ...createBusinessObj } = business;
         const newBusiness = await database.createDocument(
             databaseId,
@@ -240,40 +198,38 @@ export const registerBusiness = async ({ logo, ...business }: RegisterBusinessPa
             ID.unique(),
             {
                 ...createBusinessObj,
-                logo: logoUrl,
+                logo: logoData?.imageUrl,
                 slug: generatedSlug,
                 branches: [],
                 authId: user.id,
                 orgId: clerkOrganization.id,
-                users: [newBusinessOwner],
+                users: [newBusinessOwner.$id],
             }
-        )
+        );
 
-        initTrial(newBusiness.$id, parseStringify(newBusinessOwner));
-
-        await clerkClient.users.updateUser(user.id, {
-            firstName: business.firstName,
-            lastName: business.lastName,
-            publicMetadata: {
-                fullName: business.firstName.trim() + business.lastName.trim(),
-                firstName: business.firstName.trim(),
-                lastName: business.lastName.trim(),
-                onboardingComplete: true,
-                businessId: newBusiness.$id,
-                invite: false,
-                organizationId: clerkOrganization.id,
-            },
-        })
-
-        const newBranch = await createDefaultBranch(parseStringify(newBusiness))
-        createDefaultDepartment(newBranch)
+        await Promise.all([
+            initTrial(newBusiness.$id, parseStringify(newBusinessOwner)),
+            clerkClient.users.updateUser(user.id, {
+                publicMetadata: {
+                    fullName,
+                    firstName: business.firstName.trim(),
+                    lastName: business.lastName.trim(),
+                    onboardingComplete: true,
+                    businessId: newBusiness.$id,
+                    invite: false,
+                    organizationId: clerkOrganization.id,
+                },
+            }),
+            createDefaultBranch(parseStringify(newBusiness)).then(createDefaultDepartment)
+        ]);
     } catch (error) {
         handleError(error);
+        throw error; // Re-throw to allow caller to handle if needed
     }
 
-    revalidatePath("/business-registration")
-    redirect('/dashboard')
-}
+    //revalidatePath("/business-registration");
+    redirect('/dashboard');
+};
 
 export const updateItem = async (id: string, data: Business) => {
     if( !id || !data) return null;

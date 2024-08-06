@@ -1,9 +1,9 @@
 'use server';
 
-import {databaseCheck, handleError} from "@/lib/utils/actions-service";
+import {databaseCheck, deleteFile, handleError, shouldReplaceImage, uploadFile} from "@/lib/utils/actions-service";
 import { ID, Query } from "node-appwrite";
 import { parseStringify } from "../utils";
-import { Product } from "@/types";
+import {Product} from "@/types";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
 
@@ -11,43 +11,51 @@ const {
     PRODUCTS_COLLECTION: PRODUCTS_COLLECTION_ID,
     PRODUCT_VARIANTS_COLLECTION: PRODUCTS_VARIANTS_COLLECTION_ID
 } = process.env;
-  
-export const createItem = async (item: Product) => {
-  const { database, databaseId,businessId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID, {needsBusinessId: true})
-  const { variants, ...productData } = item;
 
+export const createItem = async ({ image, variants, ...productData }: Product) => {
     try {
-      const product = await database.createDocument(
-        databaseId,
-        collectionId,
-        ID.unique(),
-        {
-          ...productData,
-          businessId: businessId,
-          canDelete: true
-        }
-      )
+        const { database, databaseId, businessId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID, { needsBusinessId: true });
 
-      //Create variants
-      for (const variant of variants) {
-        await database.createDocument(
-          databaseId,
-          PRODUCTS_VARIANTS_COLLECTION_ID!,
-          ID.unique(),
-          {
-            ...variant,
-            product: product.$id,
-            productId: product.$id
-          }
-        )
-      }
-    } catch (error: any) {
-      handleError(error, 'Error creating product');
+        // Upload image first if it exists
+        const imageData = image ? await uploadFile(image) : null;
+
+        // Create product with image data in a single operation
+        const product = await database.createDocument(
+            databaseId,
+            collectionId,
+            ID.unique(),
+            {
+                ...productData,
+                businessId,
+                canDelete: true,
+                image: imageData?.imageUrl,
+                imageId: imageData?.imageId
+            }
+        );
+
+        // Create variants if they exist
+        if (variants && variants.length > 0) {
+            await Promise.all(variants.map(variant =>
+                database.createDocument(
+                    databaseId,
+                    PRODUCTS_VARIANTS_COLLECTION_ID!,
+                    ID.unique(),
+                    {
+                        ...variant,
+                        product: product.$id,
+                        productId: product.$id
+                    }
+                )
+            ));
+        }
+
+    } catch (error) {
+        handleError(error, 'Error creating product');
     }
 
-  revalidatePath('/dashboard/products')
-  redirect('/dashboard/products')
-};
+    revalidatePath('/dashboard/products');
+    redirect('/dashboard/products');
+}
 
 export const list = async ( ) => {
   const { database, databaseId,businessId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID, {needsBusinessId: true})
@@ -145,54 +153,63 @@ export const deleteItem = async ({ $id }: Product) => {
     redirect('/dashboard/products')
 }
 
-export const updateItem = async (id: string, data: Product) => {
-    if (!id || !data) return null;
-    const { database, databaseId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID)
-    const { variants, ...productData } = data;
-
-    console.log("Product data", productData);
+export const updateItem = async (id: string, { image, variants, ...productData }: Product, oldImage: string, oldImageId: string) => {
+    if (!id || !productData) throw new Error("Invalid input data")
 
     try {
-        //Update variants
-        for (const variant of variants) {
-            if ( variant.$id ){
-                //update variant
-                await database.updateDocument(
-                    databaseId,
-                    PRODUCTS_VARIANTS_COLLECTION_ID!,
-                    variant.$id,
-                    {
-                        ...variant,
-                        product: data.$id,
-                        productId: data.$id
-                    }
-                )
-            }else{
-                //create variant
-                await database.createDocument(
-                    databaseId,
-                    PRODUCTS_VARIANTS_COLLECTION_ID!,
-                    ID.unique(),
-                    {
-                        ...variant,
-                        product: data.$id,
-                        productId: data.$id
-                    }
-                )
+        const { database, databaseId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID);
+
+        const updateVariants = variants.map(variant =>
+            variant.$id
+                ? database.updateDocument(databaseId, PRODUCTS_VARIANTS_COLLECTION_ID!, variant.$id, {
+                    ...variant,
+                    product: productData.$id,
+                    productId: productData.$id
+                })
+                : database.createDocument(databaseId, PRODUCTS_VARIANTS_COLLECTION_ID!, ID.unique(), {
+                    ...variant,
+                    product: productData.$id,
+                    productId: productData.$id
+                })
+        );
+
+        let imageUrl: string | null = oldImage;
+        let imageId: string | null = oldImageId;
+
+        if (image) {
+            const shouldUploadNewImage = await shouldReplaceImage(oldImageId, image);
+
+            console.log("should upload image",shouldUploadNewImage);
+
+            if (shouldUploadNewImage) {
+                const uploadResult = await uploadFile(image);
+                imageUrl = uploadResult.imageUrl;
+                imageId = uploadResult.imageId;
             }
+        } else if (!image && oldImage) {
+            imageUrl = null;
+            imageId = null;
         }
 
-        await database.updateDocument(
-            databaseId,
-            collectionId,
-            id,
-            productData
-        )
+        const [updatedProduct, ...updatedVariants] = await Promise.all([
+            database.updateDocument(databaseId, collectionId, id, {
+                ...productData,
+                image: imageUrl,
+                imageId: imageId,
+            }),
+            ...updateVariants
+        ]);
+        
+        if (imageUrl !== oldImage && oldImage) {
+            // TODO: Implement deleteImage function
+            await deleteFile(oldImageId);
+        }
 
-        throw("no update");
-    } catch (error: any) {
-      handleError(error, "Error updating product");
+    } catch (error) {
+        handleError(error, "Error updating product");
+        throw error;
     }
-    revalidatePath('/dashboard/products')
-    redirect('/dashboard/products')
-}
+
+    revalidatePath('/dashboard/products');
+    redirect('/dashboard/products');
+};

@@ -291,19 +291,18 @@ declare type ModifierItem = {
 
 /* Product */
 declare type Product = {
-  $id?: string;
+  $id: string;
   name: string;
   sku: string;
   category: Category[];
   description: string;
-  status: string;
   branch: Branch[];
   department: Department[];
   modifier: Modifier[]
-  image?: string;
+  image: FormData | undefined;
+  imageId?: string | undefined;
   variants: ProductVariant[];
-  $createdAt?: Date;
-  $updatedAt?: Date;
+  posStatus: POSItemStatus;
 };
 
 declare type ProductVariant = {
@@ -688,6 +687,11 @@ declare type PaymentCustomer = {
 /* END Subscription */
 
 
+/* Image uploads */
+interface UploadResult {
+  imageUrl: string | null;
+  imageId: string | null;
+}
 
 
 

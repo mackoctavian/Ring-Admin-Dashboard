@@ -14,7 +14,7 @@ import { Discount } from "@/types";
 import { createItem, updateItem } from "@/lib/actions/discount.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
-import React, { useEffect } from 'react';
+import React from 'react';
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
@@ -86,14 +86,14 @@ const onSubmit = async (data: z.infer<typeof DiscountSchema>) => {
             toast({
                 variant: "default",
                 title: "Success", 
-                description: "Discount updated succesfully!"
+                description: "Discount updated successfully!"
             });
         } else {
             await createItem(data);
             toast({
                 variant: "default",
                 title: "Success", 
-                description: "Discount created succesfully!"
+                description: "Discount created successfully!"
             });
         }
     } catch (error: any) {

@@ -1,14 +1,14 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
 import { Cross2Icon, PlusIcon } from "@radix-ui/react-icons"
 import { PlusCircle } from "lucide-react"
-import { useForm} from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button";
-import {Product, ProductVariant} from "@/types";
+import {Branch, Category, Department, Modifier, Product, ProductVariant} from "@/types";
 import { createItem, updateItem } from "@/lib/actions/product.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
@@ -36,110 +36,104 @@ import {
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 import {FileUploader} from "@/components/ui/custom-file-uploader";
 
-const ProductForm = ({ item }: { item?: Product | null }) => {
+const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast()
-
-  console.log(item);
 
   const form = useForm({
     resolver: zodResolver(ProductSchema),
-    defaultValues: item ? { ...item, description: ''}: {}
+    defaultValues: item ? { ...item, description: item.description ?? '' } : {
+      posStatus: POSItemStatus.DRAFT,
+      image: null,
+      variants: [{
+        status: false,
+        inventoryItems: []
+      }]
+    }
   });
 
-  const { handleSubmit, setValue, getValues } = form;
-
-  const onInvalid = (errors: any) => {
-    console.log(errors)
-    toast({
-      variant: 'warning',
-      title: 'Uh oh! Something went wrong.',
-      description: 'There was an issue submitting your form, please try later',
-    });
-  };
+  const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({
+    control: form.control,
+    name: 'variants'
+  });
 
   const onSubmit = async (data: any) => {
     setIsLoading(true);
+
+    // Store file info in form data as
+    let formData;
+
+    //Check if image exists
+    if (data.image && data.image?.length > 0) {
+      const blobFile = new Blob([data.image[0]], {
+        type: data.image[0].type,
+      });
+
+      formData = new FormData();
+      formData.append("blobFile", blobFile);
+      formData.append("fileName", data.image[0].name);
+    }
+
     try {
-      if (item) {
-        await updateItem(item.$id, data);
-        toast({
-          variant: 'success',
-          title: 'Success',
-          description: 'Product details updated successfully!',
-        });
-      } else {
-        await createItem(data);
-        toast({
-          variant: 'success',
-          title: 'Success',
-          description: 'Product added successfully!',
-        });
+      const productData = {
+        $id: item?.$id ?? null,
+        name: data.name,
+        category: data.category,
+        description: data.description,
+        branch: data.branch,
+        department: data.department,
+        modifier: data.modifier,
+        image: data.image
+            ? formData
+            : undefined,
+        variants: data.variants,
+        posStatus: data.posStatus,
+        sku: null
       }
+
+      const action = item ? await updateItem(item.$id, productData, item.image, item.imageId) : createItem(productData);
+      await action;
+      toast({
+        variant: 'success',
+        title: 'Success',
+        description: `Product ${item ? 'updated' : 'added'} successfully!`,
+      });
     } catch (error) {
+      console.log(error)
       toast({
         variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: 'There was an issue submitting your form, please try later',
+        title: 'Error',
+        description: 'There was an issue submitting your form. Please try again later.',
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const [variants, setVariants] = useState<ProductVariant[]>(
-    item ? item.variants : [{
+  const handleAddVariant = () => {
+    appendVariant({
       status: false,
       inventoryItems: []
-    }]
-  );
-
-  useEffect(() => {
-    if (item) {
-      setValue('variants', item.variants);
-      setVariants(item.variants);
-    }
-  }, [item, setValue]);
-
-  const handleAddVariant = () => {
-    const newVariant = { name: '', price: '', tax: '', allowDiscount: false, status: false, inventoryItems: [] };
-    setVariants([...variants, newVariant]);
-    setValue('variants', [...getValues('variants'), newVariant]);
+    });
   };
 
   const handleAddInventory = (variantIndex: number) => {
-    const newInventoryItem = { $id: uuidv4() }; // Replace with your own method to generate unique ids
-    const updatedVariants = [...variants];
-    updatedVariants[variantIndex].inventoryItems.push(newInventoryItem);
-    setVariants(updatedVariants);
-    setValue(`variants[${variantIndex}].inventoryItems`, updatedVariants[variantIndex].inventoryItems);
+    const currentVariant = form.getValues(`variants.${variantIndex}`);
+    form.setValue(`variants.${variantIndex}.inventoryItems`, [
+      ...currentVariant.inventoryItems,
+      { $id: uuidv4(), amountUsed: 0 }
+    ]);
   };
 
   const handleRemoveInventory = (variantIndex: number, inventoryItemIndex: number) => {
-    const updatedVariants = [...variants];
-    updatedVariants[variantIndex].inventoryItems.splice(inventoryItemIndex, 1);
-    setVariants(updatedVariants);
-    setValue(`variants[${variantIndex}].inventoryItems`, updatedVariants[variantIndex].inventoryItems);
-  };
-
-  const handleRemoveVariant = (variantIndex: number) => {
-    if (variants.length > 1) {
-      const updatedVariants = [...variants];
-      updatedVariants.splice(variantIndex, 1);
-      setVariants(updatedVariants);
-      setValue('variants', updatedVariants);
-    } else {
-      toast({
-        variant: 'warning',
-        title: 'Cannot remove variant',
-        description: 'Product must have at least one variant.',
-      });
-    }
+    const currentVariant = form.getValues(`variants.${variantIndex}`);
+    const updatedInventoryItems = currentVariant.inventoryItems.filter((_, index) => index !== inventoryItemIndex);
+    form.setValue(`variants.${variantIndex}.inventoryItems`, updatedInventoryItems);
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
           {/* Left Column */}
           <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
@@ -165,6 +159,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                       control={form.control}
                       name={`category`}
                       label="Product category *"
+                      description="Only categories of type `PRODUCT` allowed"
                       renderSkeleton={(field) => (
                           <CategorySelector value={field.value} onChange={field.onChange}/>
                       )}
@@ -190,12 +185,13 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-8">
-                  {variants.map((variant, variantIndex) => (
-                      <div key={variant.$id} className="border p-4 rounded-md">
-                        <div className="flex justify-between items-center">
-                          {variants.length > 1 && (
-                              <Button type="button" onClick={() => handleRemoveVariant(variantIndex)} variant="link" className="ml-auto">
-                                <Cross2Icon className="mr-2 h-4 w-4"/> Archive variant
+                  {variantFields.map((field, index) => (
+                      <div key={field.id} className="border p-4 rounded-md mb-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="text-sm font-medium">Variant {index + 1}</h4>
+                          {variantFields.length > 1 && (
+                              <Button type="button" onClick={() => removeVariant(index)} variant="ghost" size="sm">
+                                <Cross2Icon className="mr-2 h-4 w-4" /> Remove variant
                               </Button>
                           )}
                         </div>
@@ -203,7 +199,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                           <CustomFormField
                               fieldType={FormFieldType.INPUT}
                               control={form.control}
-                              name={`variants[${variantIndex}].name`}
+                              name={`variants.${index}.name`}
                               label="Product variant name *"
                               placeholder="Enter variant name"
                           />
@@ -211,7 +207,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                           <CustomFormField
                               fieldType={FormFieldType.INPUT}
                               control={form.control}
-                              name={`variants[${variantIndex}].price`}
+                              name={`variants.${index}.price`}
                               label="Product variant price *"
                               placeholder="Enter variant price"
                               type="number"
@@ -220,7 +216,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                           <CustomFormField
                               fieldType={FormFieldType.INPUT}
                               control={form.control}
-                              name={`variants[${variantIndex}].tax`}
+                              name={`variants.${index}.tax`}
                               label="Product variant tax *"
                               placeholder="Enter variant tax amount"
                               type="number"
@@ -229,7 +225,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                           <CustomFormField
                               fieldType={FormFieldType.INPUT}
                               control={form.control}
-                              name={`variants[${variantIndex}].barcode`}
+                              name={`variants.${index}.barcode`}
                               label="Product variant barcode"
                               placeholder="Enter variant barcode"
                           />
@@ -237,12 +233,12 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                           <CustomFormField
                               fieldType={FormFieldType.SKELETON}
                               control={form.control}
-                              name={`variants[${variantIndex}].status`}
+                              name={`variants.${index}.status`}
                               label="Status *"
                               renderSkeleton={(field) => (
                                   <div className="mt-2">
                                     <Switch
-                                        id={`variant-status-${variant.$id}`}
+                                        name={`variants.${index}.status`}
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
                                     />
@@ -251,15 +247,15 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                           />
                         </div>
                         <div className="space-y-2">
-                          {variant.inventoryItems.map((inv, inventoryIndex) => (
-                              <div key={inv.$id} className="space-y-2 p-2 rounded-md">
+                            {field.inventoryItems.map((inventoryItem, inventoryIndex) => (
+                              <div key={inventoryItem.$id} className="space-y-2 p-2 rounded-md">
                                 <Separator className="my-7"/>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div key={inventoryItem.$id} className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
                                   <CustomFormField
                                       fieldType={FormFieldType.CUSTOM_SELECTOR}
                                       control={form.control}
-                                      name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].item`}
+                                      name={`variants.${index}.inventoryItems.${inventoryIndex}.item`}
                                       label="Stock item *"
                                       renderSkeleton={(field) => (
                                           <InventorySelector value={field.value} onChange={field.onChange}/>
@@ -269,7 +265,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                                   <CustomFormField
                                       fieldType={FormFieldType.INPUT}
                                       control={form.control}
-                                      name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].amountUsed`}
+                                      name={`variants.${index}.inventoryItems.${inventoryIndex}.amountUsed`}
                                       label="Quantity used *"
                                       placeholder="Enter quantity used per sale"
                                       type="number"
@@ -278,20 +274,23 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
                                   <CustomFormField
                                       fieldType={FormFieldType.CUSTOM_SELECTOR}
                                       control={form.control}
-                                      name={`variants[${variantIndex}].inventoryItems[${inventoryIndex}].unit`}
+                                      name={`variants.${index}.inventoryItems.${inventoryIndex}.unit`}
                                       label="Unit of item usage *"
                                       renderSkeleton={(field) => (
                                           <UnitSelector value={field.value} onChange={field.onChange}/>
                                       )}
                                   />
 
-                                  <Button type="button" className='mt-8' onClick={() => handleRemoveInventory(variantIndex, inv.$id)} variant='destructive'>
+                                  <Button type="button" className='mt-8 self-end'
+                                          onClick={() => handleRemoveInventory(index, inventoryIndex)}
+                                          variant='destructive' >
                                     Stop tracking
                                   </Button>
                                 </div>
                               </div>
                           ))}
-                          <Button type="button" onClick={() => handleAddInventory(variantIndex)} variant="link">
+
+                          <Button type="button" onClick={() => handleAddInventory(index)} variant="outline" size="sm">
                             <PlusIcon className="mr-2 h-4 w-4"/> Track stock usage
                           </Button>
                         </div>
@@ -375,10 +374,7 @@ const ProductForm = ({ item }: { item?: Product | null }) => {
 
             <Card className="overflow-hidden">
               <CardHeader>
-                <CardTitle>Product images</CardTitle>
-                <CardDescription>
-                  Upload images of your product
-                </CardDescription>
+                <CardTitle>Product image</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-2">

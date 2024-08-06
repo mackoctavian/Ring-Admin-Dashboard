@@ -57,7 +57,7 @@ export default async function Page({ searchParams }: ParamsProps) {
                         </CardHeader>
                         <CardContent>
                             <DataTable
-                                searchKey="name"
+                                searchKey="firstName"
                                 pageNo={page}
                                 columns={columns}
                                 total={total}
