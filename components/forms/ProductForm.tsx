@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/card"
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 import {FileUploader} from "@/components/ui/custom-file-uploader";
+import CurrencySelector from "@/components/layout/currency-selector";
 
 const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
   const { toast } = useToast();
@@ -79,6 +80,7 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
         $id: item?.$id ?? null,
         name: data.name,
         category: data.category,
+        currency: data.currency,
         description: data.description,
         branch: data.branch,
         department: data.department,
@@ -145,7 +147,7 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                   <CustomFormField
                       fieldType={FormFieldType.INPUT}
                       control={form.control}
@@ -162,6 +164,16 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
                       description="Only categories of type `PRODUCT` allowed"
                       renderSkeleton={(field) => (
                           <CategorySelector value={field.value} onChange={field.onChange}/>
+                      )}
+                  />
+
+                  <CustomFormField
+                      fieldType={FormFieldType.CUSTOM_SELECTOR}
+                      control={form.control}
+                      name="currency"
+                      label="Currency *"
+                      renderSkeleton={(field) => (
+                          <CurrencySelector value={field.value} onChange={field.onChange}/>
                       )}
                   />
                 </div>
@@ -394,7 +406,7 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
             </Card>
           </div>
 
-          <div className="flex h-5 items-center space-x-4">
+          <div className="flex h-5 items-center space-x-4 py-4">
             <CancelButton/>
             <Separator orientation="vertical"/>
             <SubmitButton loading={isLoading} label={item ? "Update product" : "Save product"}/>

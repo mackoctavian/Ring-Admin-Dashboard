@@ -294,6 +294,7 @@ declare type Product = {
   $id: string;
   name: string;
   sku: string;
+  currency: string;
   category: Category[];
   description: string;
   branch: Branch[];

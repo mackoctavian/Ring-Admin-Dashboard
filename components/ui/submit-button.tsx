@@ -10,7 +10,7 @@ type SubmitButtonProps = {
   
 export const SubmitButton = ({ label, loading }: SubmitButtonProps) => {
     return (
-        <motion.div whileHover={{ scale: 1.04 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+        <motion.div whileHover={{ scale: 1.04  }} whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
             <Button type="submit" disabled={loading}>
                 {loading ? (
                     <>

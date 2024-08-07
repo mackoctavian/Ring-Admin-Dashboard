@@ -695,6 +695,7 @@ export const ProductVariantSchema = z.object({
 export const ProductSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
+    currency: z.string(),
     sku: z.string().optional().nullable(),
     category: z.array(CategorySchema).min(1, "Select category"),
     description: z.string().optional().nullable(),
