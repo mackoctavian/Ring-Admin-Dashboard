@@ -24,8 +24,12 @@ import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
     const form = useForm<z.infer<typeof CategorySchema>>({
         resolver: zodResolver(CategorySchema),
         //handle nullable inputs & objects
-        //@ts-ignore
-        defaultValues: item ? { ...item, parent: item.parent.$id ?? '', description: '' }: {}
+        defaultValues: item ? {
+            ...item,
+            //@ts-ignore
+            parent: item.parent && item.parent.$id ? item.parent.$id : '',
+            description: ''
+        } : {}
     });
 
     const onInvalid = (errors : any ) => {
@@ -71,7 +75,7 @@ import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
                     <CustomFormField
                         fieldType={FormFieldType.INPUT}

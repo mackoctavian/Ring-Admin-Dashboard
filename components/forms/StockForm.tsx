@@ -35,6 +35,7 @@ import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 import {Card, CardContent, CardFooter} from "@/components/ui/card";
 import {PlusCircle} from "lucide-react";
 import "react-day-picker/style.css"
+import CurrencySelector from "@/components/layout/currency-selector";
 
 const StockIntakeSchema = z.object({
   items: z.array(StockSchema).min(1, "There must be at least one record before submitting"),
@@ -113,6 +114,7 @@ const StockForm =() => {
                           placeholder="Quantity of stock items"
                           type="number"
                       />
+
                       <CustomFormField
                           fieldType={FormFieldType.INPUT}
                           control={form.control}
@@ -121,6 +123,17 @@ const StockForm =() => {
                           placeholder="Value of stock items"
                           type="number"
                       />
+
+                      <CustomFormField
+                          fieldType={FormFieldType.SKELETON}
+                          control={form.control}
+                          name={`items.${index}.currency`}
+                          label="Currency *"
+                          renderSkeleton={(field) => (
+                              <CurrencySelector value={field.value} onChange={field.onChange}/>
+                          )}
+                      />
+
                       <CustomFormField
                           fieldType={FormFieldType.SKELETON}
                           control={form.control}

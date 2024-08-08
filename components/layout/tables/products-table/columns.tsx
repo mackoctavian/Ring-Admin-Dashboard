@@ -55,7 +55,7 @@ export const columns: ColumnDef<Product>[] = [
     header: "Description",
     cell: ({ row }) => {
       const description = row.original.description || "No description";
-      return description.length > 100 ? `${description.substring(0, 100)}...` : description;
+      return description.length > 100 ? `${description.substring(0,50)}...` : description;
     },
   },
   {

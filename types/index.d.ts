@@ -470,6 +470,7 @@ declare type Inventory = {
   $id?: string;
   title: string,
   packaging: string,
+  currency: string,
   businessId: string,
   variants: InventoryVariant[],
   $createdAt?: Date;

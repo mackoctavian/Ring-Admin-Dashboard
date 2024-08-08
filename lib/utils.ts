@@ -80,10 +80,10 @@ export const formatDateTime = (input: string) => {
 };
 
 
-export function formatAmount(value: number): string {
+export function formatAmount(value: number, currency: string): string {
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "TZS",
+    currency: currency ?? "TZS",
     minimumFractionDigits: 2,
   });
 

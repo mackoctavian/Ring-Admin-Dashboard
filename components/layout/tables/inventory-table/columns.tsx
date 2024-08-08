@@ -50,12 +50,22 @@ export const columns: ColumnDef<InventoryVariant>[] = [
   {
     header: "Total value",
     id: "totalValue",
-    cell: ({ row }) => <MoneyColumn value={row.original.value} />,
+    cell: ({ row }) => (
+        <MoneyColumn
+            currency={row.original.inventory?.currency ?? "TZS"}
+            value={row.original.value ?? 0}
+        />
+    ),
   },
   {
     header: "Value per item",
     id: "itemValue",
-    cell: ({ row }) => <MoneyColumn value={row.original.value / row.original.quantity} />,
+    cell: ({ row }) => (
+        <MoneyColumn
+            currency={row.original.inventory?.currency ?? "TZS"}
+            value={row.original.value / row.original.quantity ?? 0}
+        />
+    ),
   },
   {
     accessorKey: "status",

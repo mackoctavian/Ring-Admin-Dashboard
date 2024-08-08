@@ -36,6 +36,7 @@ import { Button } from "../ui/button";
 import {PlusCircle, Space} from "lucide-react";
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 import Spacer from "@/components/ui/Spacer";
+import CurrencySelector from "@/components/layout/currency-selector";
 
 const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +49,7 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
             allowMultiple: false,
             optional: true,
             modifierItems: [
-                { price: 0, inventoryItem: undefined, quantity: 0, unit: null }
+                { price: 0, inventoryItem: undefined, quantity: 0, unit: null, currency: "TZS" }
             ]
         }
     });
@@ -177,6 +178,17 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                             placeholder="Modifier item price"
                                             type="number"
                                         />
+
+                                        <CustomFormField
+                                            fieldType={FormFieldType.SKELETON}
+                                            control={form.control}
+                                            name={`modifierItems.${index}.currency`}
+                                            label="Currency *"
+                                            renderSkeleton={(field) => (
+                                                <CurrencySelector value={field.value} onChange={field.onChange}/>
+                                            )}
+                                        />
+
                                         <CustomFormField
                                             fieldType={FormFieldType.SKELETON}
                                             control={form.control}
@@ -222,6 +234,7 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                             name: '',
                                             quantity: 0,
                                             price: 0,
+                                            currency: "TZS",
                                             inventoryItem: undefined
                                         })}>
                                     <PlusCircle className="h-3.5 w-3.5"/>

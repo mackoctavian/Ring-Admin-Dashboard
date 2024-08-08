@@ -451,13 +451,15 @@ export const InventorySchema = z.object({
     $id: z.string().optional(),
     title: z.string(),
     packaging: z.string(),
+    currency: z.string(),
     variants: z.array(InventoryVariantSchema).min(1, "At least one item is required")
 });
 
 export const UpdateInventorySchema = z.object({
     $id: z.string().optional(),
-    title: z.string().nonempty("Title is required"),
+    title: z.string(),
     packaging: z.string(),
+    currency: z.string(),
     variants: z.array(UpdateInventoryVariantSchema).min(1, "At least one item is required")
 });
 
@@ -489,6 +491,7 @@ export const ModifierItemSchema = z.object({
         }
         return val;
     }, z.number()),
+    currency: z.string(),
     quantity: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseFloat(val);
@@ -552,6 +555,7 @@ export const StockSchema = z.object({
         }
         return val;
     }, z.number().nonnegative().gt(0, "Value must be greater than zero")), // Ensuring value is greater than zero
+    currency: z.string(),
     accurate: z.preprocess((val) => {
         if (typeof val === "string" && val.trim().toLowerCase() === "true") {
             return true;
@@ -635,27 +639,14 @@ export const SubscriptionPaymentSchema = z.object({
 export const ProductInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
     z.object({
         $id: z.string().optional(),
-        item: InventoryVariantSchema,
+        item: z.string(),
         amountUsed: z.preprocess((val) => {
             if (typeof val === "string" && val.trim() !== "") {
                 return parseFloat(val);
             }
             return val;
-        }, z.number().nonnegative()),
-        unit: z.string(),
-        //TODO: use unit object unit: ProductUnitSchema,
-        $createdAt: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return new Date(val);
-            }
-            return val;
-        }, z.date().optional()),
-        $updatedAt: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return new Date(val);
-            }
-            return val;
-        }, z.date().optional()),
+        }, z.number().nonnegative().gt(0)),
+        unit: z.string()
     })
 );
 
@@ -676,19 +667,7 @@ export const ProductVariantSchema = z.object({
     }, z.number().nonnegative()),
     barcode: z.string().optional().nullable(),
     status: z.boolean(),
-    inventoryItems: z.array(ProductInventoryUsageSchema).optional(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    inventoryItems: z.array(ProductInventoryUsageSchema).optional()
   });
 
 

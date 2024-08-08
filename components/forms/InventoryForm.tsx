@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/card"
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 import {PlusCircle} from "lucide-react";
+import CurrencySelector from "@/components/layout/currency-selector";
 
 const InventoryForm = ({ item }: { item?: Inventory | null }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -58,7 +59,6 @@ const InventoryForm = ({ item }: { item?: Inventory | null }) => {
       title: "Uh oh! Something went wrong.",
       description: "There was an issue submitting your form, please try later",
     });
-    console.error(JSON.stringify(errors))
   }, [toast]);
 
   const onSubmit = useCallback(async (data) => {
@@ -119,7 +119,7 @@ const StockItemDetails = ({ control }) => (
       <CardDescription>Details used to identify your stock item</CardDescription>
     </CardHeader>
     <CardContent>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
           <CustomFormField
               fieldType={FormFieldType.INPUT}
@@ -138,11 +138,22 @@ const StockItemDetails = ({ control }) => (
                   <PackagingSelector value={field.value} onChange={field.onChange} />
               )}
           />
+
+          <CustomFormField
+              fieldType={FormFieldType.SKELETON}
+              control={control}
+              name="currency"
+              label="Purchase curreny *"
+              renderSkeleton={(field) => (
+                  <CurrencySelector value={field.value} onChange={field.onChange} />
+              )}
+          />
       </div>
     </CardContent>
   </Card>
 );
 
+// @ts-ignore
 const VariantForm = ({ fields, control, append, remove, isEditMode }) => (
   <Card>
     <CardHeader>
@@ -177,6 +188,7 @@ const VariantForm = ({ fields, control, append, remove, isEditMode }) => (
   </Card>
 );
 
+// @ts-ignore
 const VariantField = ({ control, index, remove, fieldsLength }) => (
   <>
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 rounded-md">

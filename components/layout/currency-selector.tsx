@@ -22,7 +22,7 @@ export default function CurrencySelector({ value, onChange }: Props) {
           <SelectContent>
             <SelectGroup>
               <SelectItem value="TZS">Tanzanian Shillings</SelectItem>
-              <SelectItem value="KSH">Kenyan Shillings</SelectItem>
+              <SelectItem value="KES">Kenyan Shillings</SelectItem>
               <SelectItem value="ZAR">South African Rand</SelectItem>
               <SelectItem value="USD">US Dollars</SelectItem>
               <SelectItem value="GBP">British Pound</SelectItem>
