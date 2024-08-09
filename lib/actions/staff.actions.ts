@@ -1,9 +1,9 @@
 'use server';
 
-import {databaseCheck, handleError} from "@/lib/utils/actions-service";
+import {databaseCheck, deleteFile, handleError, shouldReplaceImage, uploadFile} from "@/lib/utils/actions-service";
 import { ID, Query } from "node-appwrite";
 import { parseStringify } from "../utils";
-import { Staff, User } from "@/types";
+import {Product, Staff, User} from "@/types";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
 import { auth, clerkClient } from "@clerk/nextjs/server";
@@ -13,11 +13,14 @@ const {
     SITE_URL: SITE_URL
 } = process.env;
 
-export const createItem = async (item: Staff) => {
+export const createItem = async ({ image, ...item }: Staff) => {
   const { database, businessId, userId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID, { needsBusinessId: true, needsUserId: true });
 
     try {
-      //Send invite to user
+      // Upload image first if it exists
+      const imageData = image ? await uploadFile(image) : null;
+
+      //Send invite to user if dashboard access is enabled
       if ( item.dashboardAccess ) {
         const { orgId } = auth()
 
@@ -28,7 +31,8 @@ export const createItem = async (item: Staff) => {
             email: item.email,
             name: item.firstName +" "+ item.lastName,
             phoneNumber: item.phoneNumber,
-            image: item.image,
+            image: imageData?.imageUrl,
+            imageId: imageData?.imageId,
             city: undefined,
             country: item.nationality,
             gender: item.gender,
@@ -74,6 +78,8 @@ export const createItem = async (item: Staff) => {
           ID.unique(),
           {
             ...item,
+            image: imageData?.imageUrl,
+            imageId: imageData?.imageId,
             businessId: businessId,
           }
       )
@@ -182,13 +188,29 @@ export const list = async ( ) => {
     }
   }
 
-  export const updateItem = async (id: string, data: Staff) => {
+export const updateItem = async (id: string, { image, ...data }: Staff, oldImage: string, oldImageId: string) => {
     if (!id || !data) return null;
     const { database, databaseId,businessId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID, { needsBusinessId: true });
 
     try {
       const { userId } = auth();
       if (!userId) return null;
+
+      let imageUrl: string | null = oldImage;
+      let imageId: string | null = oldImageId;
+
+      if (image) {
+        const shouldUploadNewImage = await shouldReplaceImage(oldImageId, image);
+
+        if (shouldUploadNewImage) {
+          const uploadResult = await uploadFile(image);
+          imageUrl = uploadResult.imageUrl;
+          imageId = uploadResult.imageId;
+        }
+      } else if (!image && oldImage) {
+        imageUrl = null;
+        imageId = null;
+      }
 
       if ( data.dashboardAccess ) {
         try{
@@ -221,6 +243,8 @@ export const list = async ( ) => {
                   dateOfBirth: data.dateOfBirth,
                   gender: data.gender,
                   country: data.nationality,
+                  image: imageUrl,
+                  imageId: imageId,
                   status: true,
                   points:0, 
                   isOwner: false, 
@@ -243,8 +267,15 @@ export const list = async ( ) => {
         databaseId,
         collectionId,
         id,
-        data,
+          {
+            ...data,
+            image: imageUrl,
+            imageId: imageId,
+          }
       );
+
+      if (imageUrl !== oldImage && oldImage) deleteFile(oldImageId)
+
     } catch (error: any) {
       handleError(error, "Error updating staff member");
     }

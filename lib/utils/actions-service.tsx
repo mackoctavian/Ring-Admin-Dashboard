@@ -1,13 +1,12 @@
 import {UploadResult} from "@/types";
-
-const env = process.env.NODE_ENV
-
 import * as Sentry from "@sentry/nextjs"
 import {createAdminClient, createSaaSAdminClient, createStorageClient} from "@/lib/appwrite"
 import {auth} from "@clerk/nextjs/server"
 import {getBusinessId} from "@/lib/actions/business.actions"
 import {AppwriteException, ID, InputFile} from "node-appwrite"
 import {getStatusMessage, HttpStatusCode} from "@/lib/status-handler"
+
+const env = process.env.NODE_ENV
 
 const {
     APPWRITE_ENDPOINT,
@@ -175,10 +174,7 @@ export const shouldReplaceImage = async (oldImageId: string, newImageFile: FormD
         const oldImageSize = oldImage.sizeOriginal;
 
         // Compare sizes only if both are non-zero
-        const sizesDiffer = (oldImageSize > 1 && imageBlob.size > 1) && (oldImageSize !== imageBlob.size);
-        console.log("sizesDiffer:", sizesDiffer);
-
-        return sizesDiffer;
+        return (oldImageSize > 1 && imageBlob.size > 1) && (oldImageSize !== imageBlob.size);
     } catch (error) {
         console.error("Error in shouldReplaceImage:", error);
         return true;

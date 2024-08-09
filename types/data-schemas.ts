@@ -491,7 +491,6 @@ export const ModifierItemSchema = z.object({
         }
         return val;
     }, z.number()),
-    currency: z.string(),
     quantity: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseFloat(val);
@@ -519,23 +518,12 @@ export const ModifierSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     type: z.nativeEnum(ModifierType),
+    currency: z.string(),
     allowMultiple: z.boolean(),
     optional: z.boolean(),
     image: z.string().optional(),
     modifierItems: z.array(ModifierItemSchema).min(1, "At least one item is required"),
-    status: z.nativeEnum(POSItemStatus),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    status: z.nativeEnum(POSItemStatus)
 })
 
 export const StockSchema = z.object({
@@ -638,8 +626,10 @@ export const SubscriptionPaymentSchema = z.object({
 
 export const ProductInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
     z.object({
-        $id: z.string().optional(),
-        item: z.string(),
+        $id: z.string(),
+        //item: InventoryVariantSchema,
+        item: z.string().nullable(),
+        //itemId: z.string(),
         amountUsed: z.preprocess((val) => {
             if (typeof val === "string" && val.trim() !== "") {
                 return parseFloat(val);
@@ -667,7 +657,7 @@ export const ProductVariantSchema = z.object({
     }, z.number().nonnegative()),
     barcode: z.string().optional().nullable(),
     status: z.boolean(),
-    inventoryItems: z.array(ProductInventoryUsageSchema).optional()
+    inventoryItems: z.array(ProductInventoryUsageSchema).optional().nullable()
   });
 
 
@@ -812,7 +802,8 @@ export const ExpensePaymentSchema = z.object({
             return parseInt(val);
         }
         return val;
-    }, z.number().nonnegative()),
+    }, z.number().nonnegative().gt(0)),
+    currency: z.string(),
     document: z.string().optional(),
     description: z.preprocess((val) => val === null ? "" : val, z.string().optional())
 });

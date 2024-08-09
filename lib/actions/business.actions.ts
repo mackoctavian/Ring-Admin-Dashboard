@@ -233,19 +233,18 @@ export const registerBusiness = async ({ logo, ...business }: RegisterBusinessPa
 
 export const updateItem = async (id: string, data: Business) => {
     if( !id || !data) return null;
-
     const { database, databaseId, collectionId } = await databaseCheck(BUSINESS_COLLECTION_ID);
 
     try {
-        const item = await database.updateDocument(
+        await database.updateDocument(
             databaseId,
             collectionId,
             id,
             data
         )
-
-        return parseStringify(item);
     } catch (error) {
         handleError(error);
     }
-};
+
+    revalidatePath("/dashboard/settings/business");
+}

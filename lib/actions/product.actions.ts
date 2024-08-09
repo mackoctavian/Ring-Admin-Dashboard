@@ -6,7 +6,6 @@ import { parseStringify } from "../utils";
 import {Product} from "@/types";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
-import {InventoryStatus} from "@/types/data-schemas";
 
 const {
     PRODUCTS_COLLECTION: PRODUCTS_COLLECTION_ID,
@@ -220,8 +219,6 @@ export const updateItem = async (id: string, { image, variants, ...productData }
         if (image) {
             const shouldUploadNewImage = await shouldReplaceImage(oldImageId, image);
 
-            console.log("should upload image",shouldUploadNewImage);
-
             if (shouldUploadNewImage) {
                 const uploadResult = await uploadFile(image);
                 imageUrl = uploadResult.imageUrl;
@@ -241,10 +238,7 @@ export const updateItem = async (id: string, { image, variants, ...productData }
             ...updateVariants
         ]);
 
-        if (imageUrl !== oldImage && oldImage) {
-            // TODO: Implement deleteImage function
-            await deleteFile(oldImageId);
-        }
+        if (imageUrl !== oldImage && oldImage) deleteFile(oldImageId)
 
     } catch (error) {
         handleError(error, "Error updating product");

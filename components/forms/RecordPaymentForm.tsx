@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/popover"
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 import "react-day-picker/style.css"
+import CurrencySelector from "@/components/layout/currency-selector";
 
  const RecordPaymentForm = () => {
     const [isLoading, setIsLoading] = useState(false)
@@ -74,7 +75,7 @@ import "react-day-picker/style.css"
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
                     <CustomFormField
                         fieldType={FormFieldType.SKELETON}
@@ -145,6 +146,16 @@ import "react-day-picker/style.css"
                         label="Repayment amount *"
                         placeholder="Repayment amount"
                         type="number"
+                    />
+
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
+                        control={form.control}
+                        name="currency"
+                        label="Currency *"
+                        renderSkeleton={(field) => (
+                            <CurrencySelector value={field.value} onChange={field.onChange}/>
+                        )}
                     />
                 </div>
 

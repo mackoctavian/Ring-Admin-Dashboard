@@ -1,7 +1,7 @@
 'use client'
 
 import { useToast } from "@/components/ui/use-toast"
-import React, {useState} from 'react'
+import React, {useCallback, useState} from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Switch } from "@/components/ui/switch"
 import { Cross2Icon, PlusIcon } from "@radix-ui/react-icons"
@@ -30,9 +30,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input"
 import {FileUploader} from "@/components/ui/custom-file-uploader"
 import CurrencySelector from "@/components/layout/currency-selector"
+import {ScrollArea} from "@/components/ui/scroll-area";
 
 const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
   const { toast } = useToast();
@@ -40,7 +51,17 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
 
   const form = useForm({
     resolver: zodResolver(ProductSchema),
-    defaultValues: item ? { ...item, description: item.description ?? '' } : {
+    defaultValues: item ? {
+      ...item,
+      description: item.description ?? '',
+      variants: item.variants.map(variant => ({
+        ...variant,
+        inventoryItems: variant.inventoryItems.map(invItem => ({
+          ...invItem,
+          $id: invItem.$id || null
+        }))
+      }))
+    } : {
       name: '',
       posStatus: POSItemStatus.DRAFT,
       image: null,
@@ -55,6 +76,15 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
     control: form.control,
     name: 'variants'
   });
+
+  const onInvalid = useCallback((errors: any) => {
+    console.log(errors);
+    toast({
+      variant: "warning",
+      title: "Uh oh! Something went wrong.",
+      description: "There was an issue submitting your form, please try later",
+    });
+  }, [toast]);
 
   const onSubmit = async (data: any) => {
     setIsLoading(true);
@@ -87,7 +117,9 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
         variants: data.variants,
         posStatus: data.posStatus,
         sku: null
-      }
+      };
+
+      console.log(productData);
 
       const action = item ? await updateItem(item.$id, productData, item.image, item.imageId) : createItem(productData);
       await action;
@@ -97,7 +129,6 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
         description: `Product ${item ? 'updated' : 'added'} successfully!`,
       });
     } catch (error) {
-      console.log(error)
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -119,10 +150,10 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
     const currentVariant = form.getValues(`variants.${variantIndex}`);
     const updatedInventoryItems = [
       ...currentVariant.inventoryItems,
-      { $id: uuidv4(), amountUsed: 0 }
+      { $id: uuidv4(), amountUsed: 1, unit: "666bfaa90002d3ce9abf" }
     ];
     form.setValue(`variants.${variantIndex}.inventoryItems`, updatedInventoryItems);
-    form.trigger(); // Trigger a re-render
+    form.trigger();
   };
 
   const handleRemoveInventory = (variantIndex: number, inventoryItemIndex: number) => {
@@ -132,9 +163,11 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
     form.trigger();
   };
 
+  //console.log(item)
+
   return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
           <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
             {/* Left Column */}
             <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
@@ -257,54 +290,88 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
                                 )}
                             />
                           </div>
-                          <div className="space-y-2">
-                            {form.watch(`variants.${index}.inventoryItems`, []).map((inventoryItem, inventoryIndex) => (
-                                <div key={inventoryItem.$id} className="space-y-2 p-2 rounded-md">
-                                  <Separator className="my-7"/>
-                                  <div key={inventoryItem.$id} className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-                                    <CustomFormField
-                                        fieldType={FormFieldType.CUSTOM_SELECTOR}
-                                        control={form.control}
-                                        name={`variants.${index}.inventoryItems.${inventoryIndex}.item`}
-                                        label="Stock item *"
-                                        renderSkeleton={(field) => (
-                                            <InventorySelector value={field.value} onChange={field.onChange}/>
-                                        )}
-                                    />
-
-                                    <CustomFormField
-                                        fieldType={FormFieldType.INPUT}
-                                        control={form.control}
-                                        name={`variants.${index}.inventoryItems.${inventoryIndex}.amountUsed`}
-                                        label="Quantity used *"
-                                        placeholder="Enter quantity used per sale"
-                                        type="number"
-                                    />
-
-                                    <CustomFormField
-                                        fieldType={FormFieldType.CUSTOM_SELECTOR}
-                                        control={form.control}
-                                        name={`variants.${index}.inventoryItems.${inventoryIndex}.unit`}
-                                        label="Unit of item usage *"
-                                        renderSkeleton={(field) => (
-                                            <UnitSelector value={field.value} onChange={field.onChange}/>
-                                        )}
-                                    />
-
-                                    <Button type="button" className="mt-8"
-                                            onClick={() => handleRemoveInventory(index, inventoryIndex)}
-                                            variant='destructive'>
-                                      Stop tracking
+                          <Drawer>
+                            <DrawerTrigger asChild>
+                              <Button variant="outline" className="snap-end">
+                                <PlusIcon className="mr-2 h-4 w-4" /> Enable stock item tracking
+                              </Button>
+                            </DrawerTrigger>
+                            <DrawerContent>
+                              <div className="mx-auto w-full max-w-5xl">
+                                <DrawerHeader>
+                                  <DrawerTitle>Track Stock Items</DrawerTitle>
+                                  <DrawerDescription>This feature enables stock reduction as per product sales</DrawerDescription>
+                                </DrawerHeader>
+                                <div className="p-4 pb-0">
+                                  <div className="flex justify-between items-center mb-4">
+                                    <h4 className="text-sm font-medium">Variant {index + 1} stock item tracking</h4>
+                                    <Button
+                                        type="button"
+                                        onClick={() => handleAddInventory(index)}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="accent-green-400">
+                                      <PlusIcon className="mr-2 h-4 w-4" /> Add trackable item
                                     </Button>
                                   </div>
-                                </div>
-                            ))}
 
-                            <Button type="button" onClick={() => handleAddInventory(index)} variant="outline" size="sm">
-                              <PlusIcon className="mr-2 h-4 w-4"/> Track stock item
-                            </Button>
-                          </div>
+                                  <ScrollArea key="itemScroll">
+                                    {form.watch(`variants.${index}.inventoryItems`, []).map((inventoryItem, inventoryIndex) => (
+                                        <div key={inventoryItem.$id} className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-10 px-2">
+                                          <CustomFormField
+                                              fieldType={FormFieldType.CUSTOM_SELECTOR}
+                                              control={form.control}
+                                              name={`variants.${index}.inventoryItems.${inventoryIndex}.item`}
+                                              label="Stock item *"
+                                              renderSkeleton={(field) => (
+                                                  <InventorySelector value={field.value} onChange={field.onChange} />
+                                              )}
+                                          />
+
+                                          <CustomFormField
+                                              fieldType={FormFieldType.INPUT}
+                                              control={form.control}
+                                              name={`variants.${index}.inventoryItems.${inventoryIndex}.amountUsed`}
+                                              label="Quantity used *"
+                                              placeholder="Enter quantity used per sale"
+                                              type="number"
+                                          />
+
+                                          <CustomFormField
+                                              fieldType={FormFieldType.CUSTOM_SELECTOR}
+                                              control={form.control}
+                                              name={`variants.${index}.inventoryItems.${inventoryIndex}.unit`}
+                                              label="Unit of item usage *"
+                                              renderSkeleton={(field) => (
+                                                  <UnitSelector value={field.value} onChange={field.onChange} />
+                                              )}
+                                          />
+
+                                          <Button
+                                              type="button"
+                                              className="mt-8"
+                                              onClick={() => handleRemoveInventory(index, inventoryIndex)}
+                                              variant="destructive">
+                                            Remove tracker
+                                          </Button>
+                                        </div>
+                                    ))}
+                                  </ScrollArea>
+                                </div>
+                                <DrawerFooter>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <DrawerClose asChild>
+                                      <Button>Submit</Button>
+                                    </DrawerClose>
+                                    <DrawerClose asChild>
+                                      <Button variant="outline">Cancel</Button>
+                                    </DrawerClose>
+                                  </div>
+                                </DrawerFooter>
+                              </div>
+                            </DrawerContent>
+                          </Drawer>
                         </div>
                     ))}
                   </div>
@@ -404,7 +471,6 @@ const ProductForm: React.FC<{ item?: Product | null }> = ({ item }) => {
                 </CardContent>
               </Card>
             </div>
-
             <div className="flex h-5 items-center space-x-4 py-4">
               <CancelButton/>
               <Separator orientation="vertical"/>

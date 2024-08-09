@@ -36,9 +36,10 @@ export const FileUploader = ({ files, onChange }: FileUploaderProps) => {
             {imageSrc ? (
                 <Image
                     src={imageSrc}
-                    width={1000}
-                    height={1000}
+                    width={600}
+                    height={600}
                     alt="Uploaded file"
+                    quality={60}
                     className="max-h-[400px] overflow-hidden object-cover"
                 />
             ) : (

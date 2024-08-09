@@ -14,8 +14,7 @@ import CountrySelector from "../layout/country-selector"
 import BusinessSizeSelector from "../layout/business-size-selector"
 import BusinessTypeSelector from "../layout/business-type-selector"
 import {Business} from "@/types"
-import {BranchSchema, BusinessSchema} from '@/types/data-schemas'
-import CancelButton from "../layout/cancel-button"
+import {BusinessSchema} from '@/types/data-schemas'
 import { updateItem } from "@/lib/actions/business.actions"
 import { SubmitButton } from "@/components/ui/submit-button"
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
@@ -168,7 +167,7 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
                   fieldType={FormFieldType.INPUT}
                   control={form.control}
                   name="city"
-                  label="Business location (city) *"
+                  label="Business location (city)"
                   placeholder="Enter business location"
               />
 
@@ -202,8 +201,6 @@ const BusinessSettingsForm = ({ item }: { item?: Business | null }) => {
           </div>
 
           <div className="flex h-5 items-center space-x-4">
-              <CancelButton/>
-              <Separator orientation="vertical"/>
               <SubmitButton loading={isLoading} label={item ? 'Update business details' : 'Save business details'}/>
           </div>
       </form>

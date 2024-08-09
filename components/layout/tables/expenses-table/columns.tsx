@@ -6,6 +6,7 @@ import { CellAction } from "./cell-action";
 import { NumberColumn } from "../number-column";
 import { DateTimeColumn } from "../date-colum";
 import {BadgeColumn} from "@/components/layout/tables/badge-column";
+import {MoneyColumn} from "@/components/layout/tables/money-colum";
 
 export const columns: ColumnDef<Expense>[] = [
   {
@@ -36,14 +37,34 @@ export const columns: ColumnDef<Expense>[] = [
     header: "Category",
   },
   {
-    header: "Amount",
+    header: "Total amount",
     id: "amount",
-    cell: ({ row }) => <NumberColumn suffix={row.original.currency} value={row.original.amount} />,
+    cell: ({ row }) => (
+        <MoneyColumn
+            currency={row.original.currency ?? "TZS"}
+            value={row.original.amount ?? 0}
+        />
+    ),
+  },
+  {
+    header: "Amount paid",
+    id: "paid",
+    cell: ({ row }) => (
+        <MoneyColumn
+            currency={row.original.currency ?? "TZS"}
+            value={(row.original.amount - row.original.balance) ?? 0}
+        />
+    ),
   },
   {
     header: "Balance",
     id: "balance",
-    cell: ({ row }) => <NumberColumn suffix={row.original.currency} value={row.original.balance} />,
+    cell: ({ row }) => (
+        <MoneyColumn
+            currency={row.original.currency ?? "TZS"}
+            value={row.original.balance ?? 0}
+        />
+    ),
   },
   {
     id: "dueDate",

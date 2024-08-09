@@ -33,7 +33,7 @@ import {
 import { SubmitButton } from "../ui/submit-button";
 import {SelectItem,} from "@/components/ui/select"
 import { Button } from "../ui/button";
-import {PlusCircle, Space} from "lucide-react";
+import {PlusCircle} from "lucide-react";
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 import Spacer from "@/components/ui/Spacer";
 import CurrencySelector from "@/components/layout/currency-selector";
@@ -48,8 +48,9 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
             status: POSItemStatus.DRAFT,
             allowMultiple: false,
             optional: true,
+            currency: "TZS",
             modifierItems: [
-                { price: 0, inventoryItem: undefined, quantity: 0, unit: null, currency: "TZS" }
+                { price: 0, inventoryItem: undefined, quantity: 0, unit: null }
             ]
         }
     });
@@ -77,6 +78,7 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                 status: values.status,
                 allowMultiple: values.allowMultiple,
                 optional: values.optional,
+                currency: values.currency,
                 modifierItems: values.modifierItems.map(item => ({
                     name: item.name,
                     price: item.price,
@@ -109,7 +111,6 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
             });
         } finally {
             setIsLoading(false);
-            form.reset()
         }
     }
 
@@ -127,7 +128,7 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                     <CustomFormField
                                         fieldType={FormFieldType.INPUT}
                                         control={form.control}
@@ -148,6 +149,16 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                             Modify item by typing into a text box
                                         </SelectItem>
                                     </CustomFormField>
+
+                                    <CustomFormField
+                                        fieldType={FormFieldType.SKELETON}
+                                        control={form.control}
+                                        name="currency"
+                                        label="Currency *"
+                                        renderSkeleton={(field) => (
+                                            <CurrencySelector value={field.value} onChange={field.onChange}/>
+                                        )}
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
@@ -177,16 +188,6 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                             label="Modifier item price *"
                                             placeholder="Modifier item price"
                                             type="number"
-                                        />
-
-                                        <CustomFormField
-                                            fieldType={FormFieldType.SKELETON}
-                                            control={form.control}
-                                            name={`modifierItems.${index}.currency`}
-                                            label="Currency *"
-                                            renderSkeleton={(field) => (
-                                                <CurrencySelector value={field.value} onChange={field.onChange}/>
-                                            )}
                                         />
 
                                         <CustomFormField
@@ -234,7 +235,6 @@ const ModifierForm = ({ modifier }: { modifier?: Modifier }) => {
                                             name: '',
                                             quantity: 0,
                                             price: 0,
-                                            currency: "TZS",
                                             inventoryItem: undefined
                                         })}>
                                     <PlusCircle className="h-3.5 w-3.5"/>

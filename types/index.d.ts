@@ -77,7 +77,8 @@ declare type User = {
   email: string;
   name: string;
   phoneNumber?: string;
-  image?: string;
+  image?: string | null;
+  imageId?: string | null;
   city?: string;
   country?: string;
   gender?: Gender;
@@ -270,6 +271,7 @@ declare type Modifier = {
   $id?: string;
   name: string;
   type: ModifierType;
+  currency: string;
   allowMultiple: boolean;
   optional: boolean;
   modifierItems: ModifierItem[];
@@ -323,8 +325,6 @@ declare type ProductInventoryItemUsage = {
   item: InventoryVariant;
   amountUsed: number;
   unit: ProductUnit;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 /* End Product */
 
@@ -421,6 +421,7 @@ declare type Staff = {
   department?: string[];
   branch?: Branch[];
   image: FormData | undefined;
+  imageId: string | undefined;
   businessId?: string;
   status: boolean;
   posAccess: boolean;
@@ -571,11 +572,11 @@ declare type ExpensePayment = {
   paymentDate: Date;
   receipt?: string;
   amount: number;
-  paymentMethod: PaymentMethod; 
+  currency: string;
+  paymentMethod: PaymentMethod;
   description?: string;
 }
 /* End Expense */
-
 
 
 /* Section */
