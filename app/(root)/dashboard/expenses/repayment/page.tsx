@@ -1,25 +1,32 @@
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
 import BreadCrumb from "@/components/layout/breadcrumb";
 import RecordPaymentForm from "@/components/forms/RecordPaymentForm";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 
-const breadcrumbItems = [{ title: "Expense", link: "/expenses" }, { title: "Repayment", link: "/repayment" } ];
+export default async function ExpensePaymentPage() {
 
-const ExpensePaymentPage = async () => {
+    const breadcrumbItems = [{ title: "Expenses", link: "/dashboard/expenses" }, { title: "Repayment", link: "" }];
+
     return (
-        <>
-            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-                <BreadCrumb items={breadcrumbItems} />
-
-                <div className="flex items-start justify-between">
-                    <Heading title={`Record payment`} description={`Record expense repayment`} />
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <div className="flex items-center justify-between mb-2">
+                <div className="relative flex-1 md:max-w-md">
+                    <BreadCrumb items={breadcrumbItems}/>
                 </div>
-                <Separator />
-
-                <RecordPaymentForm />
             </div>
-        </>
-    );
-};
 
-export default ExpensePaymentPage;
+            <RepaymentCard />
+        </div>
+    );
+}
+
+const RepaymentCard = () => (
+    <Card>
+        <CardHeader>
+            <CardTitle>Record payment</CardTitle>
+            <CardDescription>Record a repayment for your expenses</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <RecordPaymentForm />
+        </CardContent>
+    </Card>
+)

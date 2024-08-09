@@ -1,36 +1,19 @@
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Switch } from "@/components/ui/switch"
-import { ReloadIcon } from "@radix-ui/react-icons"
-import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select"
-import { Input } from "@/components/ui/input";
+import {Form} from "@/components/ui/form";
+import {SelectItem} from "@/components/ui/select"
 import { modifyStockItem } from "@/lib/actions/inventory.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 import { SubmitButton } from "../ui/submit-button";
 import { InventoryModificationSchema } from "@/types/data-schemas"
 import InventorySelector from "@/components/layout/inventory-selector"
+import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 
  const ModifyInventoryForm = () => {
     const [isLoading, setIsLoading] = useState(false)
@@ -53,11 +36,12 @@ import InventorySelector from "@/components/layout/inventory-selector"
         setIsLoading(true);
     
         try {
+            //@ts-ignore
             await modifyStockItem(data);
             toast({
                 variant: "success",
                 title: "Success", 
-                description: "Stock items updated succesfully!"
+                description: "Stock items updated successfully!"
             })
         } catch (error: any) {
             toast({
@@ -66,10 +50,7 @@ import InventorySelector from "@/components/layout/inventory-selector"
                 description: "There was an issue submitting your form, please try later"
             });
         } finally {
-        //delay loading
-        setTimeout(() => {
             setIsLoading(false);
-            }, 1000); 
         }
     };
 
@@ -77,101 +58,57 @@ import InventorySelector from "@/components/layout/inventory-selector"
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <FormField
+
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
                         control={form.control}
                         name="item"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Stock item *</FormLabel>
-                            <FormControl>
-                                <InventorySelector {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    
-                    <FormField
-                        control={form.control}
-                        name="quantity"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Updated stock quantity *</FormLabel>
-                            <FormControl>
-                                <Input
-                                    type="number"
-                                    placeholder="Updated stock quantity"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
+                        label="Stock item *"
+                        renderSkeleton={(field) => (
+                            <InventorySelector value={field.value} onChange={field.onChange} />
                         )}
                     />
 
-                    <FormField
+                    <CustomFormField
+                        fieldType={FormFieldType.INPUT}
+                        control={form.control}
+                        name="quantity"
+                        label="Updated stock quantity *"
+                        placeholder="Updated stock quantity"
+                        type="number"
+                    />
+
+                    <CustomFormField
+                        fieldType={FormFieldType.INPUT}
                         control={form.control}
                         name="value"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Updated stock value *</FormLabel>
-                            <FormControl>
-                                <Input
-                                    step="0.01"
-                                    type="number"
-                                    placeholder="Updated stock value"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
+                        label="Updated stock value *"
+                        placeholder="Updated stock value"
+                        type="number"
                     />
-                
-                    <FormField
+
+                    <CustomFormField
+                        fieldType={FormFieldType.SELECT}
                         control={form.control}
                         name="reason"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Reason *</FormLabel>
-                            <Select onValueChange={field.onChange}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select update reason" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="Recount">Recount</SelectItem>
-                                    <SelectItem value="Damage">Damage</SelectItem>
-                                    <SelectItem value="Expired">Expired</SelectItem>
-                                    <SelectItem value="Theft">Theft</SelectItem>
-                                    <SelectItem value="Internal use">Items used by staff</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
+                        label="Stock update reason *"
+                        placeholder="Select stock update reason">
+                            <SelectItem key="Recount" value="Recount">Recount</SelectItem>
+                            <SelectItem key="Damage" value="Damage">Damage</SelectItem>
+                            <SelectItem key="Expired" value="Expired">Expired</SelectItem>
+                            <SelectItem key="Theft" value="Theft">Theft</SelectItem>
+                            <SelectItem key="Internal use" value="Internal use">Items used by staff</SelectItem>
+                    </CustomFormField>
                 </div>
-                <FormField
-                        control={form.control}
-                        name="notes"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Notes</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Any other information regarding this modification"
-                                    className="resize-none"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                
-        
+
+                <CustomFormField
+                    fieldType={FormFieldType.TEXTAREA}
+                    control={form.control}
+                    name="notes"
+                    label="Notes"
+                    placeholder="Any other information regarding this modification"
+                />
+
                 <div className="flex h-5 items-center space-x-4">
                     <CancelButton />
                     <Separator orientation="vertical" />

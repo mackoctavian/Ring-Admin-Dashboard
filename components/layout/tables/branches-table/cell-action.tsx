@@ -43,10 +43,6 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           description: 'There was an issue with your request, please try again later',
         });
       }
-
-      // Redirect to the list page after submission
-      router.push('/branches');
-      router.refresh();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -54,11 +50,8 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         description: error.message || 'There was an issue with your request, please try again later',
       });
     } finally {
-      // Delay loading
-      setTimeout(() => {
-        setIsLoading(false);
-        setOpen(false);
-      }, 1000);
+      setIsLoading(false);
+      setOpen(false);
     }
   };
 
@@ -79,7 +72,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => router.push(`/branches/${data.$id}`)}>
+          <DropdownMenuItem onClick={() => router.push(`/dashboard/branches/${data.$id}`)}>
             <Edit className="mr-2 h-4 w-4" /> Update
           </DropdownMenuItem>
           {data.canDelete && (

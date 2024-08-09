@@ -1,110 +1,80 @@
 'use server';
 
-const env = process.env.NODE_ENV
-import * as Sentry from "@sentry/nextjs"
-import { ID, Query, AppwriteException } from "node-appwrite";
-import { createAdminClient } from "../appwrite";
+import {databaseCheck, deleteFile, handleError, shouldReplaceImage, uploadFile} from "@/lib/utils/actions-service";
+import { ID, Query } from "node-appwrite";
 import { parseStringify } from "../utils";
-import { Product } from "@/types";
-import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
-import { auth } from "@clerk/nextjs/server";
-import { getBusinessId } from "./business.actions";
+import {Product} from "@/types";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
 
 const {
-    APPWRITE_DATABASE: DATABASE_ID,
     PRODUCTS_COLLECTION: PRODUCTS_COLLECTION_ID,
     PRODUCT_VARIANTS_COLLECTION: PRODUCTS_VARIANTS_COLLECTION_ID
 } = process.env;
 
-const checkRequirements = async (collectionId: string | undefined) => {
-  if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
-
-  const { database } = await createAdminClient();
-  if (!database) throw new Error('Database client could not be initiated');
-
-  const { userId } = auth();
-  if (!userId) {
-    throw new Error('You must be signed in to use this feature');
-  }
-  
-  const businessId = await getBusinessId();
-  if( !businessId ) throw new Error('Business ID could not be initiated');
-
-  return { database, userId, businessId };
-};
-  
-export const createItem = async (item: Product) => {
-    const { database, businessId } = await checkRequirements(PRODUCTS_COLLECTION_ID);
-    const { variants, ...productData } = item;
-
+export const createItem = async ({ image, variants, ...productData }: Product) => {
     try {
-      const product = await database.createDocument(
-        DATABASE_ID!,
-        PRODUCTS_COLLECTION_ID!,
-        ID.unique(),
-        {
-          ...productData,
-          businessId: businessId,
-          canDelete: true
+        const { database, databaseId, businessId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID, { needsBusinessId: true });
+
+        // Upload image first if it exists
+        const imageData = image ? await uploadFile(image) : null;
+
+        // Create product with image data in a single operation
+        const product = await database.createDocument(
+            databaseId,
+            collectionId,
+            ID.unique(),
+            {
+                ...productData,
+                businessId,
+                canDelete: true,
+                image: imageData?.imageUrl,
+                imageId: imageData?.imageId
+            }
+        );
+
+        // Create variants if they exist
+        if (variants && variants.length > 0) {
+            await Promise.all(variants.map(variant =>
+                database.createDocument(
+                    databaseId,
+                    PRODUCTS_VARIANTS_COLLECTION_ID!,
+                    ID.unique(),
+                    {
+                        ...variant,
+                        product: product.$id,
+                        productId: product.$id
+                    }
+                )
+            ));
         }
-      )
 
-      //Create variants
-      for (const variant of variants) {
-        await database.createDocument(
-          DATABASE_ID!,
-          PRODUCTS_VARIANTS_COLLECTION_ID!,
-          ID.unique(),
-          {
-            ...variant,
-            product: product.$id,
-            productId: product.$id
-          }
-        )
-      }
-    } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+    } catch (error) {
+        handleError(error, 'Error creating product');
     }
 
-  revalidatePath('/products')
-  redirect('/products')
-};
+    revalidatePath('/dashboard/products');
+    redirect('/dashboard/products');
+}
 
 export const list = async ( ) => {
-  const { database, businessId } = await checkRequirements(PRODUCTS_COLLECTION_ID);
+  const { database, databaseId,businessId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID, {needsBusinessId: true})
 
     try {
       const items = await database.listDocuments(
-        DATABASE_ID!,
-        PRODUCTS_COLLECTION_ID!,
-        [Query.equal('businessId', businessId)]
+        databaseId,
+        collectionId,
+        [Query.equal('businessId', businessId!)]
       );
+
+      if ( items.total == 0 ) return null;
 
       return parseStringify(items.documents);
 
     }catch (error: any){
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error listing products");
     }
 };
-
 
 
 export const getItems = async (
@@ -113,11 +83,11 @@ export const getItems = async (
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    const { database, businessId } = await checkRequirements(PRODUCTS_COLLECTION_ID);
-  
-    try {
+  const { database, databaseId,businessId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID, {needsBusinessId: true})
+
+  try {
       const queries = [];
-      queries.push(Query.equal('businessId', businessId));
+      queries.push(Query.equal('businessId', businessId!));
       queries.push(Query.orderDesc("$createdAt"));
 
       if ( limit ) {
@@ -134,135 +104,147 @@ export const getItems = async (
       }
   
       const items = await database.listDocuments(
-        DATABASE_ID!,
-        PRODUCTS_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         queries
       );
   
-      if (items.documents.length === 0) {
-        return [];
-      }
+      if (items.documents.length === 0) return null;
   
       return parseStringify(items.documents);
     }catch (error: any){
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
+      handleError(error, "Error listing products");
+    }
+};
 
-      if(env == "development"){ console.error(error); }
+export const getVariantItems = async (
+    q?: string,
+    status?: boolean | null,
+    limit?: number | null,
+    offset?: number | 1,
+) => {
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID, {needsBusinessId: true})
 
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+    try {
+        const queries = [];
+        queries.push(Query.equal("businessId", businessId!));
+        queries.push(Query.orderAsc("name"));
+
+        if ( limit ) {
+            queries.push(Query.limit(limit));
+            queries.push(Query.offset(offset!));
+        }
+
+        if (q) {
+            queries.push(Query.search('name', q));
+        }
+
+        if (status) {
+            queries.push(Query.equal('status', status));
+        }
+
+        const items = await database.listDocuments(
+            databaseId,
+            collectionId,
+            queries
+        );
+
+        if (items.documents.length == 0) return null
+
+        return parseStringify(items.documents);
+    } catch (error: any) {
+        handleError(error, "Error getting product variants")
     }
 };
 
 export const getItem = async (id: string) => {
     if (!id) return null;
-    const { database, businessId } = await checkRequirements(PRODUCTS_COLLECTION_ID);
+    const { database, databaseId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID)
 
     try {
       const item = await database.listDocuments(
-        DATABASE_ID!,
-        PRODUCTS_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         [Query.equal('$id', id)]
       )
 
-      if ( item.total < 1 ) return null;
+      if ( item.total == 0 ) return null;
 
       return parseStringify(item.documents[0]);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error getting product");
     }
 };
 
 export const deleteItem = async ({ $id }: Product) => {
   if (!$id) return null;
-  const { database, businessId } = await checkRequirements(PRODUCTS_COLLECTION_ID);
-    try {
+  const { database, databaseId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID)
+
+  try {
       await database.deleteDocument(
-        DATABASE_ID!,
-        PRODUCTS_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         $id);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error deleting product");
     }
-    revalidatePath('/products')
-    redirect('/products')
+
+    revalidatePath('/dashboard/products')
+    redirect('/dashboard/products')
 }
 
-export const updateItem = async (id: string, data: Product) => {
-  if (!id || !data) return null;
-  const { database, businessId } = await checkRequirements(PRODUCTS_COLLECTION_ID);
-  const { variants, ...productData } = data;
-
-  console.log(JSON.stringify(data));
+export const updateItem = async (id: string, { image, variants, ...productData }: Product, oldImage: string, oldImageId: string) => {
+    if (!id || !productData) throw new Error("Invalid input data")
 
     try {
-      await database.updateDocument(
-        DATABASE_ID!,
-        PRODUCTS_COLLECTION_ID!,
-        id,
-        data
-      )
+        const { database, databaseId, collectionId } = await databaseCheck(PRODUCTS_COLLECTION_ID);
 
-      //Create variants
-//      for (const variant of variants) {
-//        console.log("VARIANT UPDATE", variant)
-//
-//        if ( variant.$id ){
-//          await database.updateDocument(
-//            DATABASE_ID,
-//            PRODUCTS_VARIANTS_COLLECTION_ID,
-//            variant.$id,
-//            {
-//              ...variant,
-//              product: id,
-//              productId: id
-//            }
-//          )
-//        }else{
-//          //
-//          await database.createDocument(
-//            DATABASE_ID,
-//            PRODUCTS_VARIANTS_COLLECTION_ID,
-//            ID.unique(),
-//            {
-//              ...variant,
-//              product: id,
-//              productId: id
-//            }
-//          )
-//        }
-//
-//      }
-    } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
+        const updateVariants = variants.map(variant =>
+            variant.$id
+                ? database.updateDocument(databaseId, PRODUCTS_VARIANTS_COLLECTION_ID!, variant.$id, {
+                    ...variant,
+                    product: productData.$id,
+                    productId: productData.$id
+                })
+                : database.createDocument(databaseId, PRODUCTS_VARIANTS_COLLECTION_ID!, ID.unique(), {
+                    ...variant,
+                    product: productData.$id,
+                    productId: productData.$id
+                })
+        );
 
-      if(env == "development"){ console.error(error); }
+        let imageUrl: string | null = oldImage;
+        let imageId: string | null = oldImageId;
 
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+        if (image) {
+            const shouldUploadNewImage = await shouldReplaceImage(oldImageId, image);
+
+            if (shouldUploadNewImage) {
+                const uploadResult = await uploadFile(image);
+                imageUrl = uploadResult.imageUrl;
+                imageId = uploadResult.imageId;
+            }
+        } else if (!image && oldImage) {
+            imageUrl = null;
+            imageId = null;
+        }
+
+        const [updatedProduct, ...updatedVariants] = await Promise.all([
+            database.updateDocument(databaseId, collectionId, id, {
+                ...productData,
+                image: imageUrl,
+                imageId: imageId,
+            }),
+            ...updateVariants
+        ]);
+
+        if (imageUrl !== oldImage && oldImage) deleteFile(oldImageId)
+
+    } catch (error) {
+        handleError(error, "Error updating product");
+        throw error;
     }
-    revalidatePath('/products')
-    redirect('/products')
-}
+
+    revalidatePath('/dashboard/products');
+    redirect('/dashboard/products');
+};

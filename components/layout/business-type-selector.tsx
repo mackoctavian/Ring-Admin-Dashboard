@@ -6,51 +6,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getBusinessTypes } from "@/lib/actions/business.actions"
+import { getBusinessTypes } from "@/lib/actions/business.actions";
 import { BusinessType } from "@/types";
 
 interface Props {
-  value?: BusinessType;
-  onChange: (value: BusinessType) => void;
+  value?: BusinessType | null;
+  onChange: (value: BusinessType | null) => void;
 }
 
 const BusinessTypeSelector: React.FC<Props> = ({ value, onChange }) => {
-  const [types, setTypes] = useState<BusinessType[]>([]);
+  const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
 
   useEffect(() => {
-    async function fetchTypes() {
+    async function fetchBusinessTypes() {
       try {
-        const data = await getBusinessTypes();
-        setTypes(data);
+        const businessTypes = await getBusinessTypes();
+        setBusinessTypes(businessTypes);
       } catch (error) {
         console.error('Error fetching business types:', error);
       }
     }
-    fetchTypes();
+    fetchBusinessTypes();
   }, []);
 
-  const handleSelectChange = (value: string) => {
-    const selectedType = types.find(type => type.$id === value);
-    if (selectedType) {
-      onChange(selectedType);
-    }
+  const handleSelectChange = (id: string) => {
+    const selectedBusinessType = businessTypes.find(businessType => businessType.$id === id);
+    onChange(selectedBusinessType || null);
   };
 
   return (
-    <Select value={value ? value.$id : ''} onValueChange={handleSelectChange}>
-      <SelectTrigger>
-        <SelectValue>
-          {value ? value.name : 'Select business type'}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {types.map((item) => (
-          <SelectItem key={item.$id} value={item.$id}>
-            {item.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      <Select value={value ? value.$id : ''} onValueChange={handleSelectChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select business type">
+            {value ? value.name : 'Select business type'}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {businessTypes.map((businessType) => (
+              <SelectItem key={businessType.$id} value={businessType.$id}>
+                {businessType.name}
+              </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
   );
 };
 

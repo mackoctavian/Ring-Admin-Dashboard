@@ -1,6 +1,6 @@
 "use client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Inventory, InventoryVariant } from "@/types";
+import { InventoryVariant } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { NumberColumn } from "../number-column";
@@ -29,26 +29,47 @@ export const columns: ColumnDef<InventoryVariant>[] = [
   {
     id: "fullName",
     accessorKey: "fullName",
-    header: "NAME",
+    header: "Stock item",
   },
   {
-    id: "packaging",
-    accessorKey: "inventory.packaging",
-    header: "PACKAGING",
-  },
-  {
-    header: "QUANTITY",
+    header: "Quantity",
     id: "quantity",
-    cell: ({ row }) => <NumberColumn value={row.original.quantity} />,
+    cell: ({ row }) => {
+      const quantity = row.original.quantity;
+      const packaging = row.original.inventory?.packaging;
+      const suffix = packaging ? `${packaging}${quantity === 1 ? '' : 's'}` : undefined;
+
+      return <NumberColumn value={quantity} suffix={suffix} />;
+    },
   },
   {
-    header: "VALUE",
-    id: "value",
-    cell: ({ row }) => <MoneyColumn value={row.original.value} />,
+    header: "Total items count",
+    id: "itemsCount",
+    cell: ({ row }) => <NumberColumn value={row.original.itemsPerPackage * row.original.quantity} />,
+  },
+  {
+    header: "Total value",
+    id: "totalValue",
+    cell: ({ row }) => (
+        <MoneyColumn
+            currency={row.original.inventory?.currency ?? "TZS"}
+            value={row.original.value ?? 0}
+        />
+    ),
+  },
+  {
+    header: "Value per item",
+    id: "itemValue",
+    cell: ({ row }) => (
+        <MoneyColumn
+            currency={row.original.inventory?.currency ?? "TZS"}
+            value={row.original.value / row.original.quantity ?? 0}
+        />
+    ),
   },
   {
     accessorKey: "status",
-    header: "STATUS",
+    header: "Status",
   },
   {
     id: "actions",

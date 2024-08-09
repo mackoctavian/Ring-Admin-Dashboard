@@ -1,17 +1,24 @@
-import BreadCrumb from "@/components/layout/breadcrumb";
-import { buttonVariants } from "@/components/ui/button";
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
-import { Expense } from "@/types";
-import { cn } from "@/lib/utils";
-import { Plus, ReceiptText } from "lucide-react";
-import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button"
+import {Expense, ExpensePayment} from "@/types"
+import { cn } from "@/lib/utils"
+import { Plus, ReceiptText } from "lucide-react"
+import Link from "next/link"
 
-import { columns } from "@/components/layout/tables/expenses-table/columns";
-import { getItems } from "@/lib/actions/expense.actions";
-import { ExpensesTable } from "@/components/layout/tables/expenses-table/expenses-table";
+import { columns as expensesColumn } from "@/components/layout/tables/expenses-table/columns"
+import { columns as paymentsColumn } from "@/components/layout/tables/payments-table/columns"
+import { getItems as getExpenseItems } from "@/lib/actions/expense.actions"
+import { getItems as getPaymentItems } from "@/lib/actions/payments.actions"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+import NoItems from "@/components/layout/no-items";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {DataTable} from "@/components/layout/tables/data-table";
 
-const breadcrumbItems = [{ title: "Expenses", link: "/expenses" }];
+const breadcrumbItems = [{ title: "Expenses", link: "dashboard/expenses" }]
 
 type ParamsProps = {
   searchParams: {
@@ -25,39 +32,114 @@ export default async function Page({ searchParams }: ParamsProps) {
   const q = searchParams.search || null;  
   const offset = (page - 1) * pageLimit;
 
-  const data : Expense[] = await getItems(q?.toString(), null, null, offset);
-  const total = data? data.length : 0;
-  const pageCount = Math.ceil(total / pageLimit);
+  const expenseData : Expense[] = await getExpenseItems(q?.toString(), null, null, offset);
+  const totalExpenses = expenseData? expenseData.length : 0;
+  const expensesPageCount = Math.ceil(totalExpenses / pageLimit);
+
+
+  const paymentData : ExpensePayment[] = await getPaymentItems(q?.toString(), null, null, offset);
+  const totalPayments = paymentData? paymentData.length : 0;
+  const paymentPageCount = Math.ceil(totalPayments / pageLimit);
 
   return (
-    <>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <BreadCrumb items={breadcrumbItems} />
+      <>
+        <Tabs defaultValue="expenses">
+          <TabsContent value="expenses">
+            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="relative flex-1 md:max-w-md">
+                  {/*<BreadCrumb items={breadcrumbItems}/>*/}
 
-        <div className="flex items-start justify-between">
-          <Heading title={`Expenses`} total={total.toString()} description="Manage expenses" />
+                  <div className="flex items-center">
+                    <TabsList>
+                      <TabsTrigger value="expenses">Expenses</TabsTrigger>
+                      <TabsTrigger value="payments">Payments</TabsTrigger>
+                    </TabsList>
+                  </div>
+                </div>
 
-          <div className="ml-auto flex space-x-4">
-            <Link href="/expenses/new" className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Record expense
-            </Link>
 
-            <Link href="/expenses/repayment" className={cn(buttonVariants({ variant: "outline" }))} >
-                <ReceiptText className="mr-2 h-4 w-4" /> Record payment
-            </Link>
-          </div>
-        </div>
-        <Separator />
 
-        <ExpensesTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
-      </div>
-    </>
+                <div className="flex items-center space-x-2">
+                  <Link href={`/dashboard/expenses/new`}
+                        className={cn(buttonVariants({variant: "default"}), "gap-1 size-md flex items-center dark:text-white")}>
+                    <Plus className="h-3.5 w-3.5"/>
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap"> Record expense </span>
+                  </Link>
+                </div>
+              </div>
+
+              {totalExpenses > 0 || q != null ? (
+                  <Card x-chunk="data-table">
+                    <CardHeader>
+                      <CardTitle>Expenses</CardTitle>
+                      <CardDescription>
+                      Manage your business expenses.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <DataTable
+                          searchKey="name"
+                          pageNo={page}
+                          columns={expensesColumn}
+                          total={totalExpenses}
+                          data={expenseData}
+                          pageCount={expensesPageCount}
+                      />
+                    </CardContent>
+                  </Card>
+              ) : (<NoItems newItemUrl={`/dashboard/expenses/new`} itemName={`expense`}/>)}
+            </div>
+
+          </TabsContent>
+          <TabsContent value="payments">
+
+            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="relative flex-1 md:max-w-md">
+                  {/*<BreadCrumb items={breadcrumbItems}/>*/}
+
+                  <div className="flex items-center">
+                    <TabsList>
+                      <TabsTrigger value="expenses">Expenses</TabsTrigger>
+                      <TabsTrigger value="payments">Payments</TabsTrigger>
+                    </TabsList>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Link href={`/dashboard/expenses/repayment`}
+                        className={cn(buttonVariants({variant: "default"}), "gap-1 size-md flex items-center dark:text-white")}>
+                    <ReceiptText className="h-3.5 w-3.5"/>
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap"> Record payment </span>
+                  </Link>
+                </div>
+              </div>
+
+              {totalPayments > 0 || q != null ? (
+                  <Card x-chunk="data-table">
+                    <CardHeader>
+                      <CardTitle>Payments</CardTitle>
+                      <CardDescription>
+                        Manage payments.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <DataTable
+                          searchKey="name"
+                          pageNo={page}
+                          columns={paymentsColumn}
+                          total={totalPayments}
+                          data={paymentData}
+                          pageCount={paymentPageCount}
+                      />
+                    </CardContent>
+                  </Card>
+              ) : (<NoItems newItemUrl={`/dashboard/expenses/repayment`} itemName={`payment`}/>)}
+            </div>
+
+          </TabsContent>
+        </Tabs>
+      </>
   );
 }

@@ -1,137 +1,115 @@
 'use server';
 
-const env = process.env.NODE_ENV
-import * as Sentry from "@sentry/nextjs";
-import { ID, Query, AppwriteException } from "node-appwrite";
-import { createAdminClient } from "../appwrite";
+import {databaseCheck, deleteFile, handleError, shouldReplaceImage, uploadFile} from "@/lib/utils/actions-service";
+import { ID, Query } from "node-appwrite";
 import { parseStringify } from "../utils";
-import { Staff, User, Business } from "@/types";
-import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
-import { getBusinessId, getCurrentBusiness } from "./business.actions";
+import {Product, Staff, User} from "@/types";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
-
-import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { createUser } from "./user.actions"
 const {
-    APPWRITE_DATABASE: DATABASE_ID,
     STAFF_COLLECTION: STAFF_COLLECTION_ID,
     SITE_URL: SITE_URL
 } = process.env;
 
-const checkRequirements = async (collectionId: string | undefined) => {
-  if (!DATABASE_ID || !collectionId) throw new Error('Database ID or Collection ID is missing');
-
-  const { database } = await createAdminClient();
-  if (!database) throw new Error('Database client could not be initiated');
-
-  const { userId } = auth();
-  if (!userId) {
-    throw new Error('You must be signed in to use this feature');
-  }
-
-  const businessId = await getBusinessId();
-  if( !businessId ) throw new Error('Business ID could not be initiated');
-
-  return { database, userId, businessId };
-};
-
-  export const createItem = async (item: Staff) => {
-    const { database, userId } = await checkRequirements(STAFF_COLLECTION_ID);
+export const createItem = async ({ image, ...item }: Staff) => {
+  const { database, businessId, userId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID, { needsBusinessId: true, needsUserId: true });
 
     try {
-      if(item.dashboardAccess){
-        const { orgId } = auth()
-        //TODO: Create user but do not send invite and fail gracefully
-        if( !orgId ){
-          item.dashboardAccess = false;
-          console.error('Organization ID could not be initiated ,disabled dashboard access');
-        };
-      }
+      // Upload image first if it exists
+      const imageData = image ? await uploadFile(image) : null;
 
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
-  
-      await database.createDocument(
-        DATABASE_ID!,
-        STAFF_COLLECTION_ID!,
-        ID.unique(),
-        {
-          ...item,
-          businessId: businessId,
-        }
-      )
-
-      //Send invite to user
+      //Send invite to user if dashboard access is enabled
       if ( item.dashboardAccess ) {
-        const business: Business = await getCurrentBusiness();
+        const { orgId } = auth()
 
-        const user: User = { ...item, points:0, isOwner: false, businesses: [business], userId: 'invitee'  }
-        await createUser(user);
-        
-        try{
-          clerkClient.users.getUser(userId).then((user) => {
-            clerkClient.users.getOrganizationMembershipList({ userId: user.id} ).then((organization) => {
-              //TODO: Allow multiple organizations
-              const invitation = {
-                organizationId: organization.data[0].organization.id,
-                inviterUserId: user.id,
-                emailAddress: item.email,
-                role: 'org:member',
-                //redirectUrl: 'https://qroopos-git-dev-qroo-solutions.vercel.app'
-              };
-  
-              clerkClient.organizations.createOrganizationInvitation(invitation);
+        if( orgId && item.email ){
+          const user = {
+            firstName: item.firstName,
+            lastName: item.lastName,
+            email: item.email,
+            name: item.firstName +" "+ item.lastName,
+            phoneNumber: item.phoneNumber,
+            image: imageData?.imageUrl,
+            imageId: imageData?.imageId,
+            city: undefined,
+            country: item.nationality,
+            gender: item.gender,
+            dateOfBirth: item.dateOfBirth,
+            points: 0,
+            status: true,
+            userId: 'invitee',
+            orgId: orgId,
+            business: [businessId],
+            isOwner: false,
+            termsConsent: true
+          }
+
+          //@ts-ignore
+          await createUser(user);
+
+          try{
+            clerkClient.users.getUser(userId!).then((user) => {
+              clerkClient.users.getOrganizationMembershipList({ userId: user.id} ).then((organization) => {
+                //TODO: Allow multiple organizations
+                const invitation = {
+                  organizationId: organization.data[0].organization.id,
+                  inviterUserId: user.id,
+                  emailAddress: item.email!,
+                  role: 'org:member',
+                  redirectUrl: SITE_URL
+                };
+
+                clerkClient.organizations.createOrganizationInvitation(invitation);
+              })
             })
-          })
-        }catch(e){
-          console.error('Error giving user dashboard access', e)
+          }catch(e){
+            item.dashboardAccess = false;
+            console.error('Organization ID could not be initiated ,disabled dashboard access');
+          }
+
         }
       }
+
+      await database.createDocument(
+          databaseId,
+          collectionId,
+          ID.unique(),
+          {
+            ...item,
+            image: imageData?.imageUrl,
+            imageId: imageData?.imageId,
+            businessId: businessId,
+          }
+      )
       
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error adding staff member");
     }
 
-    revalidatePath('/staff')
-    redirect('/staff')
+    revalidatePath('/dashboard/staff')
+    redirect('/dashboard/staff')
   }
 
-  export const list = async ( ) => {
-    const { database } = await checkRequirements(STAFF_COLLECTION_ID);
+export const list = async ( ) => {
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID, { needsBusinessId: true });
 
-    try {
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
+  try {
+    const items = await database.listDocuments(
+      databaseId,
+      collectionId,
+      [Query.equal('businessId', businessId!)]
+    )
 
-      const items = await database.listDocuments(
-        DATABASE_ID!,
-        STAFF_COLLECTION_ID!,
-        [Query.equal('businessId', businessId!)]
-      );
+    if( items.documents.length == 0) return null;
 
-      return parseStringify(items.documents);
+    return parseStringify(items.documents);
 
-    }catch (error: any){
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
-    }
-  };
+  }catch (error: any){
+    handleError(error, "Error listing staff members");
+  }
+}
 
   export const getItems = async (
     q?: string,
@@ -139,17 +117,15 @@ const checkRequirements = async (collectionId: string | undefined) => {
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    const { database } = await checkRequirements(STAFF_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID, { needsBusinessId: true });
   
     try {
       
       const queries = [];
-      const businessId = await getBusinessId();
-      if( !businessId ) throw new Error('Business ID could not be initiated');
 
-      queries.push(Query.equal('businessId', businessId));
+      queries.push(Query.equal('businessId', businessId!));
       queries.push(Query.orderDesc("$createdAt"));
-      queries.push(Query.orderAsc("name"));
+      queries.push(Query.orderAsc("firstName"));
 
       if ( limit ) {
         queries.push(Query.limit(limit));
@@ -157,7 +133,8 @@ const checkRequirements = async (collectionId: string | undefined) => {
       }
   
       if (q) {
-        queries.push(Query.search('name', q));
+        queries.push(Query.search('firstName', q));
+        queries.push(Query.search('lastName', q));
       }
   
       if (status) {
@@ -165,81 +142,75 @@ const checkRequirements = async (collectionId: string | undefined) => {
       }
   
       const items = await database.listDocuments(
-        DATABASE_ID!,
-        STAFF_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         queries
       );
   
-      if (items.documents.length === 0) {
-        return [];
-      }
-  
+      if (items.documents.length === 0) return null;
+
       return parseStringify(items.documents);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error getting staff members");
     }
   }
 
   export const getItem = async (id: string) => {
-    const { database } = await checkRequirements(STAFF_COLLECTION_ID);
+    if (!id) return null;
+    const { database, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID);
 
     try {
-      if (!id) throw new Error('Document ID is missing')
-  
       const item = await database.listDocuments(
-        DATABASE_ID!,
-        STAFF_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         [Query.equal('$id', id)]
       )
+
+      if ( item.documents.length == 0 ) return null;
   
       return parseStringify(item.documents[0]);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error getting staff item");
     }
   }
 
   export const deleteItem = async ({ $id }: Staff) => {
-    const { database } = await checkRequirements(STAFF_COLLECTION_ID);
+    if (!$id) return null;
+    const { database, databaseId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID);
 
     try {
       const item = await database.deleteDocument(
-        DATABASE_ID!,
-        STAFF_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         $id);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error deleting staff member");
     }
   }
 
-  export const updateItem = async (id: string, data: Staff) => {  
-    const { database, userId } = await checkRequirements(STAFF_COLLECTION_ID);
+export const updateItem = async (id: string, { image, ...data }: Staff, oldImage: string, oldImageId: string) => {
+    if (!id || !data) return null;
+    const { database, databaseId,businessId, collectionId } = await databaseCheck(STAFF_COLLECTION_ID, { needsBusinessId: true });
 
     try {
-      const business: Business = await getCurrentBusiness();
+      const { userId } = auth();
+      if (!userId) return null;
+
+      let imageUrl: string | null = oldImage;
+      let imageId: string | null = oldImageId;
+
+      if (image) {
+        const shouldUploadNewImage = await shouldReplaceImage(oldImageId, image);
+
+        if (shouldUploadNewImage) {
+          const uploadResult = await uploadFile(image);
+          imageUrl = uploadResult.imageUrl;
+          imageId = uploadResult.imageId;
+        }
+      } else if (!image && oldImage) {
+        imageUrl = null;
+        imageId = null;
+      }
 
       if ( data.dashboardAccess ) {
         try{
@@ -251,7 +222,7 @@ const checkRequirements = async (collectionId: string | undefined) => {
                 inviterUserId: user.id,
                 emailAddress: data.email,
                 role: 'org:member',
-                //redirectUrl: 'https://qroopos-git-dev-qroo-solutions.vercel.app',
+                redirectUrl: SITE_URL,
                 publicMetadata: {
                   onboardingComplete: true,
                   businessId: data.businessId,
@@ -259,22 +230,29 @@ const checkRequirements = async (collectionId: string | undefined) => {
                   organizationId: organization.data[0].organization.id,
                 },
               };
-  
+
+              //@ts-ignore
               const invitationRespone = clerkClient.organizations.createOrganizationInvitation(invitation);
 
               invitationRespone.then((response) => {
                 const userDetails: User = { 
-                  name: data.name,
-                  email: data.email, 
+                  firstName: data.firstName,
+                  lastName: data.lastName,
+                  email: data.email!,
                   phoneNumber: data.phoneNumber,
                   dateOfBirth: data.dateOfBirth,
                   gender: data.gender,
                   country: data.nationality,
+                  image: imageUrl,
+                  imageId: imageId,
                   status: true,
                   points:0, 
                   isOwner: false, 
-                  businesses: [business], 
-                  userId: response.id  
+                  business: businessId!,
+                  userId: response.id,
+                  name: data.firstName + ' '+data.lastName,
+                  orgId: organization.data[0].organization.id,
+                  termsConsent: true
                 }
                 createUser(userDetails);
               })
@@ -286,23 +264,22 @@ const checkRequirements = async (collectionId: string | undefined) => {
       }
 
       await database.updateDocument(
-        DATABASE_ID!,
-        STAFF_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         id,
-        data,
+          {
+            ...data,
+            image: imageUrl,
+            imageId: imageId,
+          }
       );
+
+      if (imageUrl !== oldImage && oldImage) deleteFile(oldImageId)
+
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error updating staff member");
     }
 
-    revalidatePath('/staff')
-    redirect('/staff')
+    revalidatePath('/dashboard/staff')
+    redirect('/dashboard/staff')
   }

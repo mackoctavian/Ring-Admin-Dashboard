@@ -27,22 +27,22 @@ export const columns: ColumnDef<Supplier>[] = [
   },
   {
     accessorKey: "name",
-    header: "NAME",
+    header: "Name",
   },
   {
     accessorKey: "contactPersonName",
-    header: "CONTACT PERSON",
+    header: "Contact person",
   },
   {
     accessorKey: "email",
-    header: "EMAIL",
+    header: "Email",
   },
   {
     accessorKey: "phoneNumber",
-    header: "PHONE NUMBER",
+    header: "Phone number",
   },
   {
-    header: "STATUS",
+    header: "Status",
     id: "status",
     cell: ({ row }) => <StateColumn state={row.original.status} />,
   },

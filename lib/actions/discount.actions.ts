@@ -1,63 +1,54 @@
 'use server';
 
-import { ID, Query, AppwriteException } from "node-appwrite";
-import { createAdminClient } from "../appwrite";
+import { ID, Query } from "node-appwrite";
 import { parseStringify } from "../utils";
 import { DiscountDto, Discount } from "@/types";
-import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
+import {databaseCheck, handleError} from "@/lib/utils/actions-service";
+import {revalidatePath} from "next/cache";
+import {redirect} from "next/navigation";
 
 const {
-  APPWRITE_DATABASE: DATABASE_ID,
-  DISCOUNTS_COLLECTION: DISCOUNTS_COLLECTION_ID
+  DISCOUNTS_COLLECTION: DISCOUNTS_COLLECTION_ID,
 } = process.env;
 
-
 export const createItem = async (item: DiscountDto) => {
+  if( !item ) return null;
+
+  const { database, databaseId, collectionId } = await databaseCheck(DISCOUNTS_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
-      throw Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
-    const newItem = await database.createDocument(
-      DATABASE_ID!,
-      DISCOUNTS_COLLECTION_ID!,
+    await database.createDocument(
+      databaseId,
+      collectionId,
       ID.unique(),
       {
         ...item,
       }
     )
-
-    return parseStringify(newItem);
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-    throw Error(errorMessage);
+    handleError(error, "Error creating discount item");
   }
+
+  revalidatePath('/dashboard/discounts')
+  redirect('/dashboard/discounts')
 }
 
 export const list = async ( ) => {
+  const { database, databaseId, collectionId } = await databaseCheck(DISCOUNTS_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
     const items = await database.listDocuments(
-      DATABASE_ID,
-      DISCOUNTS_COLLECTION_ID,
+      databaseId,
+      collectionId,
     );
 
-    return parseStringify(items.documents);
+    if (items.length === 0) return null;
 
+    return parseStringify(items.documents);
   }catch (error: any){
-    console.error(error);
+    handleError(error, "Error listing discounts");
   }
-};
+}
 
 export const getItems = async (
   q?: string,
@@ -65,13 +56,9 @@ export const getItems = async (
   limit?: number | null, 
   offset?: number | 1,
 ) => {
-  if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
-    throw new Error('Database ID or Collection ID is missing');
-  }
+  const { database, databaseId, collectionId } = await databaseCheck(DISCOUNTS_COLLECTION_ID);
 
   try {
-    const { database } = await createAdminClient();
-
     const queries = [];
     queries.push(Query.orderDesc("$createdAt"));
 
@@ -89,96 +76,72 @@ export const getItems = async (
     }
 
     const items = await database.listDocuments(
-      DATABASE_ID,
-      DISCOUNTS_COLLECTION_ID,
+      databaseId,
+      collectionId,
       queries
     );
 
-    if (items.documents.length === 0) {
-      return [];
-    }
+    if (items.documents.length === 0) return null
 
     return parseStringify(items.documents);
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-    throw Error(errorMessage);
+    handleError(error, "Error getting discount items");
   }
 }
 
 export const getItem = async (id: string) => {
+  if( !id ) return null;
+
+  const { database, databaseId, collectionId } = await databaseCheck(DISCOUNTS_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
-    if (!id) {
-      throw new Error('Document ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
     const item = await database.listDocuments(
-      DATABASE_ID!,
-      DISCOUNTS_COLLECTION_ID!,
+      databaseId,
+      collectionId,
       [Query.equal('$id', id)]
     )
 
+    if ( item.total == 0 ) return null;
+
     return parseStringify(item.documents[0]);
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-    throw Error(errorMessage);
+    handleError(error, 'Error getting discount item');
   }
 }
 
 export const deleteItem = async ({ $id }: Discount) => {
+  if( !$id ) return null;
+
+  const { database, databaseId, collectionId } = await databaseCheck(DISCOUNTS_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
-    const item = await database.deleteDocument(
-      DATABASE_ID!,
-      DISCOUNTS_COLLECTION_ID!,
+    await database.deleteDocument(
+      databaseId,
+      collectionId,
       $id);
 
-    return parseStringify(item);
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-    throw Error(errorMessage);
+    handleError(error, 'Error deleting discount')
   }
+
+  revalidatePath('/dashboard/discounts')
+  redirect('/dashboard/discounts')
 }
 
-export const updateItem = async (id: string, data: DiscountDto) => {  
+export const updateItem = async (id: string, data: DiscountDto) => {
+  if( !id || !data ) return null;
+  const { database, databaseId, collectionId } = await databaseCheck(DISCOUNTS_COLLECTION_ID);
+
   try {
-    if (!DATABASE_ID || !DISCOUNTS_COLLECTION_ID) {
-      throw new Error('Database ID or Collection ID is missing');
-    }
-
-    const { database } = await createAdminClient();
-
-    const item = await database.updateDocument(
-      DATABASE_ID!,
-      DISCOUNTS_COLLECTION_ID!,
+    await database.updateDocument(
+      databaseId,
+      collectionId,
       id,
       data);
-
-    return parseStringify(item);
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-    throw Error(errorMessage);
+    handleError(error, 'Error updating discount item')
   }
+
+  revalidatePath('/dashboard/discounts')
+  redirect('/dashboard/discounts')
 }

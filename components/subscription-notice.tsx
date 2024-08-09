@@ -1,22 +1,20 @@
 'use client'
 
-import {getSubscriptionStatus} from '@/lib/actions/business.actions';
-import { SubscriptionStatus } from '@/types/data-schemas';
-import { useEffect, useState } from 'react';
-import { siteConfig } from "@/config/site"
-import Image from 'next/image'
+import {getSubscription} from '@/lib/actions/business.actions';
+import {SubscriptionStatus} from '@/types/data-schemas';
+import {useEffect, useState} from 'react';
+import Logo from './layout/logo';
+import {SubscriptionDetails} from "@/types";
 
 const SubscriptionNotice = () => {
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [hide, setHide] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>(SubscriptionStatus.OK);
 
   //TODO: Add animations
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       try {
-        const status : SubscriptionStatus = await getSubscriptionStatus();
-        setSubscriptionStatus(status);
+        const subscription : null | undefined | SubscriptionDetails = await getSubscription();
+        if ( subscription == null ){ setSubscriptionStatus(SubscriptionStatus.EXPIRED) } else { setSubscriptionStatus(subscription.status) }
       } catch (error) {
         console.error('Error fetching subscription status:', error);
       }
@@ -44,20 +42,15 @@ const SubscriptionNotice = () => {
       <div className="flex flex-col items-start mb-3 me-4 md:items-center md:flex-row md:mb-0">
         <div className="flex items-center mb-2 border-gray-200 md:pe-4 md:me-4 md:border-e md:mb-0 dark:border-gray-600">
           <div className="relative w-full max-w-[80px]">
-              <Image 
-                src={siteConfig.logoLight}
-                width={961}
-                height={396}
-                alt={siteConfig.name}
-              />
-            </div>
+              <Logo inverse={true} />
+          </div>
         </div>
         <p className="flex items-center text-sm font-normal text-white">
           {message}
         </p>
       </div>
       <div className="flex items-center flex-shrink-0">
-        <a href="mailto: subscriptions@ring.co.tz" className="px-5 py-2 me-2 text-xs font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Renew subscription</a>
+        <a href={`/dashboard/settings/subscription`} className="px-5 py-2 me-2 text-xs font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Renew subscription</a>
       </div>
     </div>
   );

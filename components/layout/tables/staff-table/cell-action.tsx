@@ -32,9 +32,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           if (data) {
               await deleteItem(data);
               toast({
-                  variant: "default",
+                  variant: "destructive",
                   title: "Success", 
-                  description: "Staff deleted succesfully!"
+                  description: "Staff deleted successfully!"
               });
           } else {
             toast({
@@ -43,10 +43,6 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
               description: "There was an issue with your request, please try again later"
             });
           }
-          
-          // Redirect to the list page after submission
-          router.push("/staff");
-          router.refresh();
       } catch (error: any) {
         toast({
             variant: "destructive",
@@ -54,11 +50,8 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
             description: error.message || "There was an issue with your request, please try again later"
         });
       } finally {
-      //delay loading
-      setTimeout(() => {
           setIsLoading(false);
           setOpen(false);
-          }, 1000); 
       }
   };
 
@@ -79,10 +72,10 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => router.push(`/staff/${data.$id}`)}>
+          <DropdownMenuItem onClick={() => router.push(`/dashboard/staff/${data.$id}`)}>
             <Edit className="mr-2 h-4 w-4" /> Set Permissions
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push(`/staff/${data.$id}`)}>
+          <DropdownMenuItem onClick={() => router.push(`/dashboard/staff/${data.$id}`)}>
             <Edit className="mr-2 h-4 w-4" /> Update
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setOpen(true)}>

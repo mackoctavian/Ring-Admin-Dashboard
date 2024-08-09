@@ -32,7 +32,7 @@ const Footer = ({ type = 'desktop' }: FooterProps) => {
         </div>
 
         <div className="footer_image" onClick={() => signOut({ redirectUrl: '/sign-in' })}>
-          <Image src="icons/logout.svg" fill alt="jsm" />
+          <Image src="/icons/icons/logout.svg" fill alt="jsm" />
         </div>
       </footer>
     )

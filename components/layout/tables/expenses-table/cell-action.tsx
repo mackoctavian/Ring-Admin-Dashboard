@@ -1,4 +1,6 @@
-"use client";
+"use client"
+
+import React, { useState } from "react";
 import { AlertModal } from "@/components/layout/modal/alert-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,9 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Expense } from "@/types";
-import { Edit, MoreHorizontal, Trash } from "lucide-react";
+import { Edit, MoreHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { deleteItem } from "@/lib/actions/expense.actions"
 import { useToast } from "@/components/ui/use-toast"
 
@@ -34,7 +35,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
               toast({
                   variant: "default",
                   title: "Success", 
-                  description: "Expense deleted succesfully!"
+                  description: "Expense deleted successfully!"
               });
           } else {
             toast({
@@ -50,13 +51,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
             description: error.message || "There was an issue with your request, please try again later"
         });
       } finally {
-      //delay loading
-      setTimeout(() => {
-          setIsLoading(false);
-          setOpen(false);
-          }, 1000); 
+        setIsLoading(false)
       }
-  };
+  }
 
   return (
     <>
@@ -76,7 +73,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-          <DropdownMenuItem onClick={() => router.push(`/expenses/${data.$id}`)}>
+          <DropdownMenuItem onClick={() => router.push(`/dashboard/expenses/${data.$id}`)}>
             <Edit className="mr-2 h-4 w-4" /> Update
           </DropdownMenuItem>
           {/*<DropdownMenuItem onClick={() => setOpen(true)}>*/}

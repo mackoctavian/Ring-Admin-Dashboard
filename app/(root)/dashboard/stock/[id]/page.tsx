@@ -1,37 +1,32 @@
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
 import BreadCrumb from "@/components/layout/breadcrumb";
-import { getItem } from '@/lib/actions/stock.actions';
-import { Stock } from "@/types";
 import StockForm from "@/components/forms/StockForm";
-import { notFound } from 'next/navigation'
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 
-const breadcrumbItems = [{ title: "Stock", link: "/stock" }, { title: "New", link: "" } ];
+export default async function StockPage() {
 
-const StockPage = async ({ params }: { params: { id: string } }) => {
-    let item: Stock | null = null;
-    let newItem = true;
-
-    if (params.id && params.id !== "new") {
-        newItem = false;
-        item = await getItem(params.id)
-        if( !item ) notFound()
-    }
+    const breadcrumbItems = [{ title: "Stock", link: "/dashboard/stock" }, { title: "New", link: "" }];
 
     return (
-        <>
-            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-                <BreadCrumb items={breadcrumbItems} />
-
-                <div className="flex items-start justify-between">
-                    <Heading title={!newItem ? `Edit stock item` : `Record stock intake`} description={!newItem ? "Edit your stock items" : "Add new stock items to your business"} />
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <div className="flex items-center justify-between mb-2">
+                <div className="relative flex-1 md:max-w-md">
+                    <BreadCrumb items={breadcrumbItems}/>
                 </div>
-                <Separator />
-
-                <StockForm item={item} />
             </div>
-        </>
-    );
-};
 
-export default StockPage;
+            <StockCard />
+        </div>
+    );
+}
+
+const StockCard = () => (
+    <Card>
+        <CardHeader>
+            <CardTitle>Record stock intake</CardTitle>
+            <CardDescription>Record stock delivery from supplier</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <StockForm />
+        </CardContent>
+    </Card>
+);

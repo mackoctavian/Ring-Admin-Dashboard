@@ -2,7 +2,6 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Stock } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
-import { CellAction } from "./cell-action";
 import { MoneyColumn } from "../money-colum";
 import { DateTimeColumn } from "../date-colum";
 import { NumberColumn } from "../number-column";
@@ -30,33 +29,30 @@ export const columns: ColumnDef<Stock>[] = [
   {
     id: "item",
     accessorKey: "item.fullName",
-    header: "ITEM",
+    header: "Stock item",
   },
   {
-    header: "QUANTITY",
+    header: "Quantity",
     id: "quantity",
     cell: ({ row }) => <NumberColumn value={row.original.quantity} />,
   },
   {
     accessorKey: "supplier.name",
-    header: "SUPPLIER",
+    header: "Supplier",
   },
   {
-    header: "VALUE",
+    header: "Stock value",
     id: "value",
     cell: ({ row }) => <MoneyColumn value={row.original.value} />,
   },
   {
-    header: "DATE",
+    header: "Date received",
     id: "intakeDate",
-    cell: ({ row }) => <DateTimeColumn value={row.original.$createdAt} />,
+    //@ts-ignore
+    cell: ({ row }) => <DateTimeColumn value={row.original.deliveryDate} />,
   },
   {
-    header: "RECEIVED BY",
+    header: "Received by",
     accessorKey: "staff.name",
   },
-//  {
-//    id: "actions",
-//    cell: ({ row }) => <CellAction data={row.original} />,
-//  },
 ];

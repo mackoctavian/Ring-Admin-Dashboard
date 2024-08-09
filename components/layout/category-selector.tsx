@@ -10,44 +10,59 @@ import { list } from "@/lib/actions/category.actions"
 import { Category } from "@/types";
 
 interface Props {
-  value?: Category | null;
-  onChange: (value: Category | null) => void;
-  type: string;
+  value?: string | null;
+  onChange: (value: string | null) => void;
 }
 
-const CategorySelector: React.FC<Props> = ({ value, onChange, type }) => {
+const CategorySelector: React.FC<Props> = ({ value, onChange }) => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchCategories() {
       try {
+        setIsLoading(true);
         const categoriesData = await list();
-        setCategories(categoriesData);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
+        setCategories(categoriesData || []); // Ensure it's always an array
+        setError(null);
+      } catch (error: any) {
+        setError("Failed to load categories");
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchCategories();
   }, []);
 
   const handleSelectChange = (value: string) => {
-    const selectedCategory = categories.find(category => category.$id === value);
-    onChange(selectedCategory || null);
+    onChange(value === 'null' ? null : value);
   };
 
+  if (isLoading) {
+    return <div className={`text-sm text-muted-foreground`}>Loading categories...</div>;
+  }
+
+  if (error) {
+    return <div className={`text-sm text-destructive-foreground`}>Error: could not load categories</div>;
+  }
+
   return (
-    <Select value={value ? value.$id : 'null'} onValueChange={handleSelectChange}>
-      <SelectTrigger>
-        <SelectValue>{value ? value.name : 'Select category'}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {categories.map((category) => (
-          <SelectItem key={category.$id} value={category.$id}>
-            {category.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      <Select value={value || 'null'} onValueChange={handleSelectChange}>
+        <SelectTrigger>
+          <SelectValue>
+            {value ? categories.find(category => category.$id === value)?.name || 'Select category' : 'Select category'}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="null">Select category</SelectItem>
+          {categories.map((category) => (
+              <SelectItem key={category.$id} value={category.$id}>
+                {category.name}
+              </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
   );
 };
 

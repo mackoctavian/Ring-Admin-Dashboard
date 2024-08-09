@@ -1,6 +1,5 @@
 import {
-  IconBrowserCheck,
-  IconExclamationCircle,
+  IconBrowserCheck, IconCreditCardPay,
   IconNotification,
   IconPalette,
   IconTool,
@@ -41,18 +40,18 @@ const sidebarNavItems = [
     icon: <IconUser size={18} />,
     href: '/dashboard/settings/user-profile',
   },
-//  {
-//    title: 'Account',
-//    icon: <IconTool size={18} />,
-//    href: '/settings/account',
-//  },
+ {
+   title: 'Subscription',
+   icon: <IconCreditCardPay size={18} />,
+   href: '/dashboard/settings/subscription',
+ },
   {
     title: 'Business',
     icon: <IconTool size={18} />,
     href: '/dashboard/settings/business',
   },
   {
-    title: 'Devices',
+    title: 'Manage devices',
     icon: <IconBrowserCheck size={18} />,
     href: '/dashboard/settings/devices',
   },

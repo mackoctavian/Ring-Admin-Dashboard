@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Select,
@@ -11,47 +10,64 @@ import { list } from "@/lib/actions/supplier.actions"
 import { Supplier } from "@/types";
 
 interface Props {
-  value?: Supplier;
-  onChange: (value: Supplier) => void;
+  value?: string;
+  onChange: (value: string) => void;
 }
 
 const SupplierSelector: React.FC<Props> = ({ value, onChange }) => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchSuppliers() {
       try {
+        setIsLoading(true);
         const suppliersData = await list();
-        setSuppliers(suppliersData);
-      } catch (error) {
-        console.error('Error fetching suppliers:', error);
+        setSuppliers(suppliersData || []); // Ensure it's always an array
+        setError(null);
+      } catch (error: any) {
+        setError("Failed to load suppliers");
+        console.error("Error fetching suppliers:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchSuppliers();
   }, []);
 
-  const handleSelectChange = (value: string) => {
-    const selectedSupplier = suppliers.find(sup => sup.$id === value);
-    if (selectedSupplier) {
-      onChange(selectedSupplier);
-    }
+  const handleSelectChange = (selectedId: string) => {
+    onChange(selectedId === 'default' ? '' : selectedId);
   };
 
+  const selectedSupplier = suppliers.find(sup => sup.$id === value);
+
+  if (isLoading) {
+    return <div className={`text-sm text-muted-foreground`}>Loading suppliers...</div>;
+  }
+
+  if (error) {
+    return <div className={`text-sm text-destructive-foreground`}>Error: could not load suppliers</div>;
+  }
+
   return (
-    <Select value={value ? value.$id : 'Select Supplier'} onValueChange={handleSelectChange}>
-      <SelectTrigger>
-        <SelectValue>
-          {value ? value.name : 'Select supplier'}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {suppliers.map((supplier) => (
-          <SelectItem key={supplier.$id} value={supplier.$id}>
-            {supplier.name}
+      <Select value={value || 'default'} onValueChange={handleSelectChange}>
+        <SelectTrigger>
+          <SelectValue>
+            {value ? selectedSupplier?.name || 'Select supplier' : 'Select supplier'}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="default" disabled>
+            Select supplier
           </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+          {suppliers.map((supplier) => (
+              <SelectItem key={supplier.$id} value={supplier.$id}>
+                {supplier.name || 'Unnamed supplier'}
+              </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
   );
 };
 

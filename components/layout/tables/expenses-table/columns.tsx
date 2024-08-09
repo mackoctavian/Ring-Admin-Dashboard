@@ -5,6 +5,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { NumberColumn } from "../number-column";
 import { DateTimeColumn } from "../date-colum";
+import {BadgeColumn} from "@/components/layout/tables/badge-column";
+import {MoneyColumn} from "@/components/layout/tables/money-colum";
 
 export const columns: ColumnDef<Expense>[] = [
   {
@@ -28,32 +30,53 @@ export const columns: ColumnDef<Expense>[] = [
   },
   {
     accessorKey: "name",
-    header: "TITLE",
+    header: "Title",
   },
   {
     accessorKey: "category",
-    header: "CATEGORY",
+    header: "Category",
   },
   {
-    header: "AMOUNT",
+    header: "Total amount",
     id: "amount",
-    cell: ({ row }) => <NumberColumn suffix={row.original.currency} value={row.original.amount} />,
+    cell: ({ row }) => (
+        <MoneyColumn
+            currency={row.original.currency ?? "TZS"}
+            value={row.original.amount ?? 0}
+        />
+    ),
   },
   {
-    header: "BALANCE",
+    header: "Amount paid",
+    id: "paid",
+    cell: ({ row }) => (
+        <MoneyColumn
+            currency={row.original.currency ?? "TZS"}
+            value={(row.original.amount - row.original.balance) ?? 0}
+        />
+    ),
+  },
+  {
+    header: "Balance",
     id: "balance",
-    cell: ({ row }) => <NumberColumn suffix={row.original.currency} value={row.original.balance} />,
+    cell: ({ row }) => (
+        <MoneyColumn
+            currency={row.original.currency ?? "TZS"}
+            value={row.original.balance ?? 0}
+        />
+    ),
   },
   {
     id: "dueDate",
-    header: "DUE DATE",
+    header: "Due Date",
+    // @ts-ignore
     cell: ({ row }) => <DateTimeColumn value={row.original.dueDate}  />,
   },
   {
     accessorKey: "status",
-    header: "STATUS",
+    header: "Status",
+    cell: ({ row }) => <BadgeColumn value={row.original.status}  />,
   },
-  
   {
     id: "actions",
     cell: ({ row }) => <CellAction data={row.original} />,

@@ -34,7 +34,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
               toast({
                   variant: "default",
                   title: "Success", 
-                  description: "Section/space deleted succesfully!"
+                  description: "Section/space deleted successfully!"
               });
           } else {
             toast({
@@ -43,10 +43,6 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
               description: "There was an issue with your request, please try again later"
             });
           }
-          
-          // Redirect to the list page after submission
-          router.push("/sections");
-          router.refresh();
       } catch (error: any) {
         toast({
             variant: "destructive",
@@ -54,11 +50,8 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
             description: error.message || "There was an issue with your request, please try again later"
         });
       } finally {
-      //delay loading
-      setTimeout(() => {
           setIsLoading(false);
           setOpen(false);
-          }, 1000); 
       }
   };
 
@@ -80,7 +73,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-          <DropdownMenuItem onClick={() => router.push(`/sections/${data.$id}`)}>
+          <DropdownMenuItem onClick={() => router.push(`/dashboard/sections/${data.$id}`)}>
             <Edit className="mr-2 h-4 w-4" /> Update
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setOpen(true)}>

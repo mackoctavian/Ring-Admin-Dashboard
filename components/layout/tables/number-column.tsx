@@ -1,10 +1,10 @@
 import { formatNumber } from "@/lib/utils"
 
 interface NumberColumnProps {
-    prefix?: string;
+    prefix?: string | null;
     value: number;
-    suffix?: string;
-  }
+    suffix?: string | null;
+}
 
 export const NumberColumn = ({ prefix, value, suffix }: NumberColumnProps): JSX.Element => {
     return (

@@ -2,12 +2,13 @@
 import { type ClassValue, clsx } from "clsx";
 import qs from "query-string";
 import { twMerge } from "tailwind-merge";
-import { z } from "zod";
 import { nanoid } from 'nanoid';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
 
 //generate sku
 export const generateSKU = (productName: string) => {
@@ -79,10 +80,10 @@ export const formatDateTime = (input: string) => {
 };
 
 
-export function formatAmount(value: number): string {
+export function formatAmount(value: number, currency: string): string {
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "TZS",
+    currency: currency ?? "TZS",
     minimumFractionDigits: 2,
   });
 

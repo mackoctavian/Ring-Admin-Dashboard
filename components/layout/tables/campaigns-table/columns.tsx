@@ -26,15 +26,16 @@ export const columns: ColumnDef<Campaign>[] = [
   },
   {
     accessorKey: "title",
-    header: "TITLE",
+    header: "Campaign title",
   },
   {
-    header: "CAMPAIGN DATE",
+    header: "Campaign date",
     id: "scheduleDate",
+    //@ts-ignore
     cell: ({ row }) => <DateTimeColumn value={row.original.scheduleDate} />,
   },
   {
     accessorKey: "message",
-    header: "MESSAGE",
+    header: "Message",
   },
 ];

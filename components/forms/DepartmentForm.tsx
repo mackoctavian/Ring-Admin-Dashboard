@@ -1,54 +1,33 @@
 'use client'
 
 import * as z from "zod";
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch"
-import { ReloadIcon } from "@radix-ui/react-icons"
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Department, Branch } from "@/types"
+import { Department } from "@/types"
 import { createItem, updateItem } from "@/lib/actions/department.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button"
 import { DepartmentSchema } from "@/types/data-schemas"
 import BranchSelector from "../layout/branch-selector"
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-  } from "@/components/ui/form";
-
+import { Form } from "@/components/ui/form";
+import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
+import {SubmitButton} from "@/components/ui/submit-button";
 
 const DepartmentForm = ({ item }: { item?: Department | null }) => {
-    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast()
 
-    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(item?.branch ?? null);
-    useEffect(() => {
-        if (item && item.branch) {
-        setSelectedBranch(item.branch);
-        } else {
-        setSelectedBranch(null);
-        }
-    }, [item]);
-    
     const form = useForm<z.infer<typeof DepartmentSchema>>({
         resolver: zodResolver(DepartmentSchema),
-        defaultValues: item ? item : {
-        status: false,
-        },
+        //handle nullable inputs & objects
+        //@ts-ignore
+        defaultValues: item ? { ...item, branch: item.branch.$id ?? '' }: {}
     });
 
     const onInvalid = (errors : any ) => {
-        console.error("Creating department failed: ", JSON.stringify(errors));
         toast({
             variant: "warning",
             title: "Data validation failed!", 
@@ -61,128 +40,84 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
     
         try {
             if (item) {
+                //@ts-ignore
                 await updateItem(item!.$id!, data);
                 toast({
                     variant: "success",
                     title: "Success", 
-                    description: "Department details updated succesfully!"
+                    description: "Department details updated successfully!"
                 });
             } else {
+                //@ts-ignore
                 await createItem(data);
                 toast({
                     variant: "success",
                     title: "Success", 
-                    description: "Department created succesfully!"
+                    description: "Department created successfully!"
                 });
             }
-            
-            // Redirect to the list page after submission
-            router.push("/departments");
-            router.refresh();
         } catch (error: any) {
             toast({
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.", 
                 description: error.message || "There was an issue submitting your form, please try later"
             });
-            } finally {
-            //delay loading
-            setTimeout(() => {
-                setIsLoading(false);
-                }, 1000); 
-            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
 return (
     <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-            <div className="grid grid-cols-3 gap-4">
-                <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Department name *</FormLabel>
-                        <FormControl>
-                            <Input
-                            placeholder="Department full name (eg. Pizza department)"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
+                    control={form.control}
+                    name="name"
+                    label="Department name *"
+                    placeholder="Department full name (eg. Pizza department)"
                 />
-            
-                <FormField
+
+                <CustomFormField
+                    fieldType={FormFieldType.INPUT}
                     control={form.control}
                     name="shortName"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Short name *</FormLabel>
-                            <FormControl>
-                                <Input
-                                placeholder="Department short name (eg. HR)"
-                                {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
+                    label="Short name *"
+                    placeholder="Department short name (eg. Pizza)"
                 />
 
-                <FormField
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
                     control={form.control}
                     name="branch"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Branch *</FormLabel>
-                            <FormControl>
-                                <BranchSelector
-                                    value={selectedBranch}
-                                    onChange={(branch) => { setSelectedBranch(branch); field.onChange(branch); }}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
+                    label="Branch *"
+                    renderSkeleton={(field) => (
+                        <BranchSelector value={field.value} onChange={field.onChange}/>
                     )}
                 />
 
-                <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Status *</FormLabel>
-                        <FormControl>
-                            <div className="mt-2">
-                                <Switch
-                                    id="status"
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                            </div>
-                        </FormControl>
-                    </FormItem>
+                <CustomFormField
+                    fieldType={FormFieldType.SKELETON}
+                    control={form.control}
+                    name="status"
+                    label="Status *"
+                    renderSkeleton={(field) => (
+                        <div className="mt-2">
+                            <Switch
+                                id="status"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        </div>
                 )}
                 />
-            </div>
+        </div>
 
-    
-            <div className="flex h-5 items-center space-x-4">
-                <CancelButton />
-            
-                <Separator orientation="vertical" />
-
-                <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                        <>
-                            <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Processing...
-                        </>
-                        ) : (
-                        item ? "Update department" : "Save department"
-                    )}
-                </Button> 
+        <div className="flex h-5 items-center space-x-4">
+            <CancelButton/>
+            <Separator orientation="vertical"/>
+            <SubmitButton loading={isLoading} label={item ? "Update department" : "Save department"}/>
             </div>
         </form>
     </Form>

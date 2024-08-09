@@ -1,18 +1,16 @@
 'use client'
 
-import React, { useEffect, useState, useMemo, useCallback  } from 'react';
-import * as z from "zod";
+import React, { useState, useMemo, useCallback  } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ProductUnit, Inventory } from "@/types";
+import {Inventory} from "@/types";
 import { InventorySchema, UpdateInventorySchema, InventoryStatus } from "@/types/data-schemas";
 import { createItem, updateItem } from "@/lib/actions/inventory.actions";
 import { useToast } from "@/components/ui/use-toast";
 import CancelButton from "../layout/cancel-button";
 import { Button } from "@/components/ui/button"
-import { capitalizeFirstLetter } from "@/lib/utils"
 import UnitSelector from "../layout/unit-selector";
 import {
   Form,
@@ -32,25 +30,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
+import {PlusCircle} from "lucide-react";
+import CurrencySelector from "@/components/layout/currency-selector";
 
-
-const InventoryForm = ({ item, units }) => {
+const InventoryForm = ({ item }: { item?: Inventory | null }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const isEditMode = Boolean(item);
 
-  const schema = useMemo(() => isEditMode ? UpdateInventorySchema : InventorySchema.omit({ actualQuantity: true, actualValue: true }), [isEditMode]);
+  const schema = useMemo(() => isEditMode ? UpdateInventorySchema : InventorySchema, [isEditMode]);
 
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: item || {
-      variants: [{
-        status: InventoryStatus.OUT_OF_STOCK,
-        fullName: '',
-        unit: '',
-        quantity: 0,
-        value: 0,
-      }],
+      variants: [{}],
     },
   });
 
@@ -59,8 +53,7 @@ const InventoryForm = ({ item, units }) => {
     name: "variants",
   });
 
-  const onInvalid = useCallback((errors) => {
-    console.log("Validation errors", errors);
+  const onInvalid = useCallback((errors: any) => {
     toast({
       variant: "warning",
       title: "Uh oh! Something went wrong.",
@@ -70,6 +63,7 @@ const InventoryForm = ({ item, units }) => {
 
   const onSubmit = useCallback(async (data) => {
     setIsLoading(true);
+
     try {
       if (isEditMode && item?.$id) {
         await updateItem(item.$id, data);
@@ -93,9 +87,7 @@ const InventoryForm = ({ item, units }) => {
         description: "There was an issue submitting your form, please try later",
       });
     } finally {
-      setTimeout(() => {
         setIsLoading(false);
-      }, 1000);
     }
   }, [isEditMode, item, toast]);
 
@@ -127,36 +119,41 @@ const StockItemDetails = ({ control }) => (
       <CardDescription>Details used to identify your stock item</CardDescription>
     </CardHeader>
     <CardContent>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Stock item name</FormLabel>
-              <FormControl>
-                <Input placeholder="Stock item name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={control}
-          name="packaging"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Packaging</FormLabel>
-              <PackagingSelector {...field} />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <CustomFormField
+              fieldType={FormFieldType.INPUT}
+              control={control}
+              name="title"
+              label="Stock item name *"
+              placeholder="Enter stock item name"
+          />
+
+          <CustomFormField
+              fieldType={FormFieldType.SKELETON}
+              control={control}
+              name="packaging"
+              label="Stock item packaging *"
+              renderSkeleton={(field) => (
+                  <PackagingSelector value={field.value} onChange={field.onChange} />
+              )}
+          />
+
+          <CustomFormField
+              fieldType={FormFieldType.SKELETON}
+              control={control}
+              name="currency"
+              label="Purchase curreny *"
+              renderSkeleton={(field) => (
+                  <CurrencySelector value={field.value} onChange={field.onChange} />
+              )}
+          />
       </div>
     </CardContent>
   </Card>
 );
 
+// @ts-ignore
 const VariantForm = ({ fields, control, append, remove, isEditMode }) => (
   <Card>
     <CardHeader>
@@ -168,157 +165,126 @@ const VariantForm = ({ fields, control, append, remove, isEditMode }) => (
         <VariantField
           key={field.id}
           control={control}
-          field={field}
           index={index}
           remove={remove}
-          isEditMode={isEditMode}
           fieldsLength={fields.length}
         />
       ))}
     </CardContent>
-    <CardFooter className="border-t px-6 py-4">
-      <Button type="button" onClick={() => append({
-        status: InventoryStatus.OUT_OF_STOCK,
-        startingQuantity: 0,
-        fullName: '',
-        unit: '',
-        quantity: 0,
-        value: 0
-      })}>
-        Add Variant
+    <CardFooter className="justify-center border-t p-4">
+      <Button type="button" size="sm" variant="ghost" className="gap-1"
+              onClick={() => append({
+                  status: InventoryStatus.OUT_OF_STOCK,
+                  startingQuantity: 0,
+                  fullName: '',
+                  unit: '',
+                  quantity: 0,
+                  value: 0
+              })}>
+          <PlusCircle className="h-3.5 w-3.5"/>
+          Add stock variant
       </Button>
     </CardFooter>
   </Card>
 );
 
-const VariantField = ({ control, field, index, remove, isEditMode, fieldsLength }) => (
+// @ts-ignore
+const VariantField = ({ control, index, remove, fieldsLength }) => (
   <>
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-2 p-4 bg-gray-200 rounded-md">
-      <FormField
-        control={control}
-        name={`variants.${index}.name`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Variant name</FormLabel>
-            <FormControl>
-              <Input placeholder="Stock variant name" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name={`variants.${index}.image`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Image</FormLabel>
-            <FormControl>
-              <Input type='file' placeholder="Variant image" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name={`variants.${index}.startingQuantity`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Starting quantity</FormLabel>
-            <FormControl>
-              <Input type="number" min="0" placeholder="Starting quantity" {...field} readOnly={isEditMode} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name={`variants.${index}.startingValue`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Starting stock value</FormLabel>
-            <FormControl>
-              <Input type="number" min="0" placeholder="Starting stock value" {...field} readOnly={isEditMode} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name={`variants.${index}.lowQuantity`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Low quantity level</FormLabel>
-            <FormControl>
-              <Input type="number" min="1" placeholder="Low quantity level" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name={`variants.${index}.itemsPerPackage`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Items in package</FormLabel>
-            <FormControl>
-              <Input type="number" min="1" placeholder="Items in package" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name={`variants.${index}.volume`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Unit volume</FormLabel>
-            <FormControl>
-              <Input type="number" step="0.1" placeholder="Unit volume" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name={`variants.${index}.unit`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Unit per item</FormLabel>
-            <FormControl>
-              <UnitSelector {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name={`variants.${index}.barcodeId`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Bar code id</FormLabel>
-            <FormControl>
-              <Input placeholder="Variant barcode" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <Button
-        variant="destructive"
-        type="button"
-        className='mt-8'
-        onClick={() => fieldsLength > 1 && remove(index)}
-        disabled={fieldsLength === 1}>
-        Archive variant
-      </Button>
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 rounded-md">
+        <CustomFormField
+            fieldType={FormFieldType.INPUT}
+            control={control}
+            name={`variants.${index}.name`}
+            label="Variant name *"
+            placeholder="Stock item variant name"
+        />
+
+          <FormField
+            control={control}
+            name={`variants.${index}.image`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Image</FormLabel>
+                <FormControl>
+                  <Input type='file' placeholder="Variant image" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+        <CustomFormField
+            fieldType={FormFieldType.INPUT}
+            control={control}
+            name={`variants.${index}.startingQuantity`}
+            label="Starting stock quantity *"
+            placeholder="Enter starting stock quantity *"
+            type="number"
+        />
+
+        <CustomFormField
+            fieldType={FormFieldType.INPUT}
+            control={control}
+            name={`variants.${index}.startingValue`}
+            label="Starting stock value *"
+            placeholder="Enter starting stock value"
+            type="number"
+        />
+
+        <CustomFormField
+            fieldType={FormFieldType.INPUT}
+            control={control}
+            name={`variants.${index}.lowQuantity`}
+            label="Low quantity stock level (for alerts) *"
+            placeholder="Enter low quantity stock level"
+            type="number"
+        />
+
+        <CustomFormField
+            fieldType={FormFieldType.INPUT}
+            control={control}
+            name={`variants.${index}.itemsPerPackage`}
+            label="Number of items per package *"
+            placeholder="Number of items in package"
+            type="number"
+        />
+
+        <CustomFormField
+            fieldType={FormFieldType.INPUT}
+            control={control}
+            name={`variants.${index}.volume`}
+            label="Volume of single item in package"
+            placeholder="Volume of item in package"
+            type="number"
+        />
+
+        <CustomFormField
+            fieldType={FormFieldType.SKELETON}
+            control={control}
+            name={`variants.${index}.unit`}
+            label="Unit volume per item"
+            renderSkeleton={(field) => (
+                <UnitSelector value={field.value} onChange={field.onChange} />
+            )}
+        />
+
+        <CustomFormField
+            fieldType={FormFieldType.INPUT}
+            control={control}
+            name={`variants.${index}.barcodeId`}
+            label="Barcode id"
+            placeholder="Enter variant barcode"
+        />
+
+        <Button
+            variant="destructive"
+            type="button"
+            className='mt-8'
+            onClick={() => fieldsLength > 1 && remove(index)}
+            disabled={fieldsLength === 1}>
+                Remove variant
+        </Button>
     </div>
     <Separator className="my-10" />
   </>

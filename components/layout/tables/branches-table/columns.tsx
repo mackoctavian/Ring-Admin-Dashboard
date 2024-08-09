@@ -27,30 +27,30 @@ export const columns: ColumnDef<Branch>[] = [
   },
   {
     accessorKey: "name",
-    header: "NAME",
+    header: "Branch name",
   },
   {
     accessorKey: "phoneNumber",
-    header: "PHONE",
+    header: "Branch phone number",
   },
   {
     accessorKey: "email",
-    header: "EMAIL",
+    header: "Branch email address",
   },
   {
     accessorKey: "address",
-    header: "ADDRESS",
+    header: "Branch address",
   },
   {
     accessorKey: "openingTime",
-    header: "OPENING TIME",
+    header: "Branch opening time",
   },
   {
     accessorKey: "closingTime",
-    header: "CLOSING TIME",
+    header: "Branch closing time",
   },
   {
-    header: "STATUS",
+    header: "Status",
     id: "status",
     cell: ({ row }) => <StateColumn state={row.original.status} />,
   },

@@ -9,6 +9,15 @@ const nextConfig = {
     eslint: {
       ignoreDuringBuilds: true,
     },
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'cloud.appwrite.io',
+                pathname: '**',
+            },
+        ],
+    },
     // Custom webpack configuration
     webpack: (config, { dev }) => {
       if (dev) {

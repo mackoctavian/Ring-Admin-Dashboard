@@ -1,99 +1,62 @@
 'use server';
 
-const env = process.env.NODE_ENV
-import * as Sentry from "@sentry/nextjs";
-import { ID, Query, AppwriteException } from "node-appwrite";
-import { createAdminClient } from "../appwrite";
+import {databaseCheck, handleError} from "@/lib/utils/actions-service";
+
+import { ID, Query } from "node-appwrite";
 import { parseStringify } from "../utils";
 import { Device } from "@/types";
-import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
-import { getBusinessId } from "./business.actions";
-import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
 
 const {
-    APPWRITE_DATABASE: DATABASE_ID,
     DEVICES_COLLECTION: DEVICES_COLLECTION_ID,
   } = process.env;
 
-const checkRequirements = async (collectionId: string | undefined) => {
-  if (!DATABASE_ID || !collectionId) throw new Error('Check requirements failed: Database ID or Collection ID is missing');
-
-  const { database } = await createAdminClient();
-  if (!database) throw new Error('Database client could not be initiated');
-
-  const { userId } = auth();
-  if (!userId) {
-    throw new Error('You must be signed in to use this feature');
-  }
-
-  const businessId = await getBusinessId();
-  if( !businessId ) throw new Error('Business ID could not be initiated');
-
-  return { database, userId, businessId };
-};
-
 export const createItem = async (item: Device) => {
-  const { database, businessId } = await checkRequirements(DEVICES_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID, {needsBusinessId: true});
 
-  const { branch, ...deviceData } = item;
   try {
     await database.createDocument(
-      DATABASE_ID!,
-      DEVICES_COLLECTION_ID!,
+      databaseId,
+      collectionId,
       ID.unique(),
       {
-        ...deviceData,
-        branchId: item.branch.$id,
+        ...item,
         businessId,
+        branch: item.branchId,
         lastSync: new Date(),
         status: false,
         forceSync: true
       }
     )
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+    handleError(error, "Error registering device");
   }
-  revalidatePath('/settings/devices')
-  redirect('/settings/devices')
+  revalidatePath('/dashboard/settings/devices')
+  redirect('/dashboard/settings/devices')
 }
 
 export const list = async ( ) => {
-  try {
-    const { database, businessId } = await checkRequirements(DEVICES_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID, {needsBusinessId: true});
 
+  try {
     const items = await database.listDocuments(
-      DATABASE_ID!,
-      DEVICES_COLLECTION_ID!,
+      databaseId,
+      collectionId,
       [
         Query.orderAsc("$createdAt"),
         Query.equal('businessId', businessId!)
       ]
-    );
+    )
+
+    if (items.documents.length == 0) return null
 
     return parseStringify(items.documents);
 
   }catch (error: any){
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+    handleError(error, "Error listing devices");
   }
-};
+}
 
 export const getItems = async (
     q?: string,
@@ -101,11 +64,12 @@ export const getItems = async (
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    const { database, businessId } = await checkRequirements(DEVICES_COLLECTION_ID);
+
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID, {needsBusinessId: true});
     try {
        const queries = [];
 
-       queries.push(Query.equal('businessId', [businessId]));
+       queries.push(Query.equal('businessId', [businessId!]));
        queries.push(Query.orderDesc("$createdAt"));
 
        if ( limit ) {
@@ -122,104 +86,71 @@ export const getItems = async (
        }
   
        const items = await database.listDocuments(
-         DATABASE_ID!,
-         DEVICES_COLLECTION_ID!,
+         databaseId,
+         collectionId,
          queries
        );
   
-       if (items.documents.length === 0) {
-         return [];
-       }
+       if(items.documents.length == 0) return null
   
        return parseStringify(items.documents);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error getting devices");
     }
   }
 
   export const getItem = async (id: string) => {
     if (!id) return null;
-    const { database } = await checkRequirements(DEVICES_COLLECTION_ID);
+    const { database, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
 
     try {
-      if (!id) throw new Error('Document ID is missing')
-  
       const item = await database.listDocuments(
-        DATABASE_ID!,
-        DEVICES_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         [Query.equal('$id', id)]
       )
     
-      if ( item.total < 1 ) return null;
+      if( item.documents.length == 0 ) return null;
       
       return parseStringify(item.documents[0]);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error getting device details");
     }
   }
 
   export const deleteItem = async ({ $id }: Device) => {
-    if (!id) return null;
-    const { database } = await checkRequirements(DEVICES_COLLECTION_ID)
+    if (!$id) return null;
+    const { database, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
 
     try {
-      const item = await database.deleteDocument(
-        DATABASE_ID!,
-        DEVICES_COLLECTION_ID!,
+      await database.deleteDocument(
+        databaseId,
+        collectionId,
         $id);
   
-      return parseStringify(item);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error deleting device");
     }
+
+    revalidatePath('/dashboard/settings/devices')
+    redirect('/dashboard/settings/devices')
   }
 
 export const updateItem = async (id: string, data: Device) => {
   if (!id || !data ) return null;
-  const { database } = await checkRequirements(DEVICES_COLLECTION_ID);
+  const { database, databaseId, collectionId } = await databaseCheck(DEVICES_COLLECTION_ID);
+
   try {
     await database.updateDocument(
-      DATABASE_ID!,
-      DEVICES_COLLECTION_ID!,
+      databaseId,
+      collectionId,
       id,
       data);
 
   } catch (error: any) {
-    let errorMessage = 'Something went wrong with your request, please try again later.';
-    if (error instanceof AppwriteException) {
-      errorMessage = getStatusMessage(error.code as HttpStatusCode);
-    }
-
-    if(env == "development"){ console.error(error); }
-
-    Sentry.captureException(error);
-    throw Error(errorMessage);
+    handleError(error, "Error updating device");
   }
 
-  revalidatePath('/settings/devices')
-  redirect('/settings/devices')
+  revalidatePath('/dashboard/settings/devices')
+  redirect('/dashboard/settings/devices')
 }

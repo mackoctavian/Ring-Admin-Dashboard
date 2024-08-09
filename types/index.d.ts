@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
-import { Icons } from "@/components/icons";
 import * as enums from "./data-schemas";
 import { Option } from "@/components/ui/multiple-selector";
+import {ExpenseStatus, Gender, PaymentMethod, POSItemStatus} from "./data-schemas";
 
 declare type SearchParamProps = {
   params: { [key: string]: string };
@@ -37,10 +37,21 @@ declare type Country = {
 }
 
 declare type BusinessType = {
-  $id?: string;
+  $id: string;
   name: string;
-  $createdAt?: Date;
-  $updatedAt?: Date;
+  $createdAt: Date;
+  $updatedAt: Date;
+}
+
+declare type SubscriptionPlan = {
+  $id: string;
+  name: string;
+  features: string;
+  monthlyFee: number;
+  biAnnualFee: number;
+  annualFee: number;
+  $createdAt: Date;
+  $updatedAt: Date;
 }
 
 declare type SignUpParams = {
@@ -61,10 +72,13 @@ declare type SignInParams = {
 
 declare type User = {
   $id?: string;
+  firstName: string;
+  lastName: string;
   email: string;
   name: string;
   phoneNumber?: string;
-  image?: string;
+  image?: string | null;
+  imageId?: string | null;
   city?: string;
   country?: string;
   gender?: Gender;
@@ -72,42 +86,59 @@ declare type User = {
   points: number;
   status: boolean;
   userId: string;
-  businesses: Business[];
+  orgId: string;
+  business: string;
   isOwner: boolean;
-  $createdAt?: Date;
-  $updatedAt?: Date;
+  termsConsent: boolean;
 };
 
 declare type Business = {
-  $id?: string;
+  $id: string;
   name: string;
+  currency: string;
+  logo: FormData | undefined;
   businessType: BusinessType;
   size: string;
-  branches: Branch[];
+  branches?: string[];
   registrationNumber?: string;
-  logo?: FileList;
   email: string;
   phoneNumber: string;
   address?: string;
   city?: string;
   country?: string;
-  owner: string;
+  owner?: string;
   description?: string;
-  slug: string;
-  $createdAt?: Date;
-  $updatedAt?: Date;
+  slug?: string;
 }
 
+declare interface RegisterBusinessParams {
+  name: string;
+  firstName: string;
+  lastName: string;
+  businessType: BusinessType;
+  size: string;
+  currency: string;
+  registrationNumber: string | undefined;
+  logo: FormData | undefined;
+  email: string;
+  phoneNumber: string;
+  address: string | undefined;
+  city: string | undefined;
+  country: string;
+  description: string | undefined;
+  termsConsent: boolean;
+}
 /* Product Unit Data types */
 
 declare type ProductUnit = {
-  $id?: string;
+  $id: string;
   name: string;
+  type: string;
   abbreviation: string;
   isConvertible: boolean;
   unitConversions: ProductUnitConversion[];
-  $createdAt?: Date;
-  $updatedAt?: Date;
+  $createdAt: Date;
+  $updatedAt: Date;
 };
 
 declare type ProductUnitConversion = {
@@ -123,16 +154,14 @@ declare type ProductUnitConversion = {
 
 /* Department Data types */
 declare type Department = {
-  $id?: string;
-  branch: Branch;
+  $id: string;
+  branch: string;
   branchId: string;
   businessId: string;
   name: string;
   shortName: string;
   status: boolean;
   canDelete: boolean;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 };
 /* Department Data types */
 
@@ -144,6 +173,7 @@ declare type Category = {
   slug: string;
   categoryType: CategoryType;
   parent?: string;
+  parentName?: string;
   description?: string;
   childrenCount: number;
   businessId: string;
@@ -156,7 +186,7 @@ declare type Category = {
 
 /* Discount */
 declare type Discount = {
-  $id?: string;
+  $id: string;
   name: string;
   code?: string;
   type: DiscountType;
@@ -202,7 +232,7 @@ declare type DiscountDto = {
 
 /* Branches */
 declare type Branch = {
-  $id?: string;
+  $id: string;
   business: Business;
   businessId: string;
   name: string;
@@ -211,13 +241,10 @@ declare type Branch = {
   address?: string;
   city?: string;
   staffCount: number;
-  daysOpen: Option[];
+  daysOpen: string[];
   departments: Department[];
   openingTime?: string;
   closingTime?: string;
-  $createdAt?: Date;
-  $updatedAt?: Date;
-  canDelete: boolean;
   status: boolean;
   canDelete: boolean;
 }
@@ -244,13 +271,11 @@ declare type Modifier = {
   $id?: string;
   name: string;
   type: ModifierType;
+  currency: string;
   allowMultiple: boolean;
   optional: boolean;
-  businessId: string;
-  image: string;
-  items: ModifierItem[];
-  branches: Branch[];
-  status: boolean;
+  modifierItems: ModifierItem[];
+  status: POSItemStatus;
   $createdAt?: Date;
   $updatedAt?: Date;
 };
@@ -259,7 +284,7 @@ declare type ModifierItem = {
   $id?: string;
   name: string;
   price: number;
-  inventoryItem: InventoryVariant;
+  inventoryItem?: string;
   $createdAt?: Date;
   $updatedAt?: Date;
 };
@@ -268,19 +293,19 @@ declare type ModifierItem = {
 
 /* Product */
 declare type Product = {
-  $id?: string;
+  $id: string;
   name: string;
   sku: string;
+  currency: string;
   category: Category[];
   description: string;
-  status: string;
   branch: Branch[];
   department: Department[];
   modifier: Modifier[]
-  image?: string;
+  image: FormData | undefined;
+  imageId?: string | undefined;
   variants: ProductVariant[];
-  $createdAt?: Date;
-  $updatedAt?: Date;
+  posStatus: POSItemStatus;
 };
 
 declare type ProductVariant = {
@@ -290,9 +315,9 @@ declare type ProductVariant = {
   tax: number;
   barcode?: string;
   status: boolean;
+  product: Product;
+  productId: string;
   inventoryItems: ProductInventoryItemUsage[];
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 
 declare type ProductInventoryItemUsage = {
@@ -300,8 +325,6 @@ declare type ProductInventoryItemUsage = {
   item: InventoryVariant;
   amountUsed: number;
   unit: ProductUnit;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 /* End Product */
 
@@ -359,7 +382,7 @@ declare type ServiceInventoryItemUsage = {
 /* Supplier */
 
 declare type Supplier = {
-  $id?: string | undefined;
+  $id: string;
   name: string;
   phoneNumber: string;
   email?: string;
@@ -379,9 +402,10 @@ declare type Supplier = {
 /* Staff */
 
 declare type Staff = {
-  $id?: string;
-  name: string;
-  email: string;
+  $id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
   phoneNumber: string;
   code?:code;
   gender: Gender;
@@ -394,15 +418,14 @@ declare type Staff = {
   emergencyRelationship?: string;
   address?: string;
   notes?: string;
-  department?: Department[];
+  department?: string[];
   branch?: Branch[];
-  image?: string;
-  businessId: string;
+  image: FormData | undefined;
+  imageId: string | undefined;
+  businessId?: string;
   status: boolean;
   posAccess: boolean;
   dashboardAccess: boolean;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 /* End Staff */
 
@@ -419,15 +442,13 @@ declare type Customer = {
   dateOfBirth?: Date;
   nationality?: string;
   lastVisitDate: Date;
-  registrationBranch?: Branch;
+  registrationBranch?: string;
   address?: string;
   notes?: string;
   allowNotifications: boolean;
   points: number;
   totalSpend: number;
   totalVisits: number;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 
 /* End Customer */
@@ -435,15 +456,11 @@ declare type Customer = {
 /* Campaign */
 
 declare type Campaign = {
-  $id: string;
+  $id?: string;
   title: string;
   audience: CampaignAudience;
   message: string;
-  businessId: string;
   scheduleDate: Date;
-  status: boolean;
-  $createdAt: Date;
-  $updatedAt: Date;
 }
 
 /* End campaign */
@@ -454,6 +471,7 @@ declare type Inventory = {
   $id?: string;
   title: string,
   packaging: string,
+  currency: string,
   businessId: string,
   variants: InventoryVariant[],
   $createdAt?: Date;
@@ -462,7 +480,7 @@ declare type Inventory = {
 
 
 declare type InventoryVariant = {
-  $id?: string;
+  $id: string;
   name: string,
   quantity: number,
   startingQuantity: number;
@@ -486,7 +504,7 @@ declare type InventoryVariant = {
 
 declare type InventoryModification = {
   $id?: string;
-  item: InventoryVariant,
+  item: string,
   quantity: number,
   value: number,
   reason: string,
@@ -496,27 +514,24 @@ declare type InventoryModification = {
 }
 
 declare type Stock = {
-  $id?: string;
-  item: InvenvtoryVariant;
+  $id: string;
+  item: string;
   quantity: number;
   actualQuantity: number;
-  staff?: Staff;
-  department?: Department;
-  supplier: Supplier;
+  staff?: string;
+  supplier: string;
   orderNumber: string;
   orderDate: Date;
   deliveryDate: Date;
-  accurate: boolean;
+  accurate: boolean | string;
   value?: number;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 /* End Stock */
 
 
 /* Expense */
 declare type Expense = {
-  $id?: string;
+  $id: string;
   name: string;
   category: string;
   currency: string;
@@ -535,27 +550,41 @@ declare type Expense = {
   $updatedAt?: Date;
 }
 
+declare interface ExpenseDto {
+  name: string;
+  category: string;
+  currency: string;
+  tax: number;
+  amount: number;
+  staff?: string;
+  vendor?: string;
+  department?: string;
+  dueDate: Date;
+  document?: FormData;
+  description?: string;
+  balance?: number;
+  status?: ExpenseStatus;
+}
+
 declare type ExpensePayment = {
   $id?: string;
-  expense: Expense;
+  expense: string;
   paymentDate: Date;
   receipt?: string;
   amount: number;
-  paymentMethod: PaymentMethod; 
+  currency: string;
+  paymentMethod: PaymentMethod;
   description?: string;
-  $createdAt?: Date;
-  $updatedAt?: Date;
 }
 /* End Expense */
 
 
-
 /* Section */
 declare type Section = {
-  $id?: string;
+  $id: string;
   name: string;
   type: SectionType;
-  branch: Branch;
+  branch: string;
   branchId: string;
   businessId: string;
   description: string;
@@ -574,6 +603,7 @@ declare type Device = {
   imei?: string;
   name: string;
   branchId: string;
+  branch: string;
   businessId: string;
   code: number;
   status: boolean;
@@ -585,8 +615,86 @@ declare type Device = {
 /* End Device */
 
 
+/* Subscription Payment */
+declare type SubscriptionPayment = {
+  amount: number;
+  currency: string;
+  network: string;
+  email: string;
+  phoneNumber:string;
+  fullName: string;
+  clientIp: string;
+  deviceFingerprint: string;
+  redirectUrl: string;
+  businessId: string;
+  userId: string;
+  paymentMethod: string;
+  subscriptionPeriod: string;
+  subscriptionPlan: SubscriptionPlan;
+  paymentStatus: enums.PaymentStatus;
+}
+
+declare type SubscriptionPaymentRedirectResponse = {
+  status: string;
+  message: string;
+  meta: SubscriptionPaymentRedirectMeta;
+}
+
+declare type SubscriptionPaymentRedirectMeta = {
+  authorization: SubscriptionPaymentRedirectAuthorization;
+}
+
+declare type SubscriptionPaymentRedirectAuthorization = {
+  redirect: string;
+  mode: string;
+}
+
+declare type SubscriptionPaymentResponse = {
+  status: string;
+  message: string;
+  data: PaymentResponseData;
+}
+
+declare type PaymentResponseData = {
+    id: string;
+    reference: string;
+    externalReference: string;
+    deviceFingerprint: string;
+    amount: number,
+    chargedAmount: number,
+    appFee: number,
+    merchantFee: number,
+    processorResponse: string;
+    authModel: string;
+    currency: string;
+    ip: string;
+    narration: string;
+    status: string;
+    paymentType: string;
+    fraudStatus: string;
+    chargeType: string;
+    createdAt: string;
+    accountId: number;
+    customer: PaymentCustomer;
+}
+
+declare type PaymentCustomer = {
+  id: number;
+  name: string;
+  phoneNumber: string;
+  email: string;
+  created_at: string;
+}
 
 
+/* END Subscription */
+
+
+/* Image uploads */
+interface UploadResult {
+  imageUrl: string | null;
+  imageId: string | null;
+}
 
 
 
@@ -615,7 +723,6 @@ declare type Transaction = {
   $id: string;
   name: string;
   paymentChannel: string;
-  type: string;
   accountId: string;
   amount: number;
   pending: boolean;

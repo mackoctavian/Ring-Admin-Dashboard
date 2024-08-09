@@ -10,54 +10,62 @@ import { list } from "@/lib/actions/discount.actions"
 import { Discount } from "@/types";
 
 interface Props {
-  value?: Discount | null; // Update the type to allow null
-  onChange: (value: Discount | null) => void; // Update the type to allow null
+  value?: string | null;
+  onChange: (value: string | null) => void;
 }
 
 const DiscountSelector: React.FC<Props> = ({ value, onChange }) => {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchDiscounts() {
       try {
+        setIsLoading(true);
         const discountsData = await list();
-        setDiscounts(discountsData);
-      } catch (error) {
-        console.error('Error fetching discounts:', error);
+        setDiscounts(discountsData || []); // Ensure it's always an array
+        setError(null);
+      } catch (error: any) {
+        setError("Failed to load discounts");
+        console.error("Error fetching discounts:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchDiscounts();
   }, []);
 
-  const handleSelectChange = (value: string) => {
-    if (value === 'null') { // Check if the value is 'null'
-      onChange(null);
-    } else {
-      const selectedDiscount = discounts.find(disc => disc.$id === value);
-      if (selectedDiscount) {
-        onChange(selectedDiscount);
-      }
-    }
+  const handleSelectChange = (selectedId: string) => {
+    onChange(selectedId === 'null' ? null : selectedId);
   };
 
+  const selectedDiscount = discounts.find(disc => disc.$id === value);
+
+  if (isLoading) {
+    return <div className={`text-sm text-muted-foreground`}>Loading discounts...</div>;
+  }
+
+  if (error) {
+    return <div className={`text-sm text-destructive-foreground`}>Error: could not load discounts</div>;
+  }
+
   return (
-    <Select value={value ? value.$id : 'null'} onValueChange={handleSelectChange}>
-      <SelectTrigger>
-        <SelectValue>
-          {value ? value.name : 'Select Discount'}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {/* Add the option for selecting no discount */}
-        <SelectItem key="null" value="null">No Discount</SelectItem>
-        {/* Render other discounts */}
-        {discounts.map((discount) => (
-          <SelectItem key={discount.$id} value={discount.$id}>
-            {discount.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      <Select value={value || 'null'} onValueChange={handleSelectChange}>
+        <SelectTrigger>
+          <SelectValue>
+            {selectedDiscount ? selectedDiscount.name : 'Select Discount'}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="null">No Discount</SelectItem>
+          {discounts.map((discount) => (
+              <SelectItem key={discount.$id} value={discount.$id}>
+                {discount.name || 'Unnamed discount'}
+              </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
   );
 };
 

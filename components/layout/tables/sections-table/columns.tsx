@@ -4,6 +4,7 @@ import { Section } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { StateColumn } from "../state-column";
+import {BadgeColumn} from "@/components/layout/tables/badge-column";
 
 export const columns: ColumnDef<Section>[] = [
   {
@@ -27,22 +28,23 @@ export const columns: ColumnDef<Section>[] = [
   },
   {
     accessorKey: "name",
-    header: "NAME",
+    header: "Space / Section name",
   },
   {
     accessorKey: "type",
-    header: "TYPE",
+    header: "Type",
+    cell: ({ row }) => <BadgeColumn value={row.original.type} />,
   },
   {
     accessorKey: "branch.name",
-    header: "BRANCH",
+    header: "Branch",
   },
   {
     accessorKey: "description",
-    header: "DESCRIPTION",
+    header: "Description",
   },
   {
-    header: "STATUS",
+    header: "Status",
     id: "status",
     cell: ({ row }) => <StateColumn state={row.original.status} />,
   },

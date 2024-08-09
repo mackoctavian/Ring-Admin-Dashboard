@@ -1,57 +1,70 @@
 import BreadCrumb from "@/components/layout/breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
-import { Customer } from "@/types";
+import {Customer} from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-
 import { columns } from "@/components/layout/tables/customers-table/columns";
 import { getItems } from "@/lib/actions/customer.actions";
-import { CustomersTable } from "@/components/layout/tables/customers-table/customers-table";
+import NoItems from "@/components/layout/no-items";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {DataTable} from "@/components/layout/tables/data-table";
 
-const breadcrumbItems = [{ title: "Customers", link: "/customers" }];
+const breadcrumbItems = [{ title: "Customers", link: "/dashboard/customers" }]
 
 type ParamsProps = {
-  searchParams: {
-    [key: string]: string | string[] | undefined;
-  };
+    searchParams: {
+        [key: string]: string | string[] | undefined;
+    };
 };
 
 export default async function Page({ searchParams }: ParamsProps) {
-  const page = Number(searchParams.page) || 1;
-  const pageLimit = Number(searchParams.limit) || 10;
-  const q = searchParams.search || null;  
-  const offset = (page - 1) * pageLimit;
+    const page = Number(searchParams.page) || 1;
+    const pageLimit = Number(searchParams.limit) || 5;
+    const q = searchParams.search || null;
+    const offset = (page - 1) * pageLimit;
 
-  const data : Customer[] = await getItems(q?.toString(), null, null, offset);
-  const total = data? data.length : 0;
-  const pageCount = Math.ceil(total / pageLimit);
+    const data : Customer[] = await getItems(q?.toString(), null, null, offset);
+    const total = data? data.length : 0;
+    const pageCount = Math.ceil(total / pageLimit);
 
-  return (
-    <>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <BreadCrumb items={breadcrumbItems} />
+    return (
+        <>
+            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
 
-        <div className="flex items-start justify-between">
-            <Heading title={`Customers`} total={total.toString()} description="Manage customers" />
+                <div className="flex items-center justify-between mb-2">
+                    <div className="relative flex-1 md:max-w-md">
+                        <BreadCrumb items={breadcrumbItems}/>
+                    </div>
 
-            <Link href={"/customers/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add Customer
-            </Link>
-        </div>
-        <Separator />
+                    <div className="flex items-center space-x-2">
+                        <Link href={`/dashboard/customers/new`}
+                              className={cn(buttonVariants({variant: "default"}), "gap-1 size-md flex items-center dark:text-white")}>
+                            <Plus className="h-3.5 w-3.5"/>
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap"> Add Customer </span>
+                        </Link>
+                    </div>
+                </div>
 
-        <CustomersTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
-      </div>
-    </>
-  );
+                {total > 0 || q != null ? (
+                    <Card x-chunk="data-table">
+                        <CardHeader>
+                            <CardTitle>Customers</CardTitle>
+                            <CardDescription>{`Manage your customer's data`}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <DataTable
+                                searchKey="name"
+                                pageNo={page}
+                                columns={columns}
+                                total={total}
+                                data={data}
+                                pageCount={pageCount}
+                            />
+                        </CardContent>
+                    </Card>
+                ) : (<NoItems newItemUrl={`/dashboard/customers/new`} itemName={`customer`}/>)}
+            </div>
+        </>
+    );
 }

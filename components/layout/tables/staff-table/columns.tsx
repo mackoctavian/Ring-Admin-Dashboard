@@ -26,27 +26,31 @@ export const columns: ColumnDef<Staff>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "name",
-    header: "NAME",
+    accessorKey: "firstName",
+    header: "First name",
+  },
+  {
+    accessorKey: "lastName",
+    header: "Last name",
   },
   {
     accessorKey: "phoneNumber",
-    header: "PHONE",
+    header: "Phone number",
   },
   {
     accessorKey: "email",
-    header: "EMAIL",
+    header: "Email address",
   },
   {
     accessorKey: "code",
-    header: "EMPLOYEE ID",
+    header: "Employee ID",
   },
   {
     accessorKey: "jobTitle",
-    header: "TITLE",
+    header: "Job title",
   },
   {
-    header: "STATUS",
+    header: "Status",
     id: "status",
     cell: ({ row }) => <StateColumn state={row.original.status} />,
   },

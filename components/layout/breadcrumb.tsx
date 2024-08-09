@@ -1,39 +1,48 @@
-import { cn } from "@/lib/utils";
-import { ChevronRightIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import React from "react";
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator
+} from "@/components/ui/breadcrumb";
 
-type BreadCrumbType = {
-  title: string;
-  link: string;
+type BreadcrumbItemType = {
+    title: string;
+    link: string;
 };
 
-type BreadCrumbPropsType = {
-  items: BreadCrumbType[];
+type BreadcrumbPropsType = {
+    items: BreadcrumbItemType[];
 };
 
-export default function BreadCrumb({ items }: BreadCrumbPropsType) {
-  return (
-    <div className="mb-4 flex items-center space-x-1 text-sm text-muted-foreground">
-      <Link href={"/"} className="overflow-hidden text-ellipsis whitespace-nowrap">
-        Dashboard
-      </Link>
-      {items?.map((item: BreadCrumbType, index: number) => (
-        <React.Fragment key={item.title}>
-          <ChevronRightIcon className="h-4 w-4" />
-          <Link
-            href={item.link}
-            className={cn(
-              "font-medium",
-              index === items.length - 1
-                ? "text-foreground pointer-events-none"
-                : "text-muted-foreground",
-            )}
-          >
-            {item.title}
-          </Link>
-        </React.Fragment>
-      ))}
-    </div>
-  );
+export default function BreadcrumbComponent({ items }: BreadcrumbPropsType) {
+    return (
+        <Breadcrumb className="hidden md:flex">
+            <BreadcrumbList>
+                <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                        <Link href={`/dashboard`}>Dashboard</Link>
+                    </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                {items.map((item, index) => (
+                    <React.Fragment key={index}>
+                        <BreadcrumbItem>
+                            {index === items.length - 1 ? (
+                                <BreadcrumbPage>{item.title}</BreadcrumbPage>
+                            ) : (
+                                <BreadcrumbLink asChild>
+                                    <Link href={item.link}>{item.title}</Link>
+                                </BreadcrumbLink>
+                            )}
+                        </BreadcrumbItem>
+                        {index < items.length - 1 && <BreadcrumbSeparator />}
+                    </React.Fragment>
+                ))}
+            </BreadcrumbList>
+        </Breadcrumb>
+    );
 }

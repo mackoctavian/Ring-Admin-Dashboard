@@ -3,14 +3,10 @@
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Switch } from "@/components/ui/switch"
-import { ReloadIcon } from "@radix-ui/react-icons"
-import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Form,
   FormControl,
@@ -19,20 +15,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select"
-import { Input } from "@/components/ui/input";
+import {SelectItem} from "@/components/ui/select"
 import { recordPayment } from "@/lib/actions/expense.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 import { SubmitButton } from "../ui/submit-button";
 import { Button } from "../ui/button";
-import { ExpensePaymentSchema, PaymentMethod } from "@/types/data-schemas"
+import { ExpensePaymentSchema, PaymentMethod} from "@/types/data-schemas"
 import ExpenseSelector from "@/components/layout/expense-selector"
 import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon } from "@radix-ui/react-icons"
@@ -41,7 +30,9 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 import "react-day-picker/style.css"
+import CurrencySelector from "@/components/layout/currency-selector";
 
  const RecordPaymentForm = () => {
     const [isLoading, setIsLoading] = useState(false)
@@ -62,13 +53,13 @@ import "react-day-picker/style.css"
 
     const onSubmit = async (data: z.infer<typeof ExpensePaymentSchema>) => {
         setIsLoading(true);
-    
+
         try {
             await recordPayment(data);
             toast({
                 variant: "success",
                 title: "Success", 
-                description: "Repayment recorded succesfully!"
+                description: "Repayment recorded successfully!"
             })
         } catch (error: any) {
             toast({
@@ -77,28 +68,22 @@ import "react-day-picker/style.css"
                 description: "There was an issue submitting your form, please try later"
             });
         } finally {
-        //delay loading
-        setTimeout(() => {
             setIsLoading(false);
-            }, 1000); 
         }
     };
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <FormField
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
                         control={form.control}
                         name="expense"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Expense *</FormLabel>
-                            <FormControl>
-                                <ExpenseSelector status="INCOMPLETE" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
+                        label="Expense"
+                        renderSkeleton={(field) => (
+                            <ExpenseSelector status="INCOMPLETE" value={field.value} onChange={field.onChange}/>
                         )}
                     />
                     
@@ -139,69 +124,48 @@ import "react-day-picker/style.css"
                             </FormItem>
                         )}
                     />
-                
-                    <FormField
+
+                    <CustomFormField
+                        fieldType={FormFieldType.SELECT}
                         control={form.control}
                         name="paymentMethod"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Payment method *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select payment method" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value={PaymentMethod.CASH}>Cash</SelectItem>
-                                    <SelectItem value={PaymentMethod.MOBILE}>Mobile money</SelectItem>
-                                    <SelectItem value={PaymentMethod.BANK}>Bank transfer</SelectItem>
-                                    <SelectItem value={PaymentMethod.CARD}>Card</SelectItem>
-                                    <SelectItem value={PaymentMethod.CHEQUE}>Cheque</SelectItem>
-                                    <SelectItem value={PaymentMethod.OTHER}>Other</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        
-                        <FormField
-                            control={form.control}
-                            name="amount"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Amount *</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        placeholder="Repayment amount"
-                                        {...field}
-                                        />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                </div>
-                <FormField
+                        label="Payment method *"
+                        placeholder="Select payment method">
+                            <SelectItem value={PaymentMethod.CASH}>Cash</SelectItem>
+                            <SelectItem value={PaymentMethod.MOBILE}>Mobile money</SelectItem>
+                            <SelectItem value={PaymentMethod.BANK}>Bank transfer</SelectItem>
+                            <SelectItem value={PaymentMethod.CARD}>Card</SelectItem>
+                            <SelectItem value={PaymentMethod.CHEQUE}>Cheque</SelectItem>
+                            <SelectItem value={PaymentMethod.OTHER}>Other</SelectItem>
+                    </CustomFormField>
+
+                    <CustomFormField
+                        fieldType={FormFieldType.INPUT}
                         control={form.control}
-                        name="notes"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Notes</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Any other information regarding this payment"
-                                    className="resize-none"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
+                        name="amount"
+                        label="Repayment amount *"
+                        placeholder="Repayment amount"
+                        type="number"
+                    />
+
+                    <CustomFormField
+                        fieldType={FormFieldType.SKELETON}
+                        control={form.control}
+                        name="currency"
+                        label="Currency *"
+                        renderSkeleton={(field) => (
+                            <CurrencySelector value={field.value} onChange={field.onChange}/>
                         )}
                     />
-                
+                </div>
+
+                <CustomFormField
+                    fieldType={FormFieldType.TEXTAREA}
+                    control={form.control}
+                    name="notes"
+                    label="Notes regarding payment"
+                    placeholder="Any other information regarding this payment"
+                />
         
                 <div className="flex h-5 items-center space-x-4">
                     <CancelButton />

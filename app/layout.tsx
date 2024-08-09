@@ -24,8 +24,18 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
+  applicationName: siteConfig.shortName,
   title: siteConfig.name,
   description: siteConfig.description,
+  generator: "Qroo Solutions",
+  openGraph: {
+    type: "website",
+    url: "https://www.ring.co.tz",
+    title: siteConfig.name,
+    description: siteConfig.description,
+    siteName: siteConfig.name,
+    images: [{ url: siteConfig.links.baseUrl+siteConfig.logo }],
+  },
   icons: {
     icon: siteConfig.icon
   }
@@ -37,7 +47,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning={true}>
       <body className={`${inter.variable} ${ibmPlexSerif.variable} ${openSans.variable}`}>
         <SpeedInsights/>
         <Analytics />

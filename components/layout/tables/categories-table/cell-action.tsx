@@ -1,17 +1,18 @@
-"use client";
-import { AlertModal } from "@/components/layout/modal/alert-modal";
-import { Button } from "@/components/ui/button";
+'use client'
+
+import React, { useState } from "react"
+import { AlertModal } from "@/components/layout/modal/alert-modal"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Category } from "@/types";
-import { Edit, MoreHorizontal, Trash } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+} from "@/components/ui/dropdown-menu"
+import { Category } from "@/types"
+import { Edit, MoreHorizontal, Trash } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { deleteItem } from "@/lib/actions/category.actions"
 import { useToast } from "@/components/ui/use-toast"
 
@@ -26,7 +27,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const { toast } = useToast()
 
   const onConfirm = async () => {
-      setIsLoading(true);
+      setIsLoading(true)
   
       try {
           if (data) {
@@ -34,7 +35,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
               toast({
                   variant: "default",
                   title: "Success", 
-                  description: "Product category deleted succesfully!"
+                  description: "Product category deleted successfully!"
               });
           } else {
             toast({
@@ -43,10 +44,6 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
               description: "There was an issue with your request, please try again later"
             });
           }
-          
-          // Redirect to the list page after submission
-          router.push("/categories");
-          router.refresh();
       } catch (error: any) {
         toast({
             variant: "destructive",
@@ -60,7 +57,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           setOpen(false);
           }, 1000); 
       }
-  };
+  }
 
   return (
     <>
@@ -80,7 +77,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-          <DropdownMenuItem onClick={() => router.push(`/categories/${data.$id}`)}>
+          <DropdownMenuItem onClick={() => router.push(`/dashboard/categories/${data.$id}`)}>
             <Edit className="mr-2 h-4 w-4" /> Update
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setOpen(true)}>

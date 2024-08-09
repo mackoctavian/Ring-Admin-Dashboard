@@ -1,46 +1,25 @@
 'use server';
 
-const env = process.env.NODE_ENV
-import * as Sentry from "@sentry/nextjs";
-import { ID, Query, AppwriteException } from "node-appwrite";
-import { createAdminClient } from "../appwrite";
+import {databaseCheck, handleError} from "@/lib/utils/actions-service";
+
+import { ID, Query } from "node-appwrite";
 import { parseStringify } from "../utils";
 import { Supplier } from "@/types";
-import { getStatusMessage, HttpStatusCode } from '../status-handler'; 
-import { getBusinessId } from "./business.actions";
-import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
 
 const {
-    APPWRITE_DATABASE: DATABASE_ID,
     VENDORS_COLLECTION: VENDOR_COLLECTION_ID
 } = process.env;
 
-const checkRequirements = async (collectionId: string | undefined) => {
-  if (!DATABASE_ID || !collectionId) throw new Error('Check requirements failed: Database ID or Collection ID is missing');
-
-  const { database } = await createAdminClient();
-  if (!database) throw new Error('Database client could not be initiated');
-
-  const { userId } = auth();
-  if (!userId) {
-    throw new Error('You must be signed in to use this feature');
-  }
-
-  const businessId = await getBusinessId();
-  if( !businessId ) throw new Error('Business ID could not be initiated');
-
-  return { database, userId, businessId };
-}
-
 export const createItem = async (item: Supplier) => {
-  const { database, businessId } = await checkRequirements(VENDOR_COLLECTION_ID);
+  if (!item ) throw new Error('Supplier details required')
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID, {needsBusinessId: true});
 
     try {
       await database.createDocument(
-        DATABASE_ID!,
-        VENDOR_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         ID.unique(),
         {
           ...item,
@@ -48,56 +27,43 @@ export const createItem = async (item: Supplier) => {
         }
       )
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error creating supplier:")
     }
 
-    revalidatePath('/suppliers')
-    redirect('/suppliers')
-  }
+    revalidatePath('/dashboard/suppliers')
+    redirect('/dashboard/suppliers')
+}
 
 export const list = async ( ) => {
-  const { database, businessId } = await checkRequirements(VENDOR_COLLECTION_ID);
-    try {
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID, {needsBusinessId: true});
+
+  try {
       const items = await database.listDocuments(
-        DATABASE_ID,
-        VENDOR_COLLECTION_ID,
+        databaseId,
+        collectionId,
         [Query.equal('businessId', businessId!)]
-      );
+      )
+
+      if (items.documents.length == 0) return null
 
       return parseStringify(items.documents);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error listing suppliers:")
     }
 }
 
-  export const getItems = async (
+export const getItems = async (
     q?: string,
     status?: boolean | null,
     limit?: number | null, 
     offset?: number | 1,
   ) => {
-    const { database, businessId } = await checkRequirements(VENDOR_COLLECTION_ID);
+    const { database, businessId, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID, {needsBusinessId: true});
   
     try {
       const queries = [];
       
-      queries.push(Query.equal('businessId', businessId));
+      queries.push(Query.equal('businessId', businessId!));
       queries.push(Query.orderDesc("$createdAt"));
       queries.push(Query.orderAsc("name"));
 
@@ -115,102 +81,69 @@ export const list = async ( ) => {
       }
   
       const items = await database.listDocuments(
-        DATABASE_ID,
-        VENDOR_COLLECTION_ID,
+        databaseId,
+        collectionId,
         queries
       );
   
-      if (items.documents.length === 0) {
-        return [];
-      }
+      if (items.documents.length === 0) return null
   
       return parseStringify(items.documents);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error getting suppliers:")
     }
 }
 
 export const getItem = async (id: string) => {
   if (!id) return null;
-  const { database, businessId } = await checkRequirements(VENDOR_COLLECTION_ID);
+  const { database, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
 
     try {
       const item = await database.listDocuments(
-        DATABASE_ID!,
-        VENDOR_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         [Query.equal('$id', id)]
       )
 
-      if ( item.total < 1 ) return null;
+      if ( item.total == 0 ) return null;
   
       return parseStringify(item.documents[0]);
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error getting supplier:")
     }
 }
 
 export const deleteItem = async (id : string) => {
-    if (!id) return null;
-    const { database, businessId } = await checkRequirements(VENDOR_COLLECTION_ID);
+  if (!id ) throw new Error('Supplier details required')
+  const { database, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
 
     try {
       await database.deleteDocument(
-        DATABASE_ID!,
-        VENDOR_COLLECTION_ID!,
+        databaseId,
+        collectionId,
         id)
 
     } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error deleting supplier:")
     }
 
-    revalidatePath('/suppliers')
-    redirect('/suppliers')
-  }
+    revalidatePath('/dashboard/suppliers')
+    redirect('/dashboard/suppliers')
+}
 
 export const updateItem = async (id: string, data: Supplier) => {
-  const { database, businessId } = await checkRequirements(VENDOR_COLLECTION_ID);
+  if (!id || !data) throw new Error('Supplier details required')
+  const { database, databaseId, collectionId } = await databaseCheck(VENDOR_COLLECTION_ID);
   try {
     await database.updateDocument(
-      DATABASE_ID!,
-      VENDOR_COLLECTION_ID!,
+      databaseId,
+      collectionId,
       id,
       data);
   } catch (error: any) {
-      let errorMessage = 'Something went wrong with your request, please try again later.';
-      if (error instanceof AppwriteException) {
-        errorMessage = getStatusMessage(error.code as HttpStatusCode);
-      }
-
-      if(env == "development"){ console.error(error); }
-
-      Sentry.captureException(error);
-      throw Error(errorMessage);
+      handleError(error, "Error updating supplier:")
   }
 
-  revalidatePath('/suppliers')
-  redirect('/suppliers')
+  revalidatePath('/dashboard/suppliers')
+  redirect('/dashboard/suppliers')
 }

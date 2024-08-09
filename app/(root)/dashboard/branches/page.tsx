@@ -1,17 +1,16 @@
 import BreadCrumb from "@/components/layout/breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
-import { Branch } from "@/types";
+import {Branch} from "@/types";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-
 import { columns } from "@/components/layout/tables/branches-table/columns";
 import { getItems } from "@/lib/actions/branch.actions";
-import { BranchesTable } from "@/components/layout/tables/branches-table/branches-table";
+import NoItems from "@/components/layout/no-items";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {DataTable} from "@/components/layout/tables/data-table";
 
-const breadcrumbItems = [{ title: "Branches", link: "/branches" }];
+const breadcrumbItems = [{ title: "Branches", link: "dashboard/branches" }];
 
 type ParamsProps = {
   searchParams: {
@@ -29,30 +28,45 @@ export default async function Page({ searchParams }: ParamsProps) {
   const total = data? data.length : 0;
   const pageCount = Math.ceil(total / pageLimit);
 
+    return (
+        <>
+            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
 
-  return (
-    <>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <BreadCrumb items={breadcrumbItems} />
+                <div className="flex items-center justify-between mb-2">
+                    <div className="relative flex-1 md:max-w-md">
+                        <BreadCrumb items={breadcrumbItems}/>
+                    </div>
 
-        <div className="flex items-start justify-between">
-            <Heading title={`Branches`} total={total.toString()} description="Manage branches" />
+                    <div className="flex items-center space-x-2">
+                        <Link href={`/dashboard/branches/new`}
+                              className={cn(buttonVariants({variant: "default"}), "gap-1 size-md flex items-center dark:text-white")}>
+                            <Plus className="h-3.5 w-3.5"/>
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap"> Add Branch </span>
+                        </Link>
+                    </div>
+                </div>
 
-            <Link href={"/branches/new"} className={cn(buttonVariants({ variant: "default" }))} >
-                <Plus className="mr-2 h-4 w-4" /> Add Branch / Location
-            </Link>
-        </div>
-        <Separator />
-
-        <BranchesTable
-          searchKey="name"
-          pageNo={page}
-          columns={columns}
-          total={total}
-          data={data}
-          pageCount={pageCount}
-        />
-      </div>
-    </>
-  );
+                {total > 0 || q != null ? (
+                    <Card x-chunk="data-table">
+                        <CardHeader>
+                            <CardTitle>Branches</CardTitle>
+                            <CardDescription>
+                                Manage your branches.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <DataTable
+                                searchKey="name"
+                                pageNo={page}
+                                columns={columns}
+                                total={total}
+                                data={data}
+                                pageCount={pageCount}
+                            />
+                        </CardContent>
+                    </Card>
+                ) : (<NoItems newItemUrl={`/dashboard/branches/new`} itemName={`branch`}/>)}
+            </div>
+        </>
+    );
 }

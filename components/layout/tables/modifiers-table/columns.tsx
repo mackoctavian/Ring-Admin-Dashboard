@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { StateColumn } from "../state-column";
 import { MoneyColumn } from "../money-colum";
+import {BadgeColumn} from "@/components/layout/tables/badge-column";
 
 export const columns: ColumnDef<Modifier>[] = [
   {
@@ -28,16 +29,17 @@ export const columns: ColumnDef<Modifier>[] = [
   },
   {
     accessorKey: "name",
-    header: "NAME",
+    header: "Name",
   },
   {
     accessorKey: "type",
-    header: "TYPE",
+    header: "Type",
+    cell: ({ row }) => <BadgeColumn value={row.original.type} />,
   },
   {
-    header: "STATUS",
+    header: "Status",
     id: "status",
-    cell: ({ row }) => <StateColumn state={row.original.status} />,
+    cell: ({ row }) => <BadgeColumn value={row.original.status} />,
   },
   {
     id: "actions",

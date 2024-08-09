@@ -1,12 +1,10 @@
-import { count } from "console";
 import * as z from "zod";
-
-const phoneNumberRegex = /^[0-9]{10,15}$/;
+const phoneNumberRegex = /^\+\d{10,15}$/;
 
 //Image validation
 const MAX_MB = 5; // Max size in MB
 const MAX_UPLOAD_SIZE = MAX_MB * 1024 * 1024; // Convert MB to bytes
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+const ACCEPTED_IMAGE_TYPES = ["jpeg", "jpg", "png", "webp"];
 
 export enum CategoryType{
     SERVICE = "SERVICE",
@@ -73,6 +71,12 @@ export enum SubscriptionStatus {
     TRIAL = 'TRIAL'
 }
 
+export enum PaymentStatus {
+    PENDING = 'PENDING',
+    SUCCESS = 'SUCCESS',
+    FAILED = 'FAILED',
+}
+
 export enum POSItemStatus {
     DRAFT = 'Draft',
     ACTIVE = 'Active',
@@ -115,25 +119,26 @@ export const SignUpSchema = z.object({
 
 
 export const BusinessRegistrationSchema = z.object({
-    name: z.string().min(3),
-    // logo: z
-    // .custom<FileList>()
-    // .transform((file) => file.length > 0 && file.item(0))
-    // .refine((file) => !file || (!!file && file.size <= MAX_UPLOAD_SIZE ), {
-    //   message: `Max image size is ${MAX_MB}MB`,
-    // })
-    // .refine((file) => !file || (!!file && file.type?.startsWith("image")), {
-    //   message: "Only .jpg .jpeg and .png formats are supported",
-    // }),
-    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-    businessType: BusinessTypeSchema,
+    firstName: z.string(),
+    lastName: z.string(),
+    name: z.string(),
+    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number"),
+    logo: z.custom<File[]>().optional(),
     size: z.string(),
+    currency: z.string(),
     city: z.string().optional(),
     country: z.string(),
     email: z.string().email(),
     address: z.string().optional(),
+    businessType: BusinessTypeSchema,
     description: z.string().optional(),
     registrationNumber: z.string().optional(),
+    termsConsent: z
+        .boolean()
+        .default(false)
+        .refine((value) => value === true, {
+            message: "You must consent to the terms & conditions before you proceed",
+        }),
 })
 
 
@@ -166,94 +171,45 @@ export const UserSchema: z.ZodSchema = z.lazy(() =>
 )
 
 export const BusinessSchema = z.object({
-    $id: z.string().optional(),
     name: z.string(),
-    businessType: BusinessTypeSchema,
+    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number"),
+    logo: z.custom<File[]>().optional(),
     size: z.string(),
-    registrationNumber: z.string().optional(),
-    // logo: z.instanceof(File)
-    // .optional()
-    // .refine(
-    //     (file) => !file || file.size !== 0 || file.size <= MAX_UPLOAD_SIZE,
-    //     `Max image size is ${MAX_MB}MB`
-    // )
-    // .refine(
-    //     (file) => !file || file.type === "" || ACCEPTED_IMAGE_TYPES.includes(file.type),
-    //     "Only .jpg .jpeg and .png formats are supported"
-    // ),
-    email: z.string().email(),
-    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
-    address: z.string().optional().nullable(),
+    currency: z.string(),
     city: z.string().optional().nullable(),
     country: z.string(),
-    authId: z.string(),
-    description: z.string().optional(),
-    slug: z.string(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    email: z.string().email(),
+    address: z.string().optional().nullable(),
+    businessType: BusinessTypeSchema,
+    description: z.string().optional().nullable(),
+    registrationNumber: z.string().optional().nullable()
 })
 
 export const BranchSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     email: z.string().email("Invalid email address"),
-    businessId: z.string().optional(),
-    business: BusinessSchema.optional(),
     phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
     address: z.string().optional().nullable(),
     city: z.string().optional().nullable(),
-    daysOpen: z.string(),
-    openingTime: z.string().optional(),
-    closingTime: z.string().optional(),
+    daysOpen: z.array(z.string()).min(1, { message: "Select at least one day" }),
+    openingTime: z.string(),
+    closingTime: z.string(),
     staffCount: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
         }
         return val;
-    }, z.number().nonnegative()),
-    status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    }, z.number().nonnegative().gt(0)),
+    status: z.boolean()
 })
 
 export const DepartmentSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     shortName: z.string(),
-    branch: BranchSchema.omit({business: true, daysOpen: true}),
+    branch: BranchSchema,
     status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
 });
 
 export const CampaignSchema = z.object({
@@ -266,26 +222,15 @@ export const CampaignSchema = z.object({
             return new Date(val);
         }
         return val;
-    }, z.date({message: "Select a date to broadcast your message"})),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    }, z.date({message: "Select a date to broadcast your message"}))
 });
     
 
 
 export const StaffSchema = z.object({
     $id: z.string().optional(),
-    name: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
     email: z.string().email("Invalid email address").trim().optional().nullable(),
     phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
     code: z.preprocess((val) => val === null ? undefined : val, z.string().optional()),
@@ -310,35 +255,14 @@ export const StaffSchema = z.object({
     emergencyRelationship: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     address: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    // image: z.instanceof(File)
-    // .optional()
-    // .refine(
-    //     (file) => !file || file.size !== 0 || file.size <= MAX_UPLOAD_SIZE,
-    //     `Max image size is ${MAX_MB}MB`
-    // )
-    // .refine(
-    //     (file) => !file || file.type === "" || ACCEPTED_IMAGE_TYPES.includes(file.type),
-    //     "Only .jpg .jpeg and .png formats are supported"
-    // ).nullable(),
+    image: z.custom<File[]>().optional(),
     posAccess: z.boolean(),
     dashboardAccess: z.boolean(),
     status: z.boolean(),
-    department: z.array(DepartmentSchema.omit({branch: true})).min(1, { message: "Select at least one department" }),
-    branch: z.array(BranchSchema.omit({business: true})).min(1, { message: "Select at least one branch" }),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    department: z.array(DepartmentSchema).min(1, { message: "Select at least one department" }),
+    branch: z.array(BranchSchema).min(1, { message: "Select at least one branch" })
 }).superRefine((values, context) => {
-    if ( values.dashboardAccess === true && ( !values.email || values.email.trim() === "" ) ){
+    if ( values.dashboardAccess && ( !values.email || values.email.trim() === "" ) ){
     console.log("Email value",values.email)
       context.addIssue({
         code: z.ZodIssueCode.custom,
@@ -354,23 +278,11 @@ export const SupplierSchema = z.object({
     name: z.string(),
     email: z.string().email("Invalid email address").optional().nullable(),
     contactPersonName: z.string(),
-    branch: z.array(BranchSchema.omit({business: true, daysOpen: true})).min(1, { message: "Select at least one branch" }),
+    branch: z.array(z.string()).min(1, { message: "Select at least one branch" }),
     phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
     address: z.string().optional().nullable(),
     description: z.string().optional().nullable(),
-    status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    status: z.boolean()
 });
 
 export const DiscountSchema = z.object({
@@ -404,19 +316,7 @@ export const DiscountSchema = z.object({
     }, z.date().optional()),
     redemptionLimit: z.preprocess((val) => val === null ? undefined : val, z.number().optional()),
     description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    status: z.boolean()
 }).superRefine((values, context) => {
     if ( values.type === DiscountType.PERCENTAGE && (values.value < 0 || values.value > 100) ) {
       context.addIssue({
@@ -428,33 +328,6 @@ export const DiscountSchema = z.object({
     }
 })
 
-export const ParentCategorySchema = z.object({
-    $id: z.string().optional(),
-    slug: z.string().min(1),
-    type: z.enum([CategoryType.SERVICE, CategoryType.PRODUCT], {
-        required_error: "Category type is required",
-        invalid_type_error: "Category type must be either 'Product' or 'Service'",
-    }),
-    name: z.string({
-        required_error: "Product category name is required",
-        invalid_type_error: "Product category name must be more than 2 characters long",
-    }).min(2),
-    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-});
-
 export const CategorySchema = z.object({
         $id: z.string().optional(),
         type: z.enum([CategoryType.SERVICE, CategoryType.PRODUCT], {
@@ -465,21 +338,9 @@ export const CategorySchema = z.object({
             required_error: "Product category name is required",
             invalid_type_error: "Product category name must be more than 2 characters long",
         }).min(2),
-        parent: ParentCategorySchema.optional().nullable(),
+        parent: z.string().optional().nullable(),
         description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-        status: z.boolean(),
-        $createdAt: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return new Date(val);
-            }
-            return val;
-        }, z.date().optional()),
-        $updatedAt: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return new Date(val);
-            }
-            return val;
-        }, z.date().optional()),
+        status: z.boolean()
 });
 
 
@@ -487,25 +348,13 @@ export const ProductUnitSchema = z.object({
     $id: z.string().optional(),
     shortName: z.string().min(1),
     name: z.string().min(1),
-    status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    status: z.boolean()
 });
 
 
 export const UpdateInventoryVariantSchema = z.object({
-    $id: z.string().optional(),
-    name: z.string().trim().nonempty(),
+    $id: z.string(),
+    name: z.string(),
     itemsPerUnit: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
@@ -539,24 +388,12 @@ export const UpdateInventoryVariantSchema = z.object({
         return val;
     }, z.number().nonnegative().optional()),
     image: z.string().optional().nullable(),
-    status: z.nativeEnum(InventoryStatus),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    status: z.nativeEnum(InventoryStatus)
 });
 
 export const InventoryVariantSchema = z.object({
     $id: z.string().optional(),
-    name: z.string().trim().nonempty(),
+    name: z.string(),
     itemsPerUnit: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
@@ -607,81 +444,28 @@ export const InventoryVariantSchema = z.object({
             return parseFloat(val);
         }
         return val;
-    }, z.number().nonnegative().optional()),
-    quantity: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return parseInt(val);
-        }
-        return val;
-    }, z.number().nonnegative()),
-    actualQuantity: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return parseFloat(val);
-        }
-        return val;
-    }, z.number().optional()),
-    actualValue: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return parseFloat(val);
-        }
-        return val;
-    }, z.number().optional()),
-    status: z.nativeEnum(InventoryStatus),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    }, z.number().nonnegative().optional())
 });
 
 export const InventorySchema = z.object({
     $id: z.string().optional(),
-    title: z.string().nonempty("Title is required"),
+    title: z.string(),
     packaging: z.string(),
-    variants: z.array(InventoryVariantSchema).min(1, "At least one item is required"),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    currency: z.string(),
+    variants: z.array(InventoryVariantSchema).min(1, "At least one item is required")
 });
 
 export const UpdateInventorySchema = z.object({
     $id: z.string().optional(),
-    title: z.string().nonempty("Title is required"),
+    title: z.string(),
     packaging: z.string(),
-    variants: z.array(UpdateInventoryVariantSchema).min(1, "At least one item is required"),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    currency: z.string(),
+    variants: z.array(UpdateInventoryVariantSchema).min(1, "At least one item is required")
 });
 
 export const InventoryModificationSchema = z.object({
     $id: z.string().optional(),
-    item: InventoryVariantSchema,
+    item: z.string(),
     quantity: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
@@ -695,19 +479,7 @@ export const InventoryModificationSchema = z.object({
         return val;
     }, z.number()),
     reason: z.string(),
-    notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    notes: z.preprocess((val) => val === null ? "" : val, z.string().optional())
 });
 
 export const ModifierItemSchema = z.object({
@@ -726,7 +498,7 @@ export const ModifierItemSchema = z.object({
         return val;
     }, z.number().optional().nullable()),
     unit: z.string().optional().nullable(),
-    inventoryItem: InventoryVariantSchema.optional().nullable(),
+    inventoryItem: z.string().optional().nullable(),
     $createdAt: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
@@ -746,46 +518,41 @@ export const ModifierSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
     type: z.nativeEnum(ModifierType),
+    currency: z.string(),
     allowMultiple: z.boolean(),
     optional: z.boolean(),
     image: z.string().optional(),
     modifierItems: z.array(ModifierItemSchema).min(1, "At least one item is required"),
-    status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    status: z.nativeEnum(POSItemStatus)
 })
 
 export const StockSchema = z.object({
     $id: z.string().optional(),
-    item: InventoryVariantSchema.refine((value) => {
-            return value !== undefined && value !== null && value.$id !== "";
-        }, { message: "Select inventory item" }),
+    item: z.string(),
     quantity: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
         }
         return val;
-    }, z.number().nonnegative()),
-    staff: StaffSchema,
-    department: DepartmentSchema.optional(),
-    supplier: SupplierSchema,
+    }, z.number().nonnegative().gt(0, "Quantity must be greater than zero")), // Ensuring quantity is greater than zero
+    staff: z.string(),
+    supplier: z.string(),
     value: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseFloat(val);
         }
         return val;
-    }, z.number().nonnegative()),
-    accurate: z.boolean(),
+    }, z.number().nonnegative().gt(0, "Value must be greater than zero")), // Ensuring value is greater than zero
+    currency: z.string(),
+    accurate: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim().toLowerCase() === "true") {
+            return true;
+        }
+        if (typeof val === "string" && val.trim().toLowerCase() === "false") {
+            return false;
+        }
+        return val;
+    }, z.boolean()),
     orderNumber: z.string().trim().optional(),
     orderDate: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
@@ -798,19 +565,7 @@ export const StockSchema = z.object({
             return new Date(val);
         }
         return val;
-    }, z.date()),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    }, z.date())
 });
 
 
@@ -819,7 +574,7 @@ export const CustomerSchema = z.object({
     email: z.string().email("Invalid email address").trim().optional(),
     phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits.").optional(),
     code: z.preprocess((val) => val === null ? undefined : val, z.string().optional()),
-    gender: z.enum([Gender.UNDISCLOSED, Gender.MALE, Gender.FEMALE]),
+    gender: z.nativeEnum(Gender),
     dateOfBirth: z.preprocess((val) => {
         if (val === null) return undefined;
         if (typeof val === "string" && val.trim() !== "") {
@@ -828,75 +583,60 @@ export const CustomerSchema = z.object({
         return val;
     }, z.date().optional()),
     nationality: z.preprocess((val) => val === null ? "" : val, z.string().optional()),        
-    registrationBranch: BranchSchema.omit({business: true, daysOpen: true}),
+    registrationBranch: z.string(),
     address: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     notes: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
     allowNotifications: z.boolean(),
 });
 
+export const SubscriptionPlanSchema = z.object({
+    $id: z.string(),
+    name: z.string(),
+    features: z.string(),
+    monthlyFee: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
+    biAnnualFee: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
+    annualFee: z.preprocess((val) => {
+        if (typeof val === "string" && val.trim() !== "") {
+            return parseFloat(val);
+        }
+        return val;
+    }, z.number().nonnegative()),
+    status: z.boolean(),
+})
 
-
-
-
-
-
-
-
-
-    
-// export const ProductSchema = z.object({
-//     $id: z.string().optional(),
-//     name: z.string({
-//         required_error: "Product name is required",
-//         invalid_type_error: "Product name must be more than 2 characters long",
-//     }).min(2),
-//     sku: z.string(),
-//     category: CategorySchema,
-//     discount: DiscountSchema.nullable().optional(),
-//     description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-//     allowDiscount: z.boolean(),
-//     image: z.string().optional(),
-//     status: z.boolean(),
-//     inventoryItems: z.array(ProductInventoryUsageSchema).optional(),
-//     $createdAt: z.preprocess((val) => {
-//         if (typeof val === "string" && val.trim() !== "") {
-//             return new Date(val);
-//         }
-//         return val;
-//     }, z.date().optional()),
-//     $updatedAt: z.preprocess((val) => {
-//         if (typeof val === "string" && val.trim() !== "") {
-//             return new Date(val);
-//         }
-//         return val;
-//     }, z.date().optional()),
-// });
-
+export const SubscriptionPaymentSchema = z.object({
+    paymentMethod: z.string().trim(),
+    fullName: z.string().trim(),
+    email: z.string().email("Invalid email address").trim(),
+    phoneNumber: z.string().regex(phoneNumberRegex, "Invalid phone number"),
+    subscriptionPeriod: z.string().trim(),
+    subscriptionPlan: SubscriptionPlanSchema,
+    network: z.string().trim(),
+})
 
 export const ProductInventoryUsageSchema: z.ZodSchema = z.lazy(() =>
     z.object({
-        $id: z.string().optional(),
-        item: InventoryVariantSchema,
+        $id: z.string(),
+        //item: InventoryVariantSchema,
+        item: z.string().nullable(),
+        //itemId: z.string(),
         amountUsed: z.preprocess((val) => {
             if (typeof val === "string" && val.trim() !== "") {
                 return parseFloat(val);
             }
             return val;
-        }, z.number().nonnegative()),
-        unit: z.string(),
-        //TODO: use unit object unit: ProductUnitSchema,
-        $createdAt: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return new Date(val);
-            }
-            return val;
-        }, z.date().optional()),
-        $updatedAt: z.preprocess((val) => {
-            if (typeof val === "string" && val.trim() !== "") {
-                return new Date(val);
-            }
-            return val;
-        }, z.date().optional()),
+        }, z.number().nonnegative().gt(0)),
+        unit: z.string()
     })
 );
 
@@ -917,46 +657,23 @@ export const ProductVariantSchema = z.object({
     }, z.number().nonnegative()),
     barcode: z.string().optional().nullable(),
     status: z.boolean(),
-    inventoryItems: z.array(ProductInventoryUsageSchema).optional(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    inventoryItems: z.array(ProductInventoryUsageSchema).optional().nullable()
   });
 
 
 export const ProductSchema = z.object({
     $id: z.string().optional(),
     name: z.string(),
+    currency: z.string(),
     sku: z.string().optional().nullable(),
     category: z.array(CategorySchema).min(1, "Select category"),
-    description: z.string().min(5).optional().nullable(),
+    description: z.string().optional().nullable(),
     posStatus: z.nativeEnum(POSItemStatus),
-    branch: z.array(BranchSchema.omit({business: true})),
-    department: z.array(DepartmentSchema),
+    branch: z.array(BranchSchema).min(1, { message: "Select at least one branch" }),
+    department: z.array(DepartmentSchema).min(1, { message: "Select at least one department" }),
     modifier: z.array(ModifierSchema).optional().nullable(),
-    image: z.string().optional().nullable(),
-    variants: z.array(ProductVariantSchema).min(1, "At least one variant is required"),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    image: z.custom<File[]>().optional(),
+    variants: z.array(ProductVariantSchema).min(1, "At least one variant is required")
 });
 
 
@@ -1042,19 +759,12 @@ export const ServiceSchema = z.object({
 });
 
 export const ExpenseSchema = z.object({
-    $id: z.string().optional(),
     name: z.string({
         required_error: "Expense title is required",
         invalid_type_error: "Expense title must be more than 2 characters long",
     }).min(2),
     category: z.string(),
     amount: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return parseFloat(val);
-        }
-        return val;
-    }, z.number().nonnegative()),
-    balance: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseFloat(val);
         }
@@ -1067,39 +777,24 @@ export const ExpenseSchema = z.object({
         return val;
     }, z.number().nonnegative()),
     currency: z.string(),
-    staff: StaffSchema.nullable().optional(),
-    department: DepartmentSchema.nullable().optional(),
-    vendor: SupplierSchema.nullable().optional(),
+    staff: z.string().nullable().optional(),
+    department: z.string().nullable().optional(),
+    vendor: z.string().nullable().optional(),
     dueDate: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return new Date(val);
         }
         return val;
     }, z.date()),
-    document: z.string().optional().nullable(),
-    branch: BranchSchema.omit({business: true}).nullable().optional(),
-    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    status: z.enum([ExpenseStatus.PAID, ExpenseStatus.PARTIAL, ExpenseStatus.UNPAID], {
-        required_error: "Expense status is required",
-        invalid_type_error: "Select a valid expense status",
-    }),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    document: z.custom<File[]>().optional().nullable(),
+    branch: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    status: z.nativeEnum(ExpenseStatus)
 });
 
 export const ExpensePaymentSchema = z.object({
     $id: z.string().optional(),
-    expense: ExpenseSchema,
+    expense: z.string(),
     paymentDate: z.date(),
     paymentMethod: z.nativeEnum(PaymentMethod, {message: "Select the repayment method"}),
     amount: z.preprocess((val) => {
@@ -1107,54 +802,25 @@ export const ExpensePaymentSchema = z.object({
             return parseInt(val);
         }
         return val;
-    }, z.number().nonnegative()),
+    }, z.number().nonnegative().gt(0)),
+    currency: z.string(),
     document: z.string().optional(),
-    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    description: z.preprocess((val) => val === null ? "" : val, z.string().optional())
 });
 
 export const SectionSchema = z.object({
     $id: z.string().optional(),
-    name: z.string({
-        required_error: "Section name is required",
-        invalid_type_error: "Section name must be more than 2 characters long",
-    }).min(2),
+    name: z.string().min(2),
     noOfCustomers: z.preprocess((val) => {
         if (typeof val === "string" && val.trim() !== "") {
             return parseInt(val);
         }
         return val;
-    }, z.number().nonnegative()),
-    type: z.enum([SectionType.ROOM, SectionType.SEAT, SectionType.TABLE], {
-        required_error: "Section type is required",
-        invalid_type_error: "Select a valid section type",
-    }),
-    branch: BranchSchema.omit({business: true}),
-    description: z.preprocess((val) => val === null ? "" : val, z.string().optional()),
-    status: z.boolean(),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+    }, z.number().nonnegative().gt(0)),
+    type: z.nativeEnum(SectionType),
+    branch: z.string(),
+    description: z.string().optional().nullable(),
+    status: z.boolean()
 });
 
 
@@ -1164,7 +830,7 @@ export const DeviceSchema = z.object({
         required_error: "Device name is required",
         invalid_type_error: "Device name must be more than 2 characters long",
     }).min(2),
-    branch: BranchSchema.omit({business: true}),
+    branchId: z.string(),
     status: z.boolean(),
     code: z.coerce
             .string()
@@ -1173,17 +839,5 @@ export const DeviceSchema = z.object({
             .regex(/^[A-Z0-9]*$/, "Activation code can only have letters and numbers!")
             .min(6, "Activation code must be 6 characters long!")
             .max(6, "Activation code must be 6 characters long!")
-            .transform((val) => val.toUpperCase()),
-    $createdAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
-    $updatedAt: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            return new Date(val);
-        }
-        return val;
-    }, z.date().optional()),
+            .transform((val) => val.toUpperCase())
 });

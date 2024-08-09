@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useEffect, useState } from 'react';
 import MultipleSelector, { Option } from '@/components/ui/multiple-selector';
 import { list } from '@/lib/actions/modifier.actions';
@@ -5,8 +7,8 @@ import { Modifier } from '@/types';
 import { ReloadIcon } from "@radix-ui/react-icons"
 
 interface Props {
-  value?: Modifier[] | [];
-  onChange: (value: Modifier[] | []) => void;
+  value?: Modifier[];
+  onChange: (value: Modifier[]) => void;
 }
 
 const ModifierSelector: React.FC<Props> = ({ value = [], onChange }) => {
@@ -15,26 +17,26 @@ const ModifierSelector: React.FC<Props> = ({ value = [], onChange }) => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    async function fetchBranches() {
+    async function fetchModifiers() {
       try {
         const modifiersData = await list();
         setModifiers(modifiersData);
-        const formattedOptions = modifiersData.map(modifier => ({ label: modifier.name, value: modifier.$id }));
+        const formattedOptions = modifiersData.map((modifier: Modifier) => ({ label: modifier.name, value: modifier.$id }));
         setOptions(formattedOptions);
-      } catch (error : any) {
+      } catch (error) {
         console.error('Error fetching modifiers:', error);
       } finally {
         setLoading(false);
       }
     }
-    fetchBranches();
+    fetchModifiers();
   }, []);
 
   const handleSelectChange = (selectedOptions: Option[]) => {
     const selectedModifiers = selectedOptions
-      .map(option => modifiers.find(modifier => modifier.$id === option.value))
-      .filter((modifier): modifier is Modifier => modifier !== undefined);
-    onChange(selectedModifiers.length > 0 ? selectedModifiers : []);
+        .map(option => modifiers.find(modifier => modifier.$id === option.value))
+        .filter((modifier): modifier is Modifier => modifier !== undefined);
+    onChange(selectedModifiers);
   };
 
   const handleSearch = async (searchValue: string): Promise<Option[]> => {
@@ -42,43 +44,41 @@ const ModifierSelector: React.FC<Props> = ({ value = [], onChange }) => {
       return options;
     }
 
-    const filteredModifiers = modifiers.filter(modifier =>
-      modifier.name.toLowerCase().includes(searchValue.toLowerCase())
+    const filteredOptions = options.filter(option =>
+        option.label.toLowerCase().includes(searchValue.toLowerCase())
     );
-    const formattedOptions = filteredModifiers.map(modifier => ({
-      label: modifier.name,
-      value: modifier.$id!,
-    }));
 
     // If all modifiers are selected, return empty options to prevent "No results found" message
     if (value && value.length === modifiers.length) {
       return [];
     }
 
-    return formattedOptions;
+    return filteredOptions;
   };
 
+  const selectedOptions = options.filter(option => value.some(modifier => modifier.$id === option.value));
+
   return (
-    <MultipleSelector
-      onSearch={handleSearch}
-      defaultOptions={options}
-      value={value ? value.map(modifier => ({ label: modifier.name, value: modifier.$id })) : []}
-      onChange={handleSelectChange}
-      triggerSearchOnFocus
-      placeholder="Select modifiers..."
-      loadingIndicator={
-        <><ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Loading modifiers...</>
-      }
-      emptyIndicator={
-        loading ? (
-          <><ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Loading modifiers...</>
-        ) : (
-          value && value.length > 0 && value.length === modifiers.length ? [] : (
-            <p className="py-2 text-center text-sm leading-10 text-muted-foreground">No results found.</p>
-          )
-        )
-      }
-    />
+      <MultipleSelector
+          onSearch={handleSearch}
+          defaultOptions={options}
+          value={selectedOptions}
+          onChange={handleSelectChange}
+          triggerSearchOnFocus
+          placeholder="Select modifiers..."
+          loadingIndicator={
+            <><ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Loading modifiers...</>
+          }
+          emptyIndicator={
+            loading ? (
+                <><ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> &nbsp; Loading modifiers...</>
+            ) : (
+                value && value.length > 0 && value.length === modifiers.length ? [] : (
+                    <p className="py-2 text-center text-sm leading-10 text-muted-foreground">No results found.</p>
+                )
+            )
+          }
+      />
   );
 };
 
