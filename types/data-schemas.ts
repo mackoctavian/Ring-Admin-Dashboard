@@ -54,6 +54,8 @@ export enum SectionType{
     ROOM = "ROOM",
     TABLE = "TABLE",
     SEAT = "SEAT",
+    AREA = "AREA",
+    SECTION = "SECTION"
 }
 
 export enum CampaignAudience{
@@ -212,6 +214,14 @@ export const DepartmentSchema = z.object({
     status: z.boolean(),
 });
 
+export const DepartmentFormSchema = z.object({
+    $id: z.string().optional(),
+    name: z.string(),
+    shortName: z.string(),
+    branch: z.string(),
+    status: z.boolean(),
+});
+
 export const CampaignSchema = z.object({
     $id: z.string().optional(),
     title: z.string().min(1, {message: "Enter campaign title"}),
@@ -263,7 +273,6 @@ export const StaffSchema = z.object({
     branch: z.array(BranchSchema).min(1, { message: "Select at least one branch" })
 }).superRefine((values, context) => {
     if ( values.dashboardAccess && ( !values.email || values.email.trim() === "" ) ){
-    console.log("Email value",values.email)
       context.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Email is required for dashboard access",
@@ -278,7 +287,7 @@ export const SupplierSchema = z.object({
     name: z.string(),
     email: z.string().email("Invalid email address").optional().nullable(),
     contactPersonName: z.string(),
-    branch: z.array(z.string()).min(1, { message: "Select at least one branch" }),
+    branch: z.array(BranchSchema).min(1, { message: "Select at least one branch" }),
     phoneNumber:  z.string().regex(phoneNumberRegex, "Invalid phone number. It should contain 10 to 15 digits."),
     address: z.string().optional().nullable(),
     description: z.string().optional().nullable(),

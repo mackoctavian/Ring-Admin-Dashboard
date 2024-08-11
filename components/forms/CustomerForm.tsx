@@ -41,7 +41,7 @@ const CustomerForm = ({ item }: { item?: Customer | null }) => {
         resolver: zodResolver(CustomerSchema),
         //handle nullable inputs & objects
         //@ts-ignore
-        defaultValues: item ? { ...item, branch: item.registrationBranch.$id ?? '', notes: item.notes ?? '', allowNotifications: true }: {}
+        defaultValues: item ? { ...item, registrationBranch: item.registrationBranch.$id ?? '', notes: item.notes ?? '', allowNotifications: true }: {}
     });
 
     const onInvalid = (errors : any ) => {

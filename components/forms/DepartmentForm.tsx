@@ -10,7 +10,7 @@ import { Department } from "@/types"
 import { createItem, updateItem } from "@/lib/actions/department.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button"
-import { DepartmentSchema } from "@/types/data-schemas"
+import {DepartmentFormSchema} from "@/types/data-schemas"
 import BranchSelector from "../layout/branch-selector"
 import { Form } from "@/components/ui/form";
 import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
@@ -20,14 +20,14 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast()
 
-    const form = useForm<z.infer<typeof DepartmentSchema>>({
-        resolver: zodResolver(DepartmentSchema),
+    const form = useForm<z.infer<typeof DepartmentFormSchema>>({
+        resolver: zodResolver(DepartmentFormSchema),
         //handle nullable inputs & objects
-        //@ts-ignore
-        defaultValues: item ? { ...item, branch: item.branch.$id ?? '' }: {}
+        defaultValues: item ? { ...item }: {}
     });
 
     const onInvalid = (errors : any ) => {
+        console.log(errors)
         toast({
             variant: "warning",
             title: "Data validation failed!", 
@@ -35,7 +35,7 @@ const DepartmentForm = ({ item }: { item?: Department | null }) => {
         });
     }
     
-    const onSubmit = async (data: z.infer<typeof DepartmentSchema>) => {
+    const onSubmit = async (data: z.infer<typeof DepartmentFormSchema>) => {
         setIsLoading(true);
     
         try {

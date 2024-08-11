@@ -220,11 +220,12 @@ export const registerBusiness = async ({ logo, ...business }: RegisterBusinessPa
                     organizationId: clerkOrganization.id,
                 },
             }),
+
+            // Create default branch and department
             createDefaultBranch(parseStringify(newBusiness)).then(createDefaultDepartment)
         ]);
     } catch (error) {
         handleError(error);
-        throw error; // Re-throw to allow caller to handle if needed
     }
 
     //revalidatePath("/business-registration");

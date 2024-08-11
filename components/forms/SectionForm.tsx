@@ -11,7 +11,7 @@ import { createItem, updateItem } from "@/lib/actions/section.actions"
 import { useToast } from "@/components/ui/use-toast"
 import CancelButton from "../layout/cancel-button";
 import { SubmitButton } from "@/components/ui/submit-button";
-import {CategoryType, SectionSchema, SectionType} from "@/types/data-schemas";
+import {SectionSchema, SectionType} from "@/types/data-schemas";
 import {SelectItem} from "@/components/ui/select"
 import {Form} from "@/components/ui/form";
 import BranchSelector from "../layout/branch-selector";
@@ -25,7 +25,7 @@ const SectionForm = ({ item }: { item?: Section | null }) => {
         resolver: zodResolver(SectionSchema),
         //handle nullable inputs
         //@ts-ignore
-        defaultValues: item ? { ...item, description: item.description ?? '', branch: item.branch.$id ?? '', type: item.type ?? '' }: {}
+        defaultValues: item ? { ...item, description: item.description ?? '', type: item.type ?? '' }: {}
     });
 
     const onInvalid = (errors : any ) => {
@@ -40,9 +40,18 @@ const SectionForm = ({ item }: { item?: Section | null }) => {
         setIsLoading(true);
     
         try {
+            const sectionData = {
+                name: data.name,
+                type: data.type,
+                branch: data.branch,
+                noOfCustomers: data.noOfCustomers,
+                status: data.status,
+                description: data.description,
+            };
+
             if (item) {
                 //@ts-ignore
-                await updateItem(item!.$id, data);
+                await updateItem(item!.$id, sectionData);
                 toast({
                     variant: "success",
                     title: "Success", 
@@ -50,7 +59,7 @@ const SectionForm = ({ item }: { item?: Section | null }) => {
                 });
             } else {
                 //@ts-ignore
-                await createItem(data);
+                await createItem(sectionData);
                 toast({
                     variant: "success",
                     title: "Success", 
@@ -89,6 +98,8 @@ return (
                         <SelectItem value={SectionType.ROOM}>Room</SelectItem>
                         <SelectItem value={SectionType.SEAT}>Seat</SelectItem>
                         <SelectItem value={SectionType.TABLE}>Table</SelectItem>
+                        <SelectItem value={SectionType.AREA}>Area</SelectItem>
+                        <SelectItem value={SectionType.SECTION}>Section</SelectItem>
                 </CustomFormField>
 
                 <CustomFormField

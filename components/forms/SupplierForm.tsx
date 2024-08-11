@@ -24,7 +24,7 @@ const SupplierForm = ({ item }: { item?: Supplier | null }) => {
         resolver: zodResolver(SupplierSchema),
         //handle nullable inputs
         //@ts-ignore
-        defaultValues: item ? { ...item, description: item.description ?? '', branch: [item.branch.$id] ?? [], address: item.address ?? '' }: {}
+        defaultValues: item ? { ...item, description: item.description ?? '', address: item.address ?? '' }: {}
     });
 
     const onInvalid = (errors : any ) => {
@@ -114,6 +114,7 @@ return (
                         <BranchSelector value={field.value} onChange={field.onChange}/>
                     )}
                 />
+
                 <CustomFormField
                     fieldType={FormFieldType.INPUT}
                     control={form.control}

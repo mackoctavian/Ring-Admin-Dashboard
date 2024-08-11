@@ -37,7 +37,7 @@ export const createDefaultDepartment = async (branch: Branch) => {
 
 
 export const createItem = async (item: Department) => {
-  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEPARTMENT_COLLECTION_ID);
+  const { database, businessId, databaseId, collectionId } = await databaseCheck(DEPARTMENT_COLLECTION_ID, {needsBusinessId: true});
   try {
     await database.createDocument(
       databaseId,

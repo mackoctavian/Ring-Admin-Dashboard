@@ -34,10 +34,18 @@ import CustomFormField, {FormFieldType} from "@/components/ui/custom-input";
 
     const onSubmit = async (data: z.infer<typeof InventoryModificationSchema>) => {
         setIsLoading(true);
-    
+
+        const inventoryData = {
+            item: data.item,
+            quantity: data.quantity,
+            value: data.value,
+            reason: data.reason,
+            notes: data.notes,
+        };
+
         try {
             //@ts-ignore
-            await modifyStockItem(data);
+            await modifyStockItem(inventoryData);
             toast({
                 variant: "success",
                 title: "Success", 
