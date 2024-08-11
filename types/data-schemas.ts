@@ -132,7 +132,7 @@ export const BusinessRegistrationSchema = z.object({
     country: z.string(),
     email: z.string().email(),
     address: z.string().optional(),
-    businessType: BusinessTypeSchema,
+    businessType: z.string(),
     description: z.string().optional(),
     registrationNumber: z.string().optional(),
     termsConsent: z
@@ -182,7 +182,7 @@ export const BusinessSchema = z.object({
     country: z.string(),
     email: z.string().email(),
     address: z.string().optional().nullable(),
-    businessType: BusinessTypeSchema,
+    businessType: z.string(),
     description: z.string().optional().nullable(),
     registrationNumber: z.string().optional().nullable()
 })
