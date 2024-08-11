@@ -13,6 +13,8 @@ import {createDefaultDepartment} from "@/lib/actions/department.actions"
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation'
 
+import * as Sentry from "@sentry/nextjs";
+
 const {
     APPWRITE_DATABASE: DATABASE_ID,
     BUSINESS_COLLECTION: BUSINESS_COLLECTION_ID,
@@ -142,88 +144,94 @@ export const registerBusiness = async ({ logo, ...business }: RegisterBusinessPa
     const { database, databaseId, collectionId } = await databaseCheck(USER_COLLECTION_ID);
 
     try {
-        const user = await currentUser();
-        if (!user) throw new Error("User data could not be loaded");
+        return await Sentry.withServerActionInstrumentation(
+            "Business Registration", // The name you want to associate this Server Action with in Sentry
+            { recordResponse: true },
+            async () => {
+                const user = await currentUser();
+                if (!user) throw new Error("User data could not be loaded");
 
-        const generatedSlug = business.name.toLowerCase().replace(/\s+/g, '-');
-        const fullName = `${business.firstName.trim()} ${business.lastName.trim()}`;
+                const generatedSlug = business.name.toLowerCase().replace(/\s+/g, '-');
+                const fullName = `${business.firstName.trim()} ${business.lastName.trim()}`;
 
-        const [clerkOrganization, logoData] = await Promise.all([
-            clerkClient.organizations.createOrganization({
-                name: business.name,
-                createdBy: user.id,
-            }),
-            logo ? uploadFile(logo) : Promise.resolve(null)
-        ]);
+                const [clerkOrganization, logoData] = await Promise.all([
+                    clerkClient.organizations.createOrganization({
+                        name: business.name,
+                        createdBy: user.id,
+                    }),
+                    logo ? uploadFile(logo) : Promise.resolve(null)
+                ]);
 
-        await Promise.all([
-            clerkClient.users.updateUser(user.id, {
-                firstName: business.firstName,
-                lastName: business.lastName
-            }),
-            logoData?.imageUrl && clerkClient.organizations.updateOrganizationLogo(
-                clerkOrganization.id,
-                {
-                    uploaderUserId: user.id,
-                    file: logo?.get("blobFile") as Blob
-                }
-            )
-        ]);
+                await Promise.all([
+                    clerkClient.users.updateUser(user.id, {
+                        firstName: business.firstName,
+                        lastName: business.lastName
+                    }),
+                    logoData?.imageUrl && clerkClient.organizations.updateOrganizationLogo(
+                        clerkOrganization.id,
+                        {
+                            uploaderUserId: user.id,
+                            file: logo?.get("blobFile") as Blob
+                        }
+                    )
+                ]);
 
-        const newBusinessOwner = await database.createDocument(
-            databaseId,
-            collectionId,
-            ID.unique(),
-            {
-                email: user.primaryEmailAddress?.emailAddress.trim(),
-                name: fullName,
-                firstName: business.firstName.trim(),
-                lastName: business.lastName.trim(),
-                phoneNumber: user.phoneNumbers[0]?.phoneNumber || business.phoneNumber,
-                image: user.imageUrl,
-                gender: Gender.UNDISCLOSED,
-                points: 0,
-                status: true,
-                userId: user.id,
-                orgId: clerkOrganization.id,
-                isOwner: true,
-                termsConsent: business.termsConsent,
+                const newBusinessOwner = await database.createDocument(
+                    databaseId,
+                    collectionId,
+                    ID.unique(),
+                    {
+                        email: user.primaryEmailAddress?.emailAddress.trim(),
+                        name: fullName,
+                        firstName: business.firstName.trim(),
+                        lastName: business.lastName.trim(),
+                        phoneNumber: user.phoneNumbers[0]?.phoneNumber || business.phoneNumber,
+                        image: user.imageUrl,
+                        gender: Gender.UNDISCLOSED,
+                        points: 0,
+                        status: true,
+                        userId: user.id,
+                        orgId: clerkOrganization.id,
+                        isOwner: true,
+                        termsConsent: business.termsConsent,
+                    }
+                );
+
+                const { firstName, lastName, termsConsent, ...createBusinessObj } = business;
+                const newBusiness = await database.createDocument(
+                    databaseId,
+                    BUSINESS_COLLECTION_ID!,
+                    ID.unique(),
+                    {
+                        ...createBusinessObj,
+                        logo: logoData?.imageUrl,
+                        slug: generatedSlug,
+                        branches: [],
+                        authId: user.id,
+                        orgId: clerkOrganization.id,
+                        users: [newBusinessOwner.$id],
+                    }
+                );
+
+                await Promise.all([
+                    initTrial(newBusiness.$id, parseStringify(newBusinessOwner)),
+                    clerkClient.users.updateUser(user.id, {
+                        publicMetadata: {
+                            fullName,
+                            firstName: business.firstName.trim(),
+                            lastName: business.lastName.trim(),
+                            onboardingComplete: true,
+                            businessId: newBusiness.$id,
+                            invite: false,
+                            organizationId: clerkOrganization.id,
+                        },
+                    }),
+
+                    // Create default branch and department
+                    createDefaultBranch(parseStringify(newBusiness)).then(createDefaultDepartment)
+                ]);
             }
         );
-
-        const { firstName, lastName, termsConsent, ...createBusinessObj } = business;
-        const newBusiness = await database.createDocument(
-            databaseId,
-            BUSINESS_COLLECTION_ID!,
-            ID.unique(),
-            {
-                ...createBusinessObj,
-                logo: logoData?.imageUrl,
-                slug: generatedSlug,
-                branches: [],
-                authId: user.id,
-                orgId: clerkOrganization.id,
-                users: [newBusinessOwner.$id],
-            }
-        );
-
-        await Promise.all([
-            initTrial(newBusiness.$id, parseStringify(newBusinessOwner)),
-            clerkClient.users.updateUser(user.id, {
-                publicMetadata: {
-                    fullName,
-                    firstName: business.firstName.trim(),
-                    lastName: business.lastName.trim(),
-                    onboardingComplete: true,
-                    businessId: newBusiness.$id,
-                    invite: false,
-                    organizationId: clerkOrganization.id,
-                },
-            }),
-
-            // Create default branch and department
-            createDefaultBranch(parseStringify(newBusiness)).then(createDefaultDepartment)
-        ]);
     } catch (error) {
         handleError(error);
     }

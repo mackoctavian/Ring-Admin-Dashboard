@@ -1,4 +1,5 @@
 import {withSentryConfig} from '@sentry/nextjs';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     // Disable type checking (if using TypeScript)
@@ -18,13 +19,11 @@ const nextConfig = {
             },
         ],
     },
-    // Custom webpack configuration
     webpack: (config, { dev }) => {
-      if (dev) {
-        // Development-specific configuration
-      }
+
       return config;
     },
+
   };
 
 export default withSentryConfig(nextConfig, {

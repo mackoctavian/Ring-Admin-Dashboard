@@ -31,7 +31,7 @@ export const createDefaultDepartment = async (branch: Branch) => {
 
     return parseStringify(newItem);
   } catch (error: any) {
-    handleError(error, "Error creating main branch")
+    handleError(error, "Error creating main department")
   }
 }
 

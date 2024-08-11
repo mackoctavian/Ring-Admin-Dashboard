@@ -115,7 +115,7 @@ declare interface RegisterBusinessParams {
   name: string;
   firstName: string;
   lastName: string;
-  businessType: BusinessType;
+  businessType: string;
   size: string;
   currency: string;
   registrationNumber: string | undefined;
