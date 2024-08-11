@@ -36,7 +36,7 @@ const { toast } = useToast();
 const form = useForm<z.infer<typeof StaffSchema>>({
     resolver: zodResolver(StaffSchema),
     //@ts-ignore
-    defaultValues: item ? { ...item, notes: item.notes ?? '' }: {
+    defaultValues: item ? { ...item, notes: item.notes ?? '', email: item.email ?? null, address: item.address ?? '' }: {
         status: true,
         posAccess: false,
         dashboardAccess: false
@@ -44,6 +44,7 @@ const form = useForm<z.infer<typeof StaffSchema>>({
 });
 
 const onInvalid = (errors: any) => {
+    console.log(errors)
     toast({
         variant: "warning",
         title: "Data validation failed!", 

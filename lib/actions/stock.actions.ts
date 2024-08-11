@@ -90,6 +90,8 @@ export const createItem = async (items: Stock[]) => {
           inventoryItem.status = InventoryStatus.IN_STOCK;
       }
 
+      item.item = inventoryItem;
+
         await database.createDocument(
           databaseId,
           collectionId,

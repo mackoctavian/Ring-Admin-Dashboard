@@ -442,7 +442,7 @@ declare type Customer = {
   dateOfBirth?: Date;
   nationality?: string;
   lastVisitDate: Date;
-  registrationBranch?: string;
+  registrationBranch?: Branch;
   address?: string;
   notes?: string;
   allowNotifications: boolean;

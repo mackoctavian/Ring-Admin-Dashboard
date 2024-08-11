@@ -344,7 +344,8 @@ export const modifyStockItem = async (data: InventoryModification) => {
         {
           ...data,
           businessId: businessId,
-          itemId: variantItem.$id
+          itemId: variantItem.$id,
+          currency: variantItem.inventory.currency
         }
       )
 
@@ -366,8 +367,6 @@ export const modifyStockItem = async (data: InventoryModification) => {
       } else {
         variantItem.status = InventoryStatus.IN_STOCK;
       }
-
-      console.log("Item", variantItem)
 
       await database.updateDocument(
         databaseId,
