@@ -10,40 +10,59 @@ import { getBusinessTypes } from "@/lib/actions/business.actions";
 import { BusinessType } from "@/types";
 
 interface Props {
-  value?: BusinessType | null;
-  onChange: (value: BusinessType | null) => void;
+  value?: string | null;
+  onChange: (value: string) => void;
 }
 
 const BusinessTypeSelector: React.FC<Props> = ({ value, onChange }) => {
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchBusinessTypes() {
       try {
-        const businessTypes = await getBusinessTypes();
-        setBusinessTypes(businessTypes);
-      } catch (error) {
-        console.error('Error fetching business types:', error);
+        setIsLoading(true);
+        const businessTypesData = await getBusinessTypes();
+        setBusinessTypes(businessTypesData || []); // Ensure it's always an array
+        setError(null);
+      } catch (error: any) {
+        setError("Failed to load business types");
+        console.error("Error fetching business types:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchBusinessTypes();
   }, []);
 
-  const handleSelectChange = (id: string) => {
-    const selectedBusinessType = businessTypes.find(businessType => businessType.$id === id);
-    onChange(selectedBusinessType || null);
+  const handleSelectChange = (selectedId: string) => {
+    onChange(selectedId === 'default' ? '' : selectedId);
   };
 
+  if (isLoading) {
+    return <div className={`text-sm text-muted-foreground`}>Loading business types...</div>;
+  }
+
+  if (error) {
+    return <div className={`text-sm text-destructive-foreground`}>Error: could not load business types</div>;
+  }
+
   return (
-      <Select value={value ? value.$id : ''} onValueChange={handleSelectChange}>
+      <Select
+          value={value || 'default'}
+          onValueChange={handleSelectChange}>
         <SelectTrigger>
-          <SelectValue placeholder="Select business type">
-            {value ? value.name : 'Select business type'}
+          <SelectValue>
+            {value ? businessTypes.find(businessType => businessType.name === value)?.name || 'Select business type' : 'Select business type'}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="default" disabled>
+            Select business type
+          </SelectItem>
           {businessTypes.map((businessType) => (
-              <SelectItem key={businessType.$id} value={businessType.$id}>
+              <SelectItem key={businessType.$id} value={businessType.name}>
                 {businessType.name}
               </SelectItem>
           ))}
